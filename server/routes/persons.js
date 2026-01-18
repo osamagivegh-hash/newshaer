@@ -72,12 +72,35 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   GET /api/persons/tree
- * @desc    Get full family tree structure
+ * @desc    Get full family tree structure (CACHED)
  * @access  Public
+ * 
+ * Cache Strategy:
+ * - Server-side cache with 5-minute TTL
+ * - HTTP Cache-Control headers for browser caching
+ * - ETag support for conditional GET (304 responses)
  */
 router.get('/tree', async (req, res) => {
     try {
-        const tree = await Person.buildTree();
+        // Check if client has valid cached version (ETag)
+        const clientEtag = req.headers['if-none-match'];
+        if (clientEtag && treeCache.isClientCacheValid(clientEtag)) {
+            // Client cache is still valid, return 304 Not Modified
+            return res.status(304).end();
+        }
+
+        // Check server-side cache first
+        let tree = treeCache.get('fullTree');
+
+        if (!tree) {
+            // Cache miss - fetch from database
+            tree = await Person.buildTree();
+
+            if (tree) {
+                // Store in cache
+                treeCache.set('fullTree', tree);
+            }
+        }
 
         if (!tree) {
             return res.json({
@@ -86,6 +109,12 @@ router.get('/tree', async (req, res) => {
                 message: 'لا توجد شجرة عائلة بعد. يرجى إضافة الجد الأكبر أولاً.'
             });
         }
+
+        // Set cache headers
+        const cacheHeaders = treeCache.getCacheHeaders();
+        Object.entries(cacheHeaders).forEach(([key, value]) => {
+            res.set(key, value);
+        });
 
         res.json({
             success: true,

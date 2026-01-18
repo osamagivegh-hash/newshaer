@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { TreeVisualization, OliveTreeVisualization, PersonModal } from '../components/FamilyTree';
+import { fetchTreeWithCache } from '../utils/familyTreeCache';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -112,20 +113,24 @@ const FamilyTreeDisplayPage = () => {
             setLoading(true);
             setError(null);
 
-            const [treeRes, statsRes, displayRes] = await Promise.all([
-                fetch(`${API_URL}/api/persons/tree`),
+            // Use cached tree data
+            const [treeResult, statsRes, displayRes] = await Promise.all([
+                fetchTreeWithCache(API_URL),
                 fetch(`${API_URL}/api/persons/stats`),
                 fetch(`${API_URL}/api/family-tree-content/tree-display`)
             ]);
 
-            const [treeData, statsData, displayData] = await Promise.all([
-                treeRes.json(),
+            const [statsData, displayData] = await Promise.all([
                 statsRes.json(),
                 displayRes.json()
             ]);
 
-            if (treeData.success) {
-                setTree(treeData.data);
+            // Tree data comes from cache utility
+            if (treeResult.data) {
+                setTree(treeResult.data);
+                if (treeResult.fromCache) {
+                    console.log('[FamilyTreeDisplayPage] Tree loaded from cache!');
+                }
             }
             if (statsData.success) {
                 setStats(statsData.data);

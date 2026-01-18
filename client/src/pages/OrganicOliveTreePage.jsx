@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OrganicOliveTree from '../components/FamilyTree/OrganicOliveTree';
+import { fetchTreeWithCache, clearTreeCache } from '../utils/familyTreeCache';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -13,6 +14,7 @@ const OrganicOliveTreePage = () => {
     const [fullTreeData, setFullTreeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [loadedFromCache, setLoadedFromCache] = useState(false);
 
     // Navigation State
     const [viewStep, setViewStep] = useState('MAIN_SELECTION'); // MAIN_SELECTION, SUB_SELECTION, TREE_VIEW
@@ -23,19 +25,26 @@ const OrganicOliveTreePage = () => {
         fetchData();
     }, []);
 
-    const fetchData = async () => {
+    const fetchData = async (forceRefresh = false) => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_URL}/api/persons/tree`);
-            const data = await res.json();
-            if (data.success) {
-                setFullTreeData(data.data);
-            } else {
-                setError('فشل تحميل البيانات');
+            setError(null);
+
+            const { data, fromCache } = await fetchTreeWithCache(API_URL, forceRefresh);
+
+            setFullTreeData(data);
+            setLoadedFromCache(fromCache);
+
+            if (fromCache) {
+                console.log('[OrganicOliveTreePage] Loaded from cache - instant!');
             }
         } catch (err) {
             console.error(err);
             setError('خطأ في الاتصال بالخادم');
+            // Try to clear cache on error and retry once
+            if (!forceRefresh) {
+                clearTreeCache();
+            }
         } finally {
             setLoading(false);
         }
@@ -81,7 +90,7 @@ const OrganicOliveTreePage = () => {
                     <div className="text-4xl mb-4">⚠️</div>
                     <h3 className="text-xl font-bold text-red-600 mb-2">{error}</h3>
                     <button
-                        onClick={fetchData}
+                        onClick={() => fetchData(true)}
                         className="mt-4 px-6 py-2 bg-[#558B2F] text-white rounded-lg hover:bg-[#33691E] transition"
                     >
                         إعادة المحاولة

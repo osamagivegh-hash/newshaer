@@ -14,13 +14,14 @@ const newsRouter = require('./routes/news');
 const { startNewsJob } = require('./jobs/newsJob');
 const { startBackupScheduler } = require('./jobs/backupScheduler');
 const { initializeFTAdmin } = require('./middleware/familyTreeAuth');
+const treeCache = require('./services/treeCache');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB Atlas
-connectDB().then(() => {
+connectDB().then(async () => {
   // Initialize CMS admin user after DB connection
   initializeAdmin();
 
@@ -29,6 +30,9 @@ connectDB().then(() => {
 
   // Start backup scheduler after DB connection
   startBackupScheduler();
+
+  // Pre-warm the family tree cache for instant first load
+  await treeCache.warmUp();
 });
 
 // General rate limiting

@@ -20,6 +20,7 @@ const {
 } = require('../middleware/familyTreeAuth');
 const { Person, Backup, BackupSettings, AuditLog } = require('../models');
 const BackupService = require('../services/BackupService');
+const treeCache = require('../services/treeCache');
 
 // Helper to get client IP
 const getClientIP = (req) => {
@@ -146,6 +147,9 @@ router.post('/persons', authenticateFTToken, requireFTPermission('manage-members
         const person = new Person(personData);
         await person.save();
 
+        // Invalidate tree cache
+        treeCache.invalidate();
+
         // Log the action
         await AuditLog.logAction({
             action: 'FT_PERSON_CREATED',
@@ -208,6 +212,9 @@ router.put('/persons/:id', authenticateFTToken, requireFTPermission('manage-memb
             { $set: updateData },
             { new: true, runValidators: true }
         );
+
+        // Invalidate tree cache
+        treeCache.invalidate();
 
         // Log the action
         await AuditLog.logAction({
@@ -293,6 +300,9 @@ router.delete('/persons/:id', authenticateFTToken, requireFTPermission('manage-m
         } else {
             await Person.findByIdAndDelete(req.params.id);
         }
+
+        // Invalidate tree cache
+        treeCache.invalidate();
 
         // Log the action
         await AuditLog.logAction({
