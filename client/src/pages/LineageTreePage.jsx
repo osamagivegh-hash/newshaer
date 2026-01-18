@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LineageTreeVisualization, PersonModal } from '../components/FamilyTree';
+import { fetchTreeWithCache } from '../utils/familyTreeCache';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -26,17 +27,19 @@ const LineageTreePage = () => {
             setLoading(true);
             setError(null);
 
-            const [treeRes, statsRes] = await Promise.all([
-                fetch(`${API_URL}/api/persons/tree`),
+            const [treeResult, statsRes] = await Promise.all([
+                fetchTreeWithCache(API_URL),
                 fetch(`${API_URL}/api/persons/stats`)
             ]);
 
-            const [treeData, statsData] = await Promise.all([
-                treeRes.json(),
-                statsRes.json()
-            ]);
+            const statsData = await statsRes.json();
 
-            if (treeData.success) setTree(treeData.data);
+            if (treeResult.data) {
+                setTree(treeResult.data);
+                if (treeResult.fromCache) {
+                    console.log('[LineageTreePage] Tree loaded from cache!');
+                }
+            }
             if (statsData.success) setStats(statsData.data);
 
         } catch (err) {
