@@ -237,32 +237,65 @@ personSchema.statics.getFullTree = async function () {
   return root;
 };
 
-// Static method to build nested tree structure
+// Static method to build nested tree structure (OPTIMIZED - single query)
 personSchema.statics.buildTree = async function (personId = null) {
-  const buildNode = async (id) => {
-    const person = await this.findById(id).lean();
-    if (!person) return null;
+  // Fetch ALL persons in a single query - MUCH faster than recursive queries
+  const allPersons = await this.find({}).lean();
 
-    const children = await this.find({ fatherId: id }).lean();
-    const childNodes = await Promise.all(
-      children.map(child => buildNode(child._id))
-    );
+  if (allPersons.length === 0) return null;
 
-    return {
+  // Create a map for O(1) lookup
+  const personMap = new Map();
+  allPersons.forEach(person => {
+    personMap.set(person._id.toString(), {
       ...person,
-      children: childNodes.filter(Boolean).sort((a, b) => a.siblingOrder - b.siblingOrder)
-    };
+      children: []
+    });
+  });
+
+  // Build parent-child relationships
+  let root = null;
+  allPersons.forEach(person => {
+    const node = personMap.get(person._id.toString());
+
+    if (person.fatherId) {
+      const parent = personMap.get(person.fatherId.toString());
+      if (parent) {
+        parent.children.push(node);
+      }
+    }
+
+    // Find root (no fatherId or isRoot flag)
+    if (person.isRoot || (!person.fatherId && !root)) {
+      root = node;
+    }
+  });
+
+  // Sort children by siblingOrder
+  const sortChildren = (node) => {
+    if (node.children && node.children.length > 0) {
+      node.children.sort((a, b) => (a.siblingOrder || 0) - (b.siblingOrder || 0));
+      node.children.forEach(sortChildren);
+    }
   };
 
+  // If a specific personId was requested, return that branch
   if (personId) {
-    return buildNode(personId);
+    const startNode = personMap.get(personId.toString());
+    if (startNode) {
+      sortChildren(startNode);
+      return startNode;
+    }
+    return null;
   }
 
-  // If no ID provided, start from root
-  const root = await this.findOne({ isRoot: true }).lean();
-  if (!root) return null;
+  // Return full tree from root
+  if (root) {
+    sortChildren(root);
+    return root;
+  }
 
-  return buildNode(root._id);
+  return null;
 };
 
 // Static method to get ancestors chain
