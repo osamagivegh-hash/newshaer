@@ -90,9 +90,9 @@ const FamilyTreePage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden rtl-content" dir="rtl">
+        <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden" dir="rtl">
             {/* Header */}
-            <header className="bg-white border-b px-4 py-3 flex items-center justify-between z-10 shadow-sm shrink-0">
+            <header className="bg-white border-b px-4 py-3 flex items-center justify-between z-50 shadow-sm shrink-0 relative">
                 <div className="flex items-center gap-4">
                     <h1 className="text-xl font-bold text-palestine-black">🌳 شجرة العائلة</h1>
                     {stats && (
@@ -125,8 +125,8 @@ const FamilyTreePage = () => {
             </header>
 
             {/* Main Tree Area */}
-            <main className="flex-1 relative overflow-hidden bg-gray-50 flex flex-col">
-                <div className="flex-1 relative w-full h-full">
+            <main className="flex-1 relative overflow-auto bg-gray-50">
+                <div className="w-full h-full" style={{ minHeight: 'calc(100vh - 80px)' }}>
                     {/* We need to ensure TreeVisualization takes full size available */}
                     <TreeVisualization
                         data={tree}

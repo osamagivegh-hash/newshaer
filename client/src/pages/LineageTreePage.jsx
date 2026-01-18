@@ -81,9 +81,9 @@ const LineageTreePage = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#F5F5DC] rtl-content" dir="rtl">
+        <div className="min-h-screen flex flex-col bg-[#F5F5DC]" dir="rtl">
             {/* Header */}
-            <header className="bg-gradient-to-r from-[#2E7D32] to-[#1B5E20] text-white shadow-xl sticky top-0 z-50">
+            <header className="bg-gradient-to-r from-[#2E7D32] to-[#1B5E20] text-white shadow-xl sticky top-0 z-50 shrink-0">
                 <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         {/* Breadcrumb & Title */}
@@ -136,7 +136,7 @@ const LineageTreePage = () => {
             </header>
 
             {/* Main Tree Area */}
-            <main className="flex-1 relative overflow-hidden" style={{ minHeight: '85vh' }}>
+            <main className="flex-1 relative overflow-auto" style={{ minHeight: '85vh' }}>
                 {error ? (
                     <div className="flex-1 flex items-center justify-center h-full">
                         <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">

@@ -74,9 +74,9 @@ const OliveTreePage = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#f0f4f0] rtl-content" dir="rtl">
+        <div className="min-h-screen flex flex-col bg-[#f0f4f0]" dir="rtl">
             {/* Header */}
-            <header className="bg-[#2c3e2c] text-white shadow-xl sticky top-0 z-50">
+            <header className="bg-[#2c3e2c] text-white shadow-xl sticky top-0 z-50 shrink-0">
                 <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         {/* Breadcrumb & Title */}
@@ -120,7 +120,7 @@ const OliveTreePage = () => {
             </header>
 
             {/* Main Tree Area */}
-            <main className="flex-1 relative overflow-hidden" style={{ minHeight: '80vh' }}>
+            <main className="flex-1 relative overflow-auto" style={{ minHeight: '80vh' }}>
                 {error ? (
                     <div className="flex-1 flex items-center justify-center h-full">
                         <div className="text-red-500 font-bold bg-white/80 p-6 rounded-lg">{error}</div>
