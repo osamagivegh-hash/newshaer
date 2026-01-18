@@ -44,6 +44,14 @@ const AdminFamilyTree = () => {
     const [deleteStep, setDeleteStep] = useState(1); // 1 = first confirm, 2 = final confirm
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // Father search by name state
+    const [fatherSearchMode, setFatherSearchMode] = useState('generation'); // 'generation' | 'search'
+    const [fatherSearchQuery, setFatherSearchQuery] = useState('');
+    const [fatherSearchResults, setFatherSearchResults] = useState([]);
+    const [fatherSearchLoading, setFatherSearchLoading] = useState(false);
+    const [showFatherDropdown, setShowFatherDropdown] = useState(false);
+    const [selectedFatherName, setSelectedFatherName] = useState('');
+
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(30);
@@ -166,6 +174,54 @@ const AdminFamilyTree = () => {
         fetchEligibleFathers(formData.targetGeneration, selectedBranch, subBranch);
     };
 
+    // Search father by name with debounce
+    const searchFatherByName = async (query) => {
+        if (query.length < 2) {
+            setFatherSearchResults([]);
+            setShowFatherDropdown(false);
+            return;
+        }
+
+        setFatherSearchLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/api/persons?search=${encodeURIComponent(query)}&limit=20`);
+            const data = await res.json();
+            if (data.success) {
+                // Filter males only (fathers must be male)
+                const males = data.data.filter(p => p.gender === 'male');
+                setFatherSearchResults(males);
+                setShowFatherDropdown(true);
+            }
+        } catch (error) {
+            console.error('Error searching fathers:', error);
+        } finally {
+            setFatherSearchLoading(false);
+        }
+    };
+
+    // Debounced search
+    useEffect(() => {
+        if (fatherSearchMode !== 'search') return;
+
+        const timeoutId = setTimeout(() => {
+            searchFatherByName(fatherSearchQuery);
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [fatherSearchQuery, fatherSearchMode]);
+
+    // Handle selecting a father from search results
+    const selectFatherFromSearch = (father) => {
+        setFormData(prev => ({
+            ...prev,
+            fatherId: father._id,
+            targetGeneration: String((father.generation || 0) + 1)
+        }));
+        setSelectedFatherName(father.fullName + ' (الجيل ' + father.generation + ')');
+        setShowFatherDropdown(false);
+        setFatherSearchQuery('');
+    };
+
     const openAddModal = () => {
         setEditingPerson(null);
         setFormData({
@@ -185,6 +241,12 @@ const AdminFamilyTree = () => {
             targetGeneration: ''
         });
         setEligibleFathers([]);
+        // Reset father search state
+        setFatherSearchMode('generation');
+        setFatherSearchQuery('');
+        setFatherSearchResults([]);
+        setSelectedFatherName('');
+        setShowFatherDropdown(false);
         setShowModal(true);
     };
 
@@ -750,143 +812,248 @@ const AdminFamilyTree = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">الأب</label>
 
-                                    {/* Branch Filter for Generations 6+ */}
-                                    {parseInt(formData.targetGeneration) >= 6 && branchCounts && (
-                                        <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                            <p className="text-xs text-amber-700 mb-2 font-medium">🔍 فلترة حسب الفرع (للتسهيل):</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleBranchChange('')}
-                                                    className={`px-3 py-1.5 text-xs rounded-full transition-colors ${selectedBranch === ''
-                                                        ? 'bg-gray-700 text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                        }`}
-                                                >
-                                                    الكل
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleBranchChange('zahar')}
-                                                    className={`px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1 ${selectedBranch === 'zahar'
-                                                        ? 'bg-teal-600 text-white'
-                                                        : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
-                                                        }`}
-                                                >
-                                                    فرع زهار
-                                                    <span className="bg-white/30 px-1.5 rounded-full text-[10px]">{branchCounts.zahar}</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleBranchChange('saleh')}
-                                                    className={`px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1 ${selectedBranch === 'saleh'
-                                                        ? 'bg-amber-600 text-white'
-                                                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                                        }`}
-                                                >
-                                                    فرع صالح
-                                                    <span className="bg-white/30 px-1.5 rounded-full text-[10px]">{branchCounts.saleh}</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleBranchChange('ibrahim')}
-                                                    className={`px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1 ${selectedBranch === 'ibrahim'
-                                                        ? 'bg-violet-600 text-white'
-                                                        : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
-                                                        }`}
-                                                >
-                                                    فرع إبراهيم
-                                                    <span className="bg-white/30 px-1.5 rounded-full text-[10px]">{branchCounts.ibrahim}</span>
-                                                </button>
-                                            </div>
+                                    {/* Toggle: Generation vs Search Mode */}
+                                    <div className="flex gap-2 mb-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFatherSearchMode('generation');
+                                                setFormData(prev => ({ ...prev, fatherId: '' }));
+                                                setSelectedFatherName('');
+                                            }}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-center gap-2 ${fatherSearchMode === 'generation'
+                                                    ? 'bg-palestine-green text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            🔢 بحث بالجيل
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFatherSearchMode('search');
+                                                setFormData(prev => ({ ...prev, fatherId: '', targetGeneration: '' }));
+                                                setSelectedFatherName('');
+                                            }}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-center gap-2 ${fatherSearchMode === 'search'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            🔍 بحث بالاسم
+                                        </button>
+                                    </div>
 
-                                            {/* Sub-branch filter for Zahar */}
-                                            {selectedBranch === 'zahar' && subBranchCounts?.zahar?.length > 0 && (
-                                                <div className="mt-3 pt-3 border-t border-amber-200">
-                                                    <p className="text-xs text-teal-700 mb-2 font-medium">🌿 أبناء زهار:</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleSubBranchChange('')}
-                                                            className={`px-2 py-1 text-[11px] rounded-full transition-colors ${selectedSubBranch === ''
-                                                                    ? 'bg-teal-700 text-white'
-                                                                    : 'bg-teal-50 text-teal-600 hover:bg-teal-100'
-                                                                }`}
-                                                        >
-                                                            كل أبناء زهار
-                                                        </button>
-                                                        {subBranchCounts.zahar.map(sub => (
-                                                            <button
-                                                                key={sub.id}
-                                                                type="button"
-                                                                onClick={() => handleSubBranchChange(sub.id)}
-                                                                className={`px-2 py-1 text-[11px] rounded-full transition-colors flex items-center gap-1 ${selectedSubBranch === sub.id
-                                                                        ? 'bg-teal-600 text-white'
-                                                                        : 'bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200'
-                                                                    }`}
-                                                            >
-                                                                {sub.name}
-                                                                <span className="bg-white/40 px-1 rounded-full text-[9px]">{sub.count}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
+                                    {/* Search Mode: Name-based search */}
+                                    {fatherSearchMode === 'search' && (
+                                        <div className="relative">
+                                            {selectedFatherName ? (
+                                                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-300 rounded-lg">
+                                                    <span className="text-green-700 flex-1">✅ {selectedFatherName}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFormData(prev => ({ ...prev, fatherId: '', targetGeneration: '' }));
+                                                            setSelectedFatherName('');
+                                                        }}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        ✕
+                                                    </button>
                                                 </div>
-                                            )}
+                                            ) : (
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        value={fatherSearchQuery}
+                                                        onChange={(e) => setFatherSearchQuery(e.target.value)}
+                                                        placeholder="اكتب اسم الأب للبحث..."
+                                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    />
+                                                    {fatherSearchLoading && (
+                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        </div>
+                                                    )}
 
-                                            {/* Sub-branch filter for Saleh */}
-                                            {selectedBranch === 'saleh' && subBranchCounts?.saleh?.length > 0 && (
-                                                <div className="mt-3 pt-3 border-t border-amber-200">
-                                                    <p className="text-xs text-amber-700 mb-2 font-medium">🌿 أبناء صالح:</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleSubBranchChange('')}
-                                                            className={`px-2 py-1 text-[11px] rounded-full transition-colors ${selectedSubBranch === ''
-                                                                    ? 'bg-amber-700 text-white'
-                                                                    : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
-                                                                }`}
-                                                        >
-                                                            كل أبناء صالح
-                                                        </button>
-                                                        {subBranchCounts.saleh.map(sub => (
-                                                            <button
-                                                                key={sub.id}
-                                                                type="button"
-                                                                onClick={() => handleSubBranchChange(sub.id)}
-                                                                className={`px-2 py-1 text-[11px] rounded-full transition-colors flex items-center gap-1 ${selectedSubBranch === sub.id
-                                                                        ? 'bg-amber-600 text-white'
-                                                                        : 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200'
-                                                                    }`}
-                                                            >
-                                                                {sub.name}
-                                                                <span className="bg-white/40 px-1 rounded-full text-[9px]">{sub.count}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                                    {/* Search Results Dropdown */}
+                                                    {showFatherDropdown && fatherSearchResults.length > 0 && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                                            {fatherSearchResults.map((father) => (
+                                                                <button
+                                                                    key={father._id}
+                                                                    type="button"
+                                                                    onClick={() => selectFatherFromSearch(father)}
+                                                                    className="w-full px-4 py-3 text-right hover:bg-blue-50 flex items-center gap-3 border-b last:border-b-0"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-full bg-palestine-green text-white flex items-center justify-center text-sm font-bold">
+                                                                        {father.fullName?.charAt(0)}
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <p className="font-medium text-gray-800">{father.fullName}</p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            الجيل {father.generation}
+                                                                            {father.fatherId?.fullName && ` • ابن ${father.fatherId.fullName}`}
+                                                                        </p>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {showFatherDropdown && fatherSearchResults.length === 0 && fatherSearchQuery.length >= 2 && !fatherSearchLoading && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg p-4 text-center text-gray-500">
+                                                            لا توجد نتائج لـ "{fatherSearchQuery}"
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
+                                            <p className="text-xs text-gray-500 mt-1">اكتب حرفين على الأقل للبحث</p>
                                         </div>
                                     )}
 
-                                    <select
-                                        value={formData.fatherId}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, fatherId: e.target.value }))}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-palestine-green focus:border-transparent"
-                                        disabled={!formData.targetGeneration || formData.targetGeneration === '0'}
-                                    >
-                                        <option value="">
-                                            {formData.targetGeneration === '0'
-                                                ? '-- بدون أب (الجد الأكبر) --'
-                                                : formData.targetGeneration
-                                                    ? `-- اختر الأب (${eligibleFathers.length} متاح) --`
-                                                    : '-- اختر الجيل أولاً --'}
-                                        </option>
-                                        {eligibleFathers.map((father) => (
-                                            <option key={father._id} value={father._id}>
-                                                {father.displayName} (الجيل {father.generation})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    {/* Generation Mode: Existing dropdown-based selection */}
+                                    {fatherSearchMode === 'generation' && (
+                                        <>
+                                            {/* Branch Filter for Generations 6+ */}
+                                            {parseInt(formData.targetGeneration) >= 6 && branchCounts && (
+                                                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                    <p className="text-xs text-amber-700 mb-2 font-medium">🔍 فلترة حسب الفرع (للتسهيل):</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleBranchChange('')}
+                                                            className={`px-3 py-1.5 text-xs rounded-full transition-colors ${selectedBranch === ''
+                                                                ? 'bg-gray-700 text-white'
+                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                                }`}
+                                                        >
+                                                            الكل
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleBranchChange('zahar')}
+                                                            className={`px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1 ${selectedBranch === 'zahar'
+                                                                ? 'bg-teal-600 text-white'
+                                                                : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
+                                                                }`}
+                                                        >
+                                                            فرع زهار
+                                                            <span className="bg-white/30 px-1.5 rounded-full text-[10px]">{branchCounts.zahar}</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleBranchChange('saleh')}
+                                                            className={`px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1 ${selectedBranch === 'saleh'
+                                                                ? 'bg-amber-600 text-white'
+                                                                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                                                }`}
+                                                        >
+                                                            فرع صالح
+                                                            <span className="bg-white/30 px-1.5 rounded-full text-[10px]">{branchCounts.saleh}</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleBranchChange('ibrahim')}
+                                                            className={`px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1 ${selectedBranch === 'ibrahim'
+                                                                ? 'bg-violet-600 text-white'
+                                                                : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                                                                }`}
+                                                        >
+                                                            فرع إبراهيم
+                                                            <span className="bg-white/30 px-1.5 rounded-full text-[10px]">{branchCounts.ibrahim}</span>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Sub-branch filter for Zahar */}
+                                                    {selectedBranch === 'zahar' && subBranchCounts?.zahar?.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-amber-200">
+                                                            <p className="text-xs text-teal-700 mb-2 font-medium">🌿 أبناء زهار:</p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSubBranchChange('')}
+                                                                    className={`px-2 py-1 text-[11px] rounded-full transition-colors ${selectedSubBranch === ''
+                                                                        ? 'bg-teal-700 text-white'
+                                                                        : 'bg-teal-50 text-teal-600 hover:bg-teal-100'
+                                                                        }`}
+                                                                >
+                                                                    كل أبناء زهار
+                                                                </button>
+                                                                {subBranchCounts.zahar.map(sub => (
+                                                                    <button
+                                                                        key={sub.id}
+                                                                        type="button"
+                                                                        onClick={() => handleSubBranchChange(sub.id)}
+                                                                        className={`px-2 py-1 text-[11px] rounded-full transition-colors flex items-center gap-1 ${selectedSubBranch === sub.id
+                                                                            ? 'bg-teal-600 text-white'
+                                                                            : 'bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200'
+                                                                            }`}
+                                                                    >
+                                                                        {sub.name}
+                                                                        <span className="bg-white/40 px-1 rounded-full text-[9px]">{sub.count}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Sub-branch filter for Saleh */}
+                                                    {selectedBranch === 'saleh' && subBranchCounts?.saleh?.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-amber-200">
+                                                            <p className="text-xs text-amber-700 mb-2 font-medium">🌿 أبناء صالح:</p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSubBranchChange('')}
+                                                                    className={`px-2 py-1 text-[11px] rounded-full transition-colors ${selectedSubBranch === ''
+                                                                        ? 'bg-amber-700 text-white'
+                                                                        : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                                                                        }`}
+                                                                >
+                                                                    كل أبناء صالح
+                                                                </button>
+                                                                {subBranchCounts.saleh.map(sub => (
+                                                                    <button
+                                                                        key={sub.id}
+                                                                        type="button"
+                                                                        onClick={() => handleSubBranchChange(sub.id)}
+                                                                        className={`px-2 py-1 text-[11px] rounded-full transition-colors flex items-center gap-1 ${selectedSubBranch === sub.id
+                                                                            ? 'bg-amber-600 text-white'
+                                                                            : 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200'
+                                                                            }`}
+                                                                    >
+                                                                        {sub.name}
+                                                                        <span className="bg-white/40 px-1 rounded-full text-[9px]">{sub.count}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <select
+                                                value={formData.fatherId}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, fatherId: e.target.value }))}
+                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-palestine-green focus:border-transparent"
+                                                disabled={!formData.targetGeneration || formData.targetGeneration === '0'}
+                                            >
+                                                <option value="">
+                                                    {formData.targetGeneration === '0'
+                                                        ? '-- بدون أب (الجد الأكبر) --'
+                                                        : formData.targetGeneration
+                                                            ? `-- اختر الأب (${eligibleFathers.length} متاح) --`
+                                                            : '-- اختر الجيل أولاً --'}
+                                                </option>
+                                                {eligibleFathers.map((father) => (
+                                                    <option key={father._id} value={father._id}>
+                                                        {father.displayName} (الجيل {father.generation})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
