@@ -6,6 +6,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Person = require('../models/Person');
+const treeCache = require('../services/treeCache');
 
 const router = express.Router();
 
