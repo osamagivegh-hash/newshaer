@@ -46,16 +46,13 @@ const FamilyTreePage = () => {
         }
     };
 
-    const handleNodeClick = async (node) => {
-        try {
-            const res = await fetch(`${API_URL}/api/persons/${node._id}`);
-            const data = await res.json();
-            if (data.success) {
-                setSelectedPerson(data.data);
-            }
-        } catch (err) {
-            console.error('Error fetching person details:', err);
-        }
+    // Handle node click - INSTANT using local data
+    const handleNodeClick = (node) => {
+        // Use node data directly for instant display
+        setSelectedPerson({
+            ...node,
+            children: node.children || []
+        });
     };
 
     const zoomIn = () => setZoom(prev => Math.min(2, prev + 0.1));
