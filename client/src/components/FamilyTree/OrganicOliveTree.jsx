@@ -100,15 +100,14 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     const bWeight = (b.value || 1) + (b.children?.length || 0);
                     const avgWeight = (aWeight + bWeight) / 2;
 
-                    // Base separation - INCREASED for better spacing
-                    let sep = sameSibling ? 2.5 : 6;
+                    // Base separation - SIGNIFICANTLY INCREASED
+                    let sep = sameSibling ? 4 : 10;
 
-                    // Add weight-based padding for nodes with many children - INCREASED
-                    sep += Math.log2(avgWeight + 1) * 0.6;
+                    // Add weight-based padding for nodes with many children - DOUBLED
+                    sep += Math.log2(avgWeight + 1) * 1.2;
 
-                    // Reduce separation at deeper levels to avoid too much spread
-                    // but keep minimum for readability - INCREASED minimum
-                    const depthFactor = Math.max(0.7, 1.4 - (a.depth * 0.1));
+                    // Keep good spacing even at deeper levels
+                    const depthFactor = Math.max(0.9, 1.6 - (a.depth * 0.08));
                     sep *= depthFactor;
 
                     return sep;
@@ -120,10 +119,10 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             // POST-PROCESS: Adjust radial distances for better spacing
             // =========================================================
 
-            // Add padding between generations
-            const depthPadding = radius / (maxDepth + 1) * 0.3;
+            // Add MORE padding between generations for clearer separation
+            const depthPadding = radius / (maxDepth + 1) * 0.5;
             root.each(node => {
-                // Increase radius for each depth level with padding
+                // Increase radius for each depth level with extra padding
                 node.y = (node.depth / maxDepth) * radius + (node.depth * depthPadding);
             });
 
