@@ -1,5 +1,5 @@
 /**
- * صفحة غصن الزيتون العضوي - Organic Olive Branch Page
+ * صفحة غصن الزيتون - Olive Branch Page
  * كل ورقة تمثل فرداً من العائلة
  */
 
@@ -18,10 +18,18 @@ const OrganicOliveTreePage = () => {
     const [loadedFromCache, setLoadedFromCache] = useState(false);
 
     // Navigation State
-    const [viewStep, setViewStep] = useState('MAIN_SELECTION'); // MAIN_SELECTION, SUB_SELECTION, TREE_VIEW
+    // MAIN_SELECTION -> SUB_SELECTION (or IBRAHIM_SELECTION for Ibrahim) -> TREE_VIEW
+    const [viewStep, setViewStep] = useState('MAIN_SELECTION');
     const [selectedMainBranch, setSelectedMainBranch] = useState(null);
+    const [selectedIbrahimSubBranch, setSelectedIbrahimSubBranch] = useState(null); // Special for Ibrahim branch
     const [selectedSubTreeNode, setSelectedSubTreeNode] = useState(null);
     const [selectedPerson, setSelectedPerson] = useState(null);
+
+    // Ibrahim branch special sub-branches names (to find them in the tree)
+    const IBRAHIM_SUB_BRANCHES = {
+        ibrahim: 'إبراهيم بن سلمان',
+        sulaiman: 'سليمان بن سلمان'
+    };
 
     useEffect(() => {
         fetchData();
@@ -52,11 +60,43 @@ const OrganicOliveTreePage = () => {
         }
     };
 
+    // Helper function to find a node by name recursively in the tree
+    const findNodeByName = (node, namePart) => {
+        if (!node) return null;
+        if (node.fullName && node.fullName.includes(namePart)) return node;
+        if (node.children) {
+            for (const child of node.children) {
+                const found = findNodeByName(child, namePart);
+                if (found) return found;
+            }
+        }
+        return null;
+    };
+
     const handleMainBranchSelect = (branchNamePart) => {
         if (!fullTreeData || !fullTreeData.children) return;
         const node = fullTreeData.children.find(c => c.fullName.includes(branchNamePart));
         if (node) {
             setSelectedMainBranch(node);
+            // Special handling for Ibrahim branch - show special selection screen
+            if (branchNamePart === 'براهيم') {
+                setViewStep('IBRAHIM_SELECTION');
+            } else {
+                setViewStep('SUB_SELECTION');
+            }
+        }
+    };
+
+    // Handle Ibrahim sub-branch selection (إبراهيم بن سلمان or سليمان بن سلمان)
+    const handleIbrahimSubBranchSelect = (subBranchKey) => {
+        if (!selectedMainBranch) return;
+
+        const namePart = IBRAHIM_SUB_BRANCHES[subBranchKey];
+        // Find the node in the Ibrahim branch tree
+        const node = findNodeByName(selectedMainBranch, namePart);
+
+        if (node) {
+            setSelectedIbrahimSubBranch(node);
             setViewStep('SUB_SELECTION');
         }
     };
@@ -71,8 +111,18 @@ const OrganicOliveTreePage = () => {
             setViewStep('SUB_SELECTION');
             setSelectedSubTreeNode(null);
         } else if (viewStep === 'SUB_SELECTION') {
+            // If we came from Ibrahim special selection, go back to it
+            if (selectedIbrahimSubBranch) {
+                setViewStep('IBRAHIM_SELECTION');
+                setSelectedIbrahimSubBranch(null);
+            } else {
+                setViewStep('MAIN_SELECTION');
+                setSelectedMainBranch(null);
+            }
+        } else if (viewStep === 'IBRAHIM_SELECTION') {
             setViewStep('MAIN_SELECTION');
             setSelectedMainBranch(null);
+            setSelectedIbrahimSubBranch(null);
         }
     };
 
@@ -153,12 +203,13 @@ const OrganicOliveTreePage = () => {
                     )}
                     <span className="font-bold text-lg">
                         {viewStep === 'MAIN_SELECTION' && 'اختر الفرع الرئيسي'}
-                        {viewStep === 'SUB_SELECTION' && `فروع عائلة ${selectedMainBranch?.fullName}`}
+                        {viewStep === 'IBRAHIM_SELECTION' && 'اختر فرع آل إبراهيم'}
+                        {viewStep === 'SUB_SELECTION' && `فروع عائلة ${selectedIbrahimSubBranch?.fullName || selectedMainBranch?.fullName}`}
                         {viewStep === 'TREE_VIEW' && `شجرة ${selectedSubTreeNode?.fullName}`}
                     </span>
                 </div>
                 <div className="text-sm bg-white/20 px-3 py-1 rounded-full hidden sm:block">
-                    غصن الزيتون العضوي
+                    غصن الزيتون
                 </div>
             </div>
 
@@ -201,12 +252,43 @@ const OrganicOliveTreePage = () => {
                     </div>
                 )}
 
+                {/* STEP 1.5: Ibrahim Special Sub-Branch Selection */}
+                {viewStep === 'IBRAHIM_SELECTION' && selectedMainBranch && (
+                    <div className="w-full max-w-4xl px-4 animate-fade-in-up">
+                        <h2 className="text-3xl font-bold text-[#5D4037] mb-8 text-center">اختر فرع آل إبراهيم</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                            {/* إبراهيم بن سلمان بن إبراهيم */}
+                            <button
+                                onClick={() => handleIbrahimSubBranchSelect('ibrahim')}
+                                className="group relative overflow-hidden rounded-3xl p-8 h-64 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-indigo-600 to-indigo-900 text-white flex flex-col items-center justify-center text-center"
+                            >
+                                <div className="absolute top-0 left-0 w-full h-full bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform">🌿</div>
+                                <h3 className="text-2xl md:text-3xl font-bold mb-2">إبراهيم بن سلمان</h3>
+                                <p className="text-white/80 text-sm">بن إبراهيم</p>
+                            </button>
+
+                            {/* سليمان بن سلمان بن إبراهيم */}
+                            <button
+                                onClick={() => handleIbrahimSubBranchSelect('sulaiman')}
+                                className="group relative overflow-hidden rounded-3xl p-8 h-64 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-purple-600 to-purple-900 text-white flex flex-col items-center justify-center text-center"
+                            >
+                                <div className="absolute top-0 left-0 w-full h-full bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform">🍃</div>
+                                <h3 className="text-2xl md:text-3xl font-bold mb-2">سليمان بن سلمان</h3>
+                                <p className="text-white/80 text-sm">بن إبراهيم</p>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* STEP 2: Sub-Branch Selection */}
-                {viewStep === 'SUB_SELECTION' && selectedMainBranch && (
+                {viewStep === 'SUB_SELECTION' && (selectedMainBranch || selectedIbrahimSubBranch) && (
                     <div className="flex flex-col items-center w-full max-w-6xl h-full overflow-y-auto py-10">
                         <h2 className="text-3xl font-bold text-[#5D4037] mb-8">اختر فرع العائلة</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full px-4">
-                            {selectedMainBranch.children && selectedMainBranch.children.map((child, idx) => (
+                            {/* Show children from Ibrahim sub-branch if selected, otherwise from main branch */}
+                            {(selectedIbrahimSubBranch?.children || selectedMainBranch?.children || []).map((child, idx) => (
                                 <SubBranchCard
                                     key={child._id || idx}
                                     node={child}
@@ -214,9 +296,10 @@ const OrganicOliveTreePage = () => {
                                 />
                             ))}
                         </div>
-                        {(!selectedMainBranch.children || selectedMainBranch.children.length === 0) && (
-                            <div className="text-gray-500 text-xl mt-10">لا توجد فروع مسجلة لهذا الجد بعد.</div>
-                        )}
+                        {(!(selectedIbrahimSubBranch?.children || selectedMainBranch?.children) ||
+                            (selectedIbrahimSubBranch?.children || selectedMainBranch?.children || []).length === 0) && (
+                                <div className="text-gray-500 text-xl mt-10">لا توجد فروع مسجلة لهذا الجد بعد.</div>
+                            )}
                     </div>
                 )}
 
