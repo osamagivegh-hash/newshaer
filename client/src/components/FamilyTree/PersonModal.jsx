@@ -46,12 +46,14 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                 {/* Content */}
                 <div className="p-6 space-y-4" dir="rtl">
                     {/* Father */}
-                    {person.fatherId && (
+                    {(person.fatherId || person.fatherName) && (
                         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span className="text-palestine-green text-xl">👨</span>
                             <div>
                                 <p className="text-xs text-gray-500">الأب</p>
-                                <p className="font-medium">{person.fatherId.fullName || 'غير محدد'}</p>
+                                <p className="font-medium">
+                                    {person.fatherName || person.fatherId?.fullName || 'غير محدد'}
+                                </p>
                             </div>
                         </div>
                     )}

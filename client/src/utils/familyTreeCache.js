@@ -6,7 +6,7 @@
 const CACHE_KEY = 'familyTreeData';
 const CACHE_VERSION_KEY = 'familyTreeVersion';
 const CACHE_TIMESTAMP_KEY = 'familyTreeTimestamp';
-const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
 
 /**
  * Get cached family tree data

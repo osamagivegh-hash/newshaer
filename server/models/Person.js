@@ -253,7 +253,7 @@ personSchema.statics.buildTree = async function (personId = null) {
     });
   });
 
-  // Build parent-child relationships
+  // Build parent-child relationships and add fatherName
   let root = null;
   allPersons.forEach(person => {
     const node = personMap.get(person._id.toString());
@@ -262,6 +262,8 @@ personSchema.statics.buildTree = async function (personId = null) {
       const parent = personMap.get(person.fatherId.toString());
       if (parent) {
         parent.children.push(node);
+        // Add father's name for display in PersonModal
+        node.fatherName = parent.fullName;
       }
     }
 
