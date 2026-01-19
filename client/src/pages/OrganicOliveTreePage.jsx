@@ -92,43 +92,54 @@ const OrganicOliveTreePage = () => {
         }
     };
 
-    // Handle Ibrahim sub-branch selection (إبراهيم بن سلمان or سليمان بن سلمان)
+    // Handle Ibrahim sub-branch selection
     const handleIbrahimSubBranchSelect = (subBranchKey) => {
         if (!selectedMainBranch) return;
 
+        // Helper to find a node that matches multiple keywords
+        const findNodeByKeywords = (node, keywords) => {
+            if (!node) return null;
+            const nodeName = (node.fullName || "").trim();
+            // Check if all keywords are present in the name
+            const allMatch = keywords.every(k => nodeName.includes(k));
+            if (allMatch) return node;
+
+            if (node.children) {
+                for (const child of node.children) {
+                    const found = findNodeByKeywords(child, keywords);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
         let targetNode = null;
 
-        // Strategy 1: Find "Salman" first, as he is the father of both
-        // This is more reliable than searching for full names directly
-        const salmanNode = findNodeByName(selectedMainBranch, 'سلمان');
+        // Define keywords for each target
+        // We look for "Ibrahim" AND "Salman" for the first one
+        // We look for "Sulaiman" AND "Salman" for the second one
+        const keywords = subBranchKey === 'ibrahim'
+            ? ['إبراهيم', 'سلمان']
+            : ['سليمان', 'سلمان'];
 
-        if (salmanNode && salmanNode.children) {
-            const childNamePart = subBranchKey === 'ibrahim' ? 'إبراهيم' : 'سليمان';
-            // Find the specific son of Salman
-            targetNode = salmanNode.children.find(child => child.fullName.includes(childNamePart));
-        }
-
-        // Strategy 2: Fallback to searching by full name if Strategy 1 fails
-        if (!targetNode) {
-            const namePart = IBRAHIM_SUB_BRANCHES[subBranchKey];
-            targetNode = findNodeByName(selectedMainBranch, namePart);
-        }
+        // Search in the entire main branch (Ibrahim branch)
+        targetNode = findNodeByKeywords(selectedMainBranch, keywords);
 
         if (targetNode) {
             setSelectedIbrahimSubBranch(targetNode);
 
-            // If the node has children, go to sub-selection
+            // Go to sub-selection to show his children
             if (targetNode.children && targetNode.children.length > 0) {
                 setViewStep('SUB_SELECTION');
             } else {
-                // If no children (or direct leaf), show the tree of this node directly
+                // If no children, show the tree directly
                 setSelectedSubTreeNode(targetNode);
                 setViewStep('TREE_VIEW');
             }
         } else {
             console.warn(`Could not find sub-branch for key: ${subBranchKey}`);
             const name = subBranchKey === 'ibrahim' ? 'إبراهيم بن سلمان' : 'سليمان بن سلمان';
-            alert(`عذراً، لم يتم العثور على بيانات لفرع ${name}. الرجاء التأكد من وجود البيانات في شجرة العائلة.`);
+            alert(`عذراً، لم يتم العثور على "${name}" في شجرة العائلة. \nالرجاء التأكد من صحة الاسم في البيانات.`);
         }
     };
 
