@@ -299,7 +299,28 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 })
                 .attr('font-weight', d => isMainPatriarch(d) ? '800' : '600')
                 .attr('fill', d => getNodeColor(d).textColor)
-                .text(d => d.data.fullName ? d.data.fullName.split(' ')[0] : '')
+                .text(d => {
+                    if (!d.data.fullName) return '';
+                    const name = d.data.fullName.trim();
+                    const words = name.split(' ');
+
+                    // Handle compound Arabic names
+                    const compoundPrefixes = ['أبو', 'ابو', 'عبد', 'عبدال', 'ابن', 'أم', 'ام', 'بنت'];
+                    const firstWord = words[0];
+
+                    // If first word is a compound prefix and there's a second word, combine them
+                    if (words.length > 1 && compoundPrefixes.some(prefix => firstWord === prefix || firstWord.startsWith(prefix))) {
+                        return words[0] + ' ' + words[1];
+                    }
+
+                    // For short names or single words, return as is
+                    if (name.length <= 10 || words.length === 1) {
+                        return name;
+                    }
+
+                    // Otherwise return first word only
+                    return firstWord;
+                })
                 .attr('transform', d => {
                     let angleDeg = (d.x * 180 / Math.PI) - 90;
 
