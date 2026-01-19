@@ -213,7 +213,14 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 .on('click', (e, d) => {
                     e.stopPropagation();
                     setSelectedNode(d.data);
-                    if (onNodeClick) onNodeClick(d.data);
+                    if (onNodeClick) {
+                        // Include parent (father) info from tree hierarchy
+                        const nodeWithParent = {
+                            ...d.data,
+                            parentNode: d.parent ? d.parent.data : null
+                        };
+                        onNodeClick(nodeWithParent);
+                    }
                 });
 
             // Dynamic Leaf Graphics - ENHANCED for patriarch visibility

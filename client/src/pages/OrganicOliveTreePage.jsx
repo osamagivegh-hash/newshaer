@@ -93,7 +93,11 @@ const OrganicOliveTreePage = () => {
             occupation: node.occupation,
             biography: node.biography,
             notes: node.notes,
-            fatherId: node.fatherId,
+            // Use parentNode (father) info from tree hierarchy
+            fatherId: node.parentNode ? {
+                _id: node.parentNode._id,
+                fullName: node.parentNode.fullName
+            } : null,
             // Build children info from node's children array
             children: node.children ? node.children.map(c => ({
                 _id: c._id,
