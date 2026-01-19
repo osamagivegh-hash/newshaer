@@ -96,24 +96,39 @@ const OrganicOliveTreePage = () => {
     const handleIbrahimSubBranchSelect = (subBranchKey) => {
         if (!selectedMainBranch) return;
 
-        const namePart = IBRAHIM_SUB_BRANCHES[subBranchKey];
-        // Find the node in the Ibrahim branch tree
-        let node = findNodeByName(selectedMainBranch, namePart);
+        let targetNode = null;
 
-        if (node) {
-            setSelectedIbrahimSubBranch(node);
+        // Strategy 1: Find "Salman" first, as he is the father of both
+        // This is more reliable than searching for full names directly
+        const salmanNode = findNodeByName(selectedMainBranch, 'سلمان');
+
+        if (salmanNode && salmanNode.children) {
+            const childNamePart = subBranchKey === 'ibrahim' ? 'إبراهيم' : 'سليمان';
+            // Find the specific son of Salman
+            targetNode = salmanNode.children.find(child => child.fullName.includes(childNamePart));
+        }
+
+        // Strategy 2: Fallback to searching by full name if Strategy 1 fails
+        if (!targetNode) {
+            const namePart = IBRAHIM_SUB_BRANCHES[subBranchKey];
+            targetNode = findNodeByName(selectedMainBranch, namePart);
+        }
+
+        if (targetNode) {
+            setSelectedIbrahimSubBranch(targetNode);
 
             // If the node has children, go to sub-selection
-            if (node.children && node.children.length > 0) {
+            if (targetNode.children && targetNode.children.length > 0) {
                 setViewStep('SUB_SELECTION');
             } else {
                 // If no children (or direct leaf), show the tree of this node directly
-                setSelectedSubTreeNode(node);
+                setSelectedSubTreeNode(targetNode);
                 setViewStep('TREE_VIEW');
             }
         } else {
-            console.warn(`Could not find sub-branch: ${namePart}`);
-            alert(`عذراً، لم يتم العثور على بيانات لفرع ${namePart}`);
+            console.warn(`Could not find sub-branch for key: ${subBranchKey}`);
+            const name = subBranchKey === 'ibrahim' ? 'إبراهيم بن سلمان' : 'سليمان بن سلمان';
+            alert(`عذراً، لم يتم العثور على بيانات لفرع ${name}. الرجاء التأكد من وجود البيانات في شجرة العائلة.`);
         }
     };
 
