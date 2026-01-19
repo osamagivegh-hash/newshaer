@@ -18,7 +18,7 @@ const COLORS = {
     rootText: '#FFFFFF'
 };
 
-const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => {
+const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFullTreeMode = false }) => {
     const svgRef = useRef(null);
     const containerRef = useRef(null);
     const [selectedNode, setSelectedNode] = useState(null);
@@ -48,31 +48,62 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
     // ==================== RENDER ====================
     useEffect(() => {
         if (!processedData) return;
-        if (!svgRef.current || !containerRef.current) return;
+        if (!svgRef.current || (!containerRef.current && !isFullTreeMode)) return;
 
         try {
             const { root } = processedData;
 
             // Setup Dimensions
-            const rect = containerRef.current.getBoundingClientRect();
-            const width = Math.max(rect.width || 1200, 1200);
-            const height = Math.max(rect.height || 1200, 1200); // Improved height for full circle
+            let width, height;
+
+            if (isFullTreeMode) {
+                // FIXED HUGE DIMENSIONS FOR EXPORT
+                width = 4000;
+                height = 4000;
+            } else {
+                const rect = containerRef.current.getBoundingClientRect();
+                width = Math.max(rect.width || 1200, 1200);
+                height = Math.max(rect.height || 1200, 1200);
+            }
 
             const cx = width / 2;
-            const cy = height / 2; // Center exactly
+            const cy = height / 2;
+
             // Use a generous radius but keep padding for leaf labels
-            const radius = Math.min(width, height) / 2 * 0.85;
+            // In FullTreeMode, we use almost the full space
+            const radius = Math.min(width, height) / 2 * (isFullTreeMode ? 0.95 : 0.85);
 
             // Clear SVG
             const svg = d3.select(svgRef.current);
             svg.selectAll('*').remove();
 
-            // Setup Zoom Group
-            const g = svg.append('g').attr('class', 'tree-layer');
-            const zoom = d3.zoom()
-                .scaleExtent([0.1, 8])
-                .on('zoom', (e) => g.attr('transform', e.transform));
-            svg.call(zoom);
+            // Set SVG attributes for export
+            svg.attr('viewBox', `0 0 ${width} ${height}`)
+                .attr('width', width)
+                .attr('height', height)
+                .attr('xmlns', 'http://www.w3.org/2000/svg');
+
+            // Setup Group
+            let g;
+
+            if (isFullTreeMode) {
+                // No zoom behavior for export mode, just static centered group
+                g = svg.append('g').attr('class', 'tree-layer');
+            } else {
+                // Interactive Zoom for normal mode
+                g = svg.append('g').attr('class', 'tree-layer');
+                const zoom = d3.zoom()
+                    .scaleExtent([0.1, 8])
+                    .on('zoom', (e) => g.attr('transform', e.transform));
+                svg.call(zoom);
+
+                // Initial Centering
+                svg.call(zoom.transform, d3.zoomIdentity
+                    .translate(width / 2, height / 2)
+                    .scale(0.95)
+                    .translate(-cx, -cy)
+                );
+            }
 
             // =========================================================
             // ALGORITHM: Weighted Radial Tree (360 Degrees) - Anti-Overlap
@@ -236,14 +267,17 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 });
 
             // Dynamic Leaf Graphics - ENHANCED for patriarch visibility
-            const baseLeafW = 55;
-            const baseLeafH = 24;
-            const minLeafW = 35;
-            const minLeafH = 16;
+            // Scale up for export mode
+            const exportScale = isFullTreeMode ? 2.5 : 1;
+
+            const baseLeafW = 55 * exportScale;
+            const baseLeafH = 24 * exportScale;
+            const minLeafW = 35 * exportScale;
+            const minLeafH = 16 * exportScale;
 
             // Patriarch (depth 1-2 with children) sizes
-            const patriarchLeafW = 75;
-            const patriarchLeafH = 35;
+            const patriarchLeafW = 75 * exportScale;
+            const patriarchLeafH = 35 * exportScale;
 
             nodes.append('ellipse')
                 .attr('rx', d => {
@@ -266,13 +300,14 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 })
                 .attr('fill', d => getNodeColor(d).fill)
                 .attr('stroke', d => getNodeColor(d).stroke)
-                .attr('stroke-width', d => isMainPatriarch(d) ? 3 : 1.5)
+                .attr('stroke-width', d => (isMainPatriarch(d) ? 3 : 1.5) * exportScale)
                 .attr('transform', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     return `rotate(${angleDeg})`;
                 })
                 .style('filter', d => isMainPatriarch(d) ? 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))' : 'none')
                 .on('mouseover', function (e, d) {
+                    if (isFullTreeMode) return; // Disable hover effects in export mode
                     if (isMainPatriarch(d)) {
                         d3.select(this).attr('fill', '#A0522D').attr('stroke', COLORS.gold);
                     } else {
@@ -280,24 +315,25 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     }
                 })
                 .on('mouseout', function (e, d) {
+                    if (isFullTreeMode) return;
                     const colors = getNodeColor(d);
                     d3.select(this).attr('fill', colors.fill).attr('stroke', colors.stroke);
                 });
 
-            // Draw small connecting dots for patriarchs to show they have children
+            // Draw small connecting dots for patriarchs
             nodes.filter(d => isMainPatriarch(d))
                 .append('circle')
-                .attr('r', 4)
+                .attr('r', 4 * exportScale)
                 .attr('fill', COLORS.gold)
                 .attr('cx', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     const rad = angleDeg * Math.PI / 180;
-                    return Math.cos(rad) * (patriarchLeafW / 2 + 8);
+                    return Math.cos(rad) * (patriarchLeafW / 2 + (8 * exportScale));
                 })
                 .attr('cy', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     const rad = angleDeg * Math.PI / 180;
-                    return Math.sin(rad) * (patriarchLeafW / 2 + 8);
+                    return Math.sin(rad) * (patriarchLeafW / 2 + (8 * exportScale));
                 })
                 .style('filter', 'drop-shadow(0px 0px 3px rgba(255,215,0,0.8))');
 
@@ -308,11 +344,11 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 .attr('font-family', "'Cairo', sans-serif")
                 .attr('font-size', d => {
                     if (isMainPatriarch(d)) {
-                        return d.depth === 1 ? '13px' : '11px';
+                        return d.depth === 1 ? (13 * exportScale) + 'px' : (11 * exportScale) + 'px';
                     }
                     const siblings = getSiblingCount(d);
-                    const baseSize = 10;
-                    const minSize = 7;
+                    const baseSize = 10 * exportScale;
+                    const minSize = 7 * exportScale;
                     const scaleFactor = Math.max(0.7, 1 - (siblings - 1) * 0.03);
                     return `${Math.max(minSize, baseSize * scaleFactor)}px`;
                 })
@@ -327,23 +363,18 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     const compoundPrefixes = ['أبو', 'ابو', 'عبد', 'عبدال', 'ابن', 'أم', 'ام', 'بنت'];
                     const firstWord = words[0];
 
-                    // If first word is a compound prefix and there's a second word, combine them
                     if (words.length > 1 && compoundPrefixes.some(prefix => firstWord === prefix || firstWord.startsWith(prefix))) {
                         return words[0] + ' ' + words[1];
                     }
 
-                    // For short names or single words, return as is
                     if (name.length <= 10 || words.length === 1) {
                         return name;
                     }
 
-                    // Otherwise return first word only
                     return firstWord;
                 })
                 .attr('transform', d => {
                     let angleDeg = (d.x * 180 / Math.PI) - 90;
-
-                    // SMART ROTATION 360:
                     let normalizedAngle = angleDeg % 360;
                     if (normalizedAngle < 0) normalizedAngle += 360;
 
@@ -356,20 +387,22 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
 
             nodes.append('title').text(d => d.data.fullName);
 
-            // Initial Zoom to fit center
-            const initialScale = 0.95;
-            svg.call(zoom.transform, d3.zoomIdentity
-                .translate(width / 2, height / 2)
-                .scale(initialScale)
-                .translate(-cx, -cy)
-            );
+            if (!isFullTreeMode) {
+                // Initial Zoom to fit center ONLY in normal mode
+                const initialScale = 0.95;
+                svg.call(zoom.transform, d3.zoomIdentity
+                    .translate(width / 2, height / 2)
+                    .scale(initialScale)
+                    .translate(-cx, -cy)
+                );
+            }
 
         } catch (err) {
             console.error("Error rendering tree:", err);
             setRenderError("حدث خطأ أثناء رسم الشجرة: " + err.message);
         }
 
-    }, [processedData]);
+    }, [processedData, isFullTreeMode]); // Re-run when mode changes
 
     if (renderError) {
         return (

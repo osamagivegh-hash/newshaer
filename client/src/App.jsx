@@ -29,6 +29,7 @@ import FamilyTreeDisplayPage from './pages/FamilyTreeDisplayPage'
 import OliveTreePage from './pages/OliveTreePage'
 import LineageTreePage from './pages/LineageTreePage'
 import OrganicOliveTreePage from './pages/OrganicOliveTreePage'
+import FullOrganicTreePage from './pages/FullOrganicTreePage'
 import FamilyTreeBranchSelection from './pages/FamilyTreeBranchSelection'
 import ZaharBranchSelection from './pages/ZaharBranchSelection'
 import SalehBranchSelection from './pages/SalehBranchSelection'
@@ -89,6 +90,7 @@ function App() {
                   <Route path="/family-tree/olive" element={<OliveTreePage />} />
                   <Route path="/family-tree/lineage" element={<LineageTreePage />} />
                   <Route path="/family-tree/organic-olive" element={<OrganicOliveTreePage />} />
+                  <Route path="/family-tree/full-organic-olive" element={<FullOrganicTreePage />} />
                   <Route path="/family-tree/dev-team" element={<DevTeamPage />} />
                   {/* Legacy route - redirects to gateway */}
                   <Route path="/family-tree-old" element={<FamilyTreePage />} />

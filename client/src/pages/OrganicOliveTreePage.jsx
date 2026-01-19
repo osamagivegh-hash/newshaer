@@ -188,14 +188,27 @@ const OrganicOliveTreePage = () => {
                             />
 
                             {/* Ibrahim - Centered in the next row if grid-cols-2 */}
-                            <div className="col-span-2 w-full md:w-1/2 mt-4">
-                                <BranchCard
-                                    title="آل إبراهيم"
-                                    color="from-blue-700 to-blue-900"
-                                    onClick={() => handleMainBranchSelect('براهيم')}
-                                    icon="🍀"
-                                    className="w-full"
-                                />
+                            <div className="col-span-2 w-full flex flex-col md:flex-row gap-4 justify-center mt-4">
+                                <div className="w-full md:w-1/2">
+                                    <BranchCard
+                                        title="آل إبراهيم"
+                                        color="from-blue-700 to-blue-900"
+                                        onClick={() => handleMainBranchSelect('براهيم')}
+                                        icon="🍀"
+                                    />
+                                </div>
+
+                                {/* Full Tree Option */}
+                                <div className="w-full md:w-1/2">
+                                    <Link to="/family-tree/full-organic-olive" className="block h-full">
+                                        <div className={`group relative overflow-hidden rounded-3xl p-8 h-64 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-[#1B5E20] to-[#0D3B12] text-white flex flex-col items-center justify-center text-center cursor-pointer`}>
+                                            <div className="absolute top-0 left-0 w-full h-full bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                            <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform">🌳</div>
+                                            <h3 className="text-4xl font-bold mb-2 shadow-sm">الشجرة الكاملة</h3>
+                                            <p className="text-white/90 mt-2 font-medium">عرض جميع الفروع في صفحة واحدة</p>
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
