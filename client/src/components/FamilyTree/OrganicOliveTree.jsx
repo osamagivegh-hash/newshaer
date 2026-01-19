@@ -51,17 +51,18 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
         if (!svgRef.current || !containerRef.current) return;
 
         try {
+
             const { root } = processedData;
 
             // Setup Dimensions
             const rect = containerRef.current.getBoundingClientRect();
             const width = Math.max(rect.width || 1200, 1200);
-            const height = Math.max(rect.height || 1200, 1200); // Improved height for full circle
+            const height = Math.max(rect.height || 1200, 1200);
 
             const cx = width / 2;
-            const cy = height / 2; // Center exactly
-            // Use a generous radius but keep padding for leaf labels
-            const radius = Math.min(width, height) / 2 * 0.85;
+            const cy = height / 2;
+            // Use a larger radius for a fuller look (Barham style)
+            const radius = Math.min(width, height) / 2 * 0.95;
 
             // Clear SVG
             const svg = d3.select(svgRef.current);
@@ -75,42 +76,17 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             svg.call(zoom);
 
             // =========================================================
-            // ALGORITHM: Weighted Radial Tree (360 Degrees) - Anti-Overlap
+            // ALGORITHM: Weighted Radial Tree (360 Degrees)
             // =========================================================
 
-            // Calculate the maximum depth and total leaves for better spacing
-            const maxDepth = root.height;
-            const totalLeaves = root.leaves().length;
-
-            // Calculate dynamic spacing based on tree complexity
-            // More leaves = need more angle separation
-            const baseAnglePadding = Math.max(0.02, 0.1 / Math.sqrt(totalLeaves));
-
-            // Use d3.tree() instead of d3.cluster() for better distribution
-            // tree() spaces nodes based on their subtree size
             const tree = d3.tree()
-                .size([2 * Math.PI, radius]) // 360 degrees
+                .size([2 * Math.PI, radius])
                 .separation((a, b) => {
-                    // Dynamic separation based on:
-                    // 1. Sibling vs non-sibling
-                    // 2. Depth level
-                    // 3. Number of descendants (weight)
+                    // Optimized separation for cohesive look
                     const sameSibling = a.parent === b.parent;
-                    const aWeight = (a.value || 1) + (a.children?.length || 0);
-                    const bWeight = (b.value || 1) + (b.children?.length || 0);
-                    const avgWeight = (aWeight + bWeight) / 2;
-
-                    // Base separation - SIGNIFICANTLY INCREASED
-                    let sep = sameSibling ? 4 : 10;
-
-                    // Add weight-based padding for nodes with many children - DOUBLED
-                    sep += Math.log2(avgWeight + 1) * 1.2;
-
-                    // Keep good spacing even at deeper levels
-                    const depthFactor = Math.max(0.9, 1.6 - (a.depth * 0.08));
-                    sep *= depthFactor;
-
-                    return sep;
+                    // Closer siblings, distinct branches
+                    const separationBase = sameSibling ? 1 : 2;
+                    return separationBase / (a.depth || 1);
                 });
 
             tree(root);
