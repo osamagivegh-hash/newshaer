@@ -92,7 +92,7 @@ const OrganicOliveTreePage = () => {
         }
     };
 
-    // Handle Ibrahim sub-branch selection via strict lineage
+    // Handle Ibrahim sub-branch selection via strict lineage and name start
     const handleIbrahimSubBranchSelect = (subBranchKey) => {
         if (!selectedMainBranch) return;
 
@@ -104,32 +104,42 @@ const OrganicOliveTreePage = () => {
             return;
         }
 
-        // 2. Now look for the specific son INSIDE Salman's subtree
         const targetName = subBranchKey === 'ibrahim' ? 'إبراهيم' : 'سليمان';
-
         let targetNode = null;
+
+        // 2. Strict Search: Check DIRECT children first finding name STARTING with target
         if (salmanNode.children) {
-            for (const child of salmanNode.children) {
-                // Search recursively starting from each child of Salman
-                const found = findNodeByName(child, targetName);
-                if (found) {
-                    targetNode = found;
-                    break;
+            // Find direct child whose name STARTS with targetName (e.g. "Ibrahim...")
+            // We verify the name starts with the target to avoid matching "Mohammad bin Ibrahim"
+            targetNode = salmanNode.children.find(child =>
+                (child.fullName || "").trim().startsWith(targetName)
+            );
+        }
+
+        // 3. Fallback: If not found in direct children, search deeper but strictly by Name Start
+        if (!targetNode && salmanNode.children) {
+            const findStrictRecursive = (nodes) => {
+                for (const node of nodes) {
+                    // Check if name strictly starts with target
+                    if ((node.fullName || "").trim().startsWith(targetName)) return node;
+                    if (node.children) {
+                        const found = findStrictRecursive(node.children);
+                        if (found) return found;
+                    }
                 }
-            }
+                return null;
+            };
+            targetNode = findStrictRecursive(salmanNode.children);
         }
 
         if (targetNode) {
             setSelectedIbrahimSubBranch(targetNode);
-
             // DIRECTLY go to TREE_VIEW as requested by user
-            // Skip the sub-selection (children list) page
             setSelectedSubTreeNode(targetNode);
             setViewStep('TREE_VIEW');
         } else {
-            console.warn(`Could not find ${targetName} inside Salman's branch`);
             const fullName = subBranchKey === 'ibrahim' ? 'إبراهيم بن سلمان' : 'سليمان بن سلمان';
-            alert(`عذراً، تم العثور على "سلمان"، ولكن لم يتم العثور على ابنه "${targetName}" في ذريته.\nالرجاء التأكد من أن "${fullName}" مضاف كابن لـ "سلمان" في شجرة العائلة.`);
+            alert(`عذراً، لم يتم العثور على "${targetName}" كابن أو حفيد لـ سلمان.\nالرجاء التأكد من البيانات.`);
         }
     };
 
