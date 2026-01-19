@@ -92,38 +92,32 @@ const OrganicOliveTreePage = () => {
         }
     };
 
-    // Handle Ibrahim sub-branch selection
+    // Handle Ibrahim sub-branch selection via strict lineage
     const handleIbrahimSubBranchSelect = (subBranchKey) => {
         if (!selectedMainBranch) return;
 
-        // Helper to find a node that matches multiple keywords
-        const findNodeByKeywords = (node, keywords) => {
-            if (!node) return null;
-            const nodeName = (node.fullName || "").trim();
-            // Check if all keywords are present in the name
-            const allMatch = keywords.every(k => nodeName.includes(k));
-            if (allMatch) return node;
+        // 1. First, find "Salman" (the father) anywhere within the main branch
+        const salmanNode = findNodeByName(selectedMainBranch, 'سلمان');
 
-            if (node.children) {
-                for (const child of node.children) {
-                    const found = findNodeByKeywords(child, keywords);
-                    if (found) return found;
-                }
-            }
-            return null;
-        };
+        if (!salmanNode) {
+            alert('عذراً، لم يتم العثور على "سلمان" (والد الفرعين) في الشجرة، يرجى التأكد من البيانات.');
+            return;
+        }
+
+        // 2. Now look for the specific son INSIDE Salman's subtree
+        const targetName = subBranchKey === 'ibrahim' ? 'إبراهيم' : 'سليمان';
 
         let targetNode = null;
-
-        // Define keywords for each target
-        // We look for "Ibrahim" AND "Salman" for the first one
-        // We look for "Sulaiman" AND "Salman" for the second one
-        const keywords = subBranchKey === 'ibrahim'
-            ? ['إبراهيم', 'سلمان']
-            : ['سليمان', 'سلمان'];
-
-        // Search in the entire main branch (Ibrahim branch)
-        targetNode = findNodeByKeywords(selectedMainBranch, keywords);
+        if (salmanNode.children) {
+            for (const child of salmanNode.children) {
+                // Search recursively starting from each child of Salman
+                const found = findNodeByName(child, targetName);
+                if (found) {
+                    targetNode = found;
+                    break;
+                }
+            }
+        }
 
         if (targetNode) {
             setSelectedIbrahimSubBranch(targetNode);
@@ -137,9 +131,9 @@ const OrganicOliveTreePage = () => {
                 setViewStep('TREE_VIEW');
             }
         } else {
-            console.warn(`Could not find sub-branch for key: ${subBranchKey}`);
-            const name = subBranchKey === 'ibrahim' ? 'إبراهيم بن سلمان' : 'سليمان بن سلمان';
-            alert(`عذراً، لم يتم العثور على "${name}" في شجرة العائلة. \nالرجاء التأكد من صحة الاسم في البيانات.`);
+            console.warn(`Could not find ${targetName} inside Salman's branch`);
+            const fullName = subBranchKey === 'ibrahim' ? 'إبراهيم بن سلمان' : 'سليمان بن سلمان';
+            alert(`عذراً، تم العثور على "سلمان"، ولكن لم يتم العثور على ابنه "${targetName}" في ذريته.\nالرجاء التأكد من أن "${fullName}" مضاف كابن لـ "سلمان" في شجرة العائلة.`);
         }
     };
 
