@@ -122,14 +122,10 @@ const OrganicOliveTreePage = () => {
         if (targetNode) {
             setSelectedIbrahimSubBranch(targetNode);
 
-            // Go to sub-selection to show his children
-            if (targetNode.children && targetNode.children.length > 0) {
-                setViewStep('SUB_SELECTION');
-            } else {
-                // If no children, show the tree directly
-                setSelectedSubTreeNode(targetNode);
-                setViewStep('TREE_VIEW');
-            }
+            // DIRECTLY go to TREE_VIEW as requested by user
+            // Skip the sub-selection (children list) page
+            setSelectedSubTreeNode(targetNode);
+            setViewStep('TREE_VIEW');
         } else {
             console.warn(`Could not find ${targetName} inside Salman's branch`);
             const fullName = subBranchKey === 'ibrahim' ? 'إبراهيم بن سلمان' : 'سليمان بن سلمان';
