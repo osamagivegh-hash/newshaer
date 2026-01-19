@@ -76,17 +76,33 @@ const OrganicOliveTreePage = () => {
         }
     };
 
-    // Handle node click to show person details
-    const handleNodeClick = async (node) => {
-        try {
-            const res = await fetch(`${API_URL}/api/persons/${node._id}`);
-            const data = await res.json();
-            if (data.success) {
-                setSelectedPerson(data.data);
-            }
-        } catch (err) {
-            console.error('Error fetching person details:', err);
-        }
+    // Handle node click to show person details - INSTANT using local data
+    const handleNodeClick = (node) => {
+        // Use node data directly for instant display
+        // The node already contains all the basic info we need
+        const personData = {
+            _id: node._id,
+            fullName: node.fullName,
+            nickname: node.nickname,
+            gender: node.gender,
+            generation: node.generation,
+            birthDate: node.birthDate,
+            deathDate: node.deathDate,
+            birthPlace: node.birthPlace,
+            currentResidence: node.currentResidence,
+            occupation: node.occupation,
+            biography: node.biography,
+            notes: node.notes,
+            fatherId: node.fatherId,
+            // Build children info from node's children array
+            children: node.children ? node.children.map(c => ({
+                _id: c._id,
+                fullName: c.fullName,
+                gender: c.gender
+            })) : []
+        };
+
+        setSelectedPerson(personData);
     };
 
     if (loading) {
