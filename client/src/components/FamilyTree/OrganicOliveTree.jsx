@@ -79,6 +79,9 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             // ALGORITHM: Weighted Radial Tree (360 Degrees)
             // =========================================================
 
+            // Calculate max depth for radial spacing logic
+            const maxDepth = root.height;
+
             const tree = d3.tree()
                 .size([2 * Math.PI, radius])
                 .separation((a, b) => {
