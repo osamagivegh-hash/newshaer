@@ -100,15 +100,15 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     const bWeight = (b.value || 1) + (b.children?.length || 0);
                     const avgWeight = (aWeight + bWeight) / 2;
 
-                    // Base separation
-                    let sep = sameSibling ? 1.5 : 4;
+                    // Base separation - INCREASED for better spacing
+                    let sep = sameSibling ? 2.5 : 6;
 
-                    // Add weight-based padding for nodes with many children
-                    sep += Math.log2(avgWeight + 1) * 0.3;
+                    // Add weight-based padding for nodes with many children - INCREASED
+                    sep += Math.log2(avgWeight + 1) * 0.6;
 
                     // Reduce separation at deeper levels to avoid too much spread
-                    // but keep minimum for readability
-                    const depthFactor = Math.max(0.5, 1.2 - (a.depth * 0.1));
+                    // but keep minimum for readability - INCREASED minimum
+                    const depthFactor = Math.max(0.7, 1.4 - (a.depth * 0.1));
                     sep *= depthFactor;
 
                     return sep;
