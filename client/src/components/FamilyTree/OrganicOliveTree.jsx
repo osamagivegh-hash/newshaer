@@ -366,26 +366,6 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
     return (
         <div ref={containerRef} className="w-full h-full relative bg-[#F9F9F0] overflow-hidden" dir="rtl">
             <svg ref={svgRef} className="w-full h-full block touch-action-none" />
-
-            {selectedNode && (
-                <div className="absolute bottom-10 right-10 bg-white/95 backdrop-blur-sm p-5 rounded-xl shadow-2xl border border-amber-200 z-50 max-w-sm transition-all duration-300">
-                    <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-xl text-amber-900">{selectedNode.fullName}</h3>
-                        <button
-                            className="text-gray-400 hover:text-red-500 transition-colors"
-                            onClick={() => setSelectedNode(null)}
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <div className="space-y-2 text-right">
-                        {selectedNode.fatherName && <p className="text-sm text-gray-700"><strong>الأب:</strong> {selectedNode.fatherName}</p>}
-                        {selectedNode.motherName && <p className="text-sm text-gray-700"><strong>الأم:</strong> {selectedNode.motherName}</p>}
-                        {selectedNode.birthDate && <p className="text-sm text-gray-700"><strong>الميلاد:</strong> {new Date(selectedNode.birthDate).toLocaleDateString('ar-SA')}</p>}
-                        <p className="text-sm text-gray-600 mt-2 leading-relaxed">{selectedNode.biography || 'لا توجد سيرة ذاتية متاحة حالياً.'}</p>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

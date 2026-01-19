@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OrganicOliveTree from '../components/FamilyTree/OrganicOliveTree';
+import { PersonModal } from '../components/FamilyTree';
 import { fetchTreeWithCache, clearTreeCache } from '../utils/familyTreeCache';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -20,6 +21,7 @@ const OrganicOliveTreePage = () => {
     const [viewStep, setViewStep] = useState('MAIN_SELECTION'); // MAIN_SELECTION, SUB_SELECTION, TREE_VIEW
     const [selectedMainBranch, setSelectedMainBranch] = useState(null);
     const [selectedSubTreeNode, setSelectedSubTreeNode] = useState(null);
+    const [selectedPerson, setSelectedPerson] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -71,6 +73,19 @@ const OrganicOliveTreePage = () => {
         } else if (viewStep === 'SUB_SELECTION') {
             setViewStep('MAIN_SELECTION');
             setSelectedMainBranch(null);
+        }
+    };
+
+    // Handle node click to show person details
+    const handleNodeClick = async (node) => {
+        try {
+            const res = await fetch(`${API_URL}/api/persons/${node._id}`);
+            const data = await res.json();
+            if (data.success) {
+                setSelectedPerson(data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching person details:', err);
         }
     };
 
@@ -188,9 +203,18 @@ const OrganicOliveTreePage = () => {
                     <div className="w-full h-full animate-fade-in">
                         <OrganicOliveTree
                             data={selectedSubTreeNode}
+                            onNodeClick={handleNodeClick}
                             style={{ width: '100%', height: '100%' }}
                         />
                     </div>
+                )}
+
+                {/* Person Modal */}
+                {selectedPerson && (
+                    <PersonModal
+                        person={selectedPerson}
+                        onClose={() => setSelectedPerson(null)}
+                    />
                 )}
 
             </div>
