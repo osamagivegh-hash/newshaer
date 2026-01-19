@@ -214,12 +214,24 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     e.stopPropagation();
                     setSelectedNode(d.data);
                     if (onNodeClick) {
-                        // Include parent (father) info from tree hierarchy
-                        const nodeWithParent = {
+                        // Build full ancestry chain by traversing up the tree
+                        const ancestors = [];
+                        let current = d.parent;
+                        while (current) {
+                            ancestors.push({
+                                _id: current.data._id,
+                                fullName: current.data.fullName
+                            });
+                            current = current.parent;
+                        }
+
+                        // Include parent (father) and full ancestry
+                        const nodeWithAncestry = {
                             ...d.data,
-                            parentNode: d.parent ? d.parent.data : null
+                            parentNode: d.parent ? d.parent.data : null,
+                            ancestors: ancestors // Full lineage chain
                         };
-                        onNodeClick(nodeWithParent);
+                        onNodeClick(nodeWithAncestry);
                     }
                 });
 

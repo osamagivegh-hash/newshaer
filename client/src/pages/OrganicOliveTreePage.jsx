@@ -103,7 +103,9 @@ const OrganicOliveTreePage = () => {
                 _id: c._id,
                 fullName: c.fullName,
                 gender: c.gender
-            })) : []
+            })) : [],
+            // Full lineage chain (سلسلة النسب)
+            ancestors: node.ancestors || []
         };
 
         setSelectedPerson(personData);
