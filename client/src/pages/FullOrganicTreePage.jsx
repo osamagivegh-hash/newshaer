@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import OrganicOliveTree from '../components/FamilyTree/OrganicOliveTree';
+import { OliveTreeVisualization, PersonModal } from '../components/FamilyTree';
 import { fetchTreeWithCache } from '../utils/familyTreeCache';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -15,6 +15,7 @@ const FullOrganicTreePage = () => {
     const [fullTreeData, setFullTreeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedPerson, setSelectedPerson] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -100,6 +101,14 @@ const FullOrganicTreePage = () => {
         }
     };
 
+    // Handle node click to show person details
+    const handleNodeClick = (node) => {
+        setSelectedPerson({
+            ...node,
+            children: node.children || []
+        });
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F9F0]">
@@ -163,10 +172,10 @@ const FullOrganicTreePage = () => {
             {/* Tree Area - Container specifically marked for export */}
             <div className="flex-1 relative overflow-hidden bg-[#F9F9F0] tree-export-container cursor-grab active:cursor-grabbing">
                 {fullTreeData && (
-                    <OrganicOliveTree
+                    <OliveTreeVisualization
                         data={fullTreeData}
+                        onNodeClick={handleNodeClick}
                         style={{ width: '100%', height: '100%' }}
-                        isFullTreeMode={true} // New prop to optimize for static export
                     />
                 )}
 
@@ -175,6 +184,14 @@ const FullOrganicTreePage = () => {
                     ✨ يمكنك تكبير وتصغير الشجرة بحرية
                 </div>
             </div>
+
+            {/* Person Modal */}
+            {selectedPerson && (
+                <PersonModal
+                    person={selectedPerson}
+                    onClose={() => setSelectedPerson(null)}
+                />
+            )}
         </div>
     );
 };

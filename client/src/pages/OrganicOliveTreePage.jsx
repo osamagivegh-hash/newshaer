@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import OrganicOliveTree from '../components/FamilyTree/OrganicOliveTree';
+import { OliveTreeVisualization } from '../components/FamilyTree';
 import { PersonModal } from '../components/FamilyTree';
 import { fetchTreeWithCache, clearTreeCache } from '../utils/familyTreeCache';
 
@@ -236,7 +236,7 @@ const OrganicOliveTreePage = () => {
                 {/* STEP 3: Tree View */}
                 {viewStep === 'TREE_VIEW' && selectedSubTreeNode && (
                     <div className="w-full h-full animate-fade-in">
-                        <OrganicOliveTree
+                        <OliveTreeVisualization
                             data={selectedSubTreeNode}
                             onNodeClick={handleNodeClick}
                             style={{ width: '100%', height: '100%' }}
