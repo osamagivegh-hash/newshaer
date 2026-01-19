@@ -82,11 +82,11 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             const tree = d3.tree()
                 .size([2 * Math.PI, radius])
                 .separation((a, b) => {
-                    // Optimized separation for cohesive look
+                    // Fix Overlap: Use large constant separation
+                    // Don't divide by depth! This keeps leaves spread out.
                     const sameSibling = a.parent === b.parent;
-                    // Closer siblings, distinct branches
-                    const separationBase = sameSibling ? 1 : 2;
-                    return separationBase / (a.depth || 1);
+                    // Separate siblings by 2 units, cousins by 4 units
+                    return sameSibling ? 2 : 4;
                 });
 
             tree(root);
