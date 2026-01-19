@@ -113,8 +113,50 @@ router.post('/visits', asyncHandler(async (req, res) => {
   }
 }));
 
-// Get all sections data
+// ==================== SECTIONS CACHE ====================
+// In-memory cache for sections data to speed up homepage loading
+const sectionsCache = {
+  data: null,
+  timestamp: null,
+  TTL: 5 * 60 * 1000 // 5 minutes
+};
+
+const getSectionsFromCache = () => {
+  if (!sectionsCache.data) return null;
+  if (Date.now() - sectionsCache.timestamp > sectionsCache.TTL) {
+    console.log('[SectionsCache] Cache expired, clearing...');
+    sectionsCache.data = null;
+    return null;
+  }
+  console.log('[SectionsCache] Cache HIT');
+  return sectionsCache.data;
+};
+
+const setSectionsCache = (data) => {
+  sectionsCache.data = data;
+  sectionsCache.timestamp = Date.now();
+  console.log('[SectionsCache] Data cached successfully');
+};
+
+// Public invalidation function for admin operations
+const invalidateSectionsCache = () => {
+  sectionsCache.data = null;
+  sectionsCache.timestamp = null;
+  console.log('[SectionsCache] Cache invalidated');
+};
+
+// Export for use in admin routes
+module.exports.invalidateSectionsCache = invalidateSectionsCache;
+
+// Get all sections data (with caching)
 router.get('/sections', asyncHandler(async (req, res) => {
+  // Check cache first
+  const cached = getSectionsFromCache();
+  if (cached) {
+    return res.success(200, 'تم جلب البيانات بنجاح (من الكاش)', cached);
+  }
+
+  // Cache miss - fetch from database
   const sections = {};
 
   // Fetch data from MongoDB collections - removed limit to show all items
@@ -123,6 +165,9 @@ router.get('/sections', asyncHandler(async (req, res) => {
   sections.articles = normalizeDocument(await Articles.find().sort({ date: -1 }).limit(10));
   sections.palestine = normalizeDocument(await Palestine.find().sort({ createdAt: -1 }));
   sections.gallery = normalizeDocument(await Gallery.find().sort({ createdAt: -1 }));
+
+  // Store in cache
+  setSectionsCache(sections);
 
   logger.info('Fetched all sections data');
   res.success(200, 'تم جلب البيانات بنجاح', sections);
