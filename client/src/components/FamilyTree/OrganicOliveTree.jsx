@@ -1,44 +1,36 @@
 /**
- * شجرة العائلة - إصدار "غصن الزيتون" - دائري كامل 360 درجة
- * Organic Olive Branch - Full 360 Radial Layout
+ * شجرة الزيتون المباركة - تصميم واقعي
+ * Blessed Olive Tree - Realistic Design
  */
 
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-
-// ==================== CONFIGURATION ====================
-const COLORS = {
-    bg: '#F9F9F0',
-    trunk: '#3E2723', // Darker brown
-    branch: '#5D4037', // Dark brown
-    leafFill: '#2E7D32', // Vibrant green
-    leafStroke: '#1B5E20',
-    text: '#FFFFFF',
-    gold: '#FFD700',
-    rootText: '#FFFFFF'
-};
 
 const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFullTreeMode = false }) => {
     const svgRef = useRef(null);
     const containerRef = useRef(null);
     const [renderError, setRenderError] = useState(null);
 
-    // ==================== ASSETS ====================
-    // Realistic Olive Leaf Path (svg path data)
-    const LEAF_PATH = "M0,0 Q5,-5 15,0 T30,0 Q25,5 15,0 T0,0";
-    // Simplified trunk path for the center (can be replaced with more complex one)
-    const TRUNK_PATH = "M-20,0 L-15,-40 Q0,-60 15,-40 L20,0 L15,10 Q0,20 -15,10 Z";
+    // ==================== REALISTIC OLIVE LEAF SVG PATH ====================
+    // Pointed olive leaf shape - elongated ellipse with pointed ends
+    const createLeafPath = (width, height) => {
+        const w = width / 2;
+        const h = height / 2;
+        return `M0,${-h} 
+                C${w * 0.6},${-h * 0.8} ${w},${-h * 0.3} ${w},0 
+                C${w},${h * 0.3} ${w * 0.6},${h * 0.8} 0,${h} 
+                C${-w * 0.6},${h * 0.8} ${-w},${h * 0.3} ${-w},0 
+                C${-w},${-h * 0.3} ${-w * 0.6},${-h * 0.8} 0,${-h}Z`;
+    };
 
     // ==================== DATA PROCESSING ====================
     const processedData = useMemo(() => {
         try {
             if (!data || Object.keys(data).length === 0) return null;
 
-            // 1. Hierarchy & Sort
             const root = d3.hierarchy(data)
                 .sort((a, b) => (b.height - a.height) || (a.data.fullName || "").localeCompare(b.data.fullName || ""));
 
-            // 2. Count Leaves
             root.count();
             return { root };
         } catch (err) {
@@ -56,101 +48,121 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFul
         try {
             const { root } = processedData;
 
-            // Setup Dimensions - MASSIVE canvas for full tree to ensure spacing
+            // ========== CANVAS SIZE ==========
+            // MASSIVE canvas for spacing - 8000px for full tree
             let width, height;
 
             if (isFullTreeMode) {
-                width = 5000; // Increased to 5000px
-                height = 5000;
+                width = 8000;
+                height = 8000;
             } else {
                 const rect = containerRef.current.getBoundingClientRect();
-                width = Math.max(rect.width || 1200, 1200);
-                height = Math.max(rect.height || 1200, 1200);
+                width = Math.max(rect.width || 1500, 1500);
+                height = Math.max(rect.height || 1500, 1500);
             }
 
             const cx = width / 2;
             const cy = height / 2;
 
-            // Use radius that fits, but leave margin
-            const radius = Math.min(width, height) / 2 * 0.90;
+            // Large radius with plenty of margin
+            const radius = Math.min(width, height) / 2 * 0.85;
 
             // Clear SVG
             const svg = d3.select(svgRef.current);
             svg.selectAll('*').remove();
 
-            // Set SVG attributes
             svg.attr('viewBox', `0 0 ${width} ${height}`)
                 .attr('width', width)
                 .attr('height', height)
                 .attr('xmlns', 'http://www.w3.org/2000/svg');
 
-            // Setup Zoom Group
+            // Main group
             const g = svg.append('g').attr('class', 'tree-layer');
 
-            // ALWAYS ENABLE ZOOM (User request: zoom capability even for large tree)
+            // Zoom controls
             const zoom = d3.zoom()
-                .scaleExtent([0.1, 10]) // Allow zooming out far (0.1) and in close (10)
+                .scaleExtent([0.05, 15])
                 .on('zoom', (e) => g.attr('transform', e.transform));
 
             svg.call(zoom);
 
-            // Initial Centering
-            // For full tree mode, zoom out to fit everything initially
-            const initialScale = isFullTreeMode ? 0.8 : 0.95;
+            // Initial zoom - zoom out more for full tree
+            const initialScale = isFullTreeMode ? 0.4 : 0.7;
             svg.call(zoom.transform, d3.zoomIdentity
                 .translate(width / 2, height / 2)
                 .scale(initialScale)
                 .translate(-cx, -cy)
             );
 
-            // =========================================================
-            // LAYOUT ALGORITHM
-            // =========================================================
+            // ========== LAYOUT ALGORITHM ==========
+            const maxDepth = root.height;
+            const totalNodes = root.descendants().length;
+
+            // Dynamic spacing based on tree size
+            const spacingMultiplier = Math.max(3, Math.sqrt(totalNodes) / 2);
 
             const tree = d3.tree()
                 .size([2 * Math.PI, radius])
                 .separation((a, b) => {
                     const sameSibling = a.parent === b.parent;
-                    // Much wider separation to prevent overlapping text
-                    return (sameSibling ? 10 : 25) / a.depth;
+                    // MASSIVE separation - scales with tree complexity
+                    const baseSep = sameSibling ? 15 : 40;
+                    const depthFactor = Math.max(1, 2 - a.depth * 0.15);
+                    return (baseSep * depthFactor * spacingMultiplier) / (a.depth + 1);
                 });
 
             tree(root);
 
-            // Adjust radial distances
-            const maxDepth = root.height;
-            const depthStep = radius / (maxDepth + 1); // Even distribution
+            // Adjust radial distances - more space between generations
+            const generationGap = radius / (maxDepth + 1) * 1.5;
 
             root.each(node => {
-                // Push outer leaves further out
-                node.y = node.depth * depthStep;
+                node.y = node.depth * generationGap + (node.depth > 0 ? 150 : 0);
             });
 
-            // =========================================================
-            // DRAW BRANCHES (Curves)
-            // =========================================================
+            // ========== DRAW BACKGROUND GRADIENT ==========
+            const defs = svg.append('defs');
 
-            // Custom curved link generator for organic look
+            // Radial gradient for subtle background
+            const bgGradient = defs.append('radialGradient')
+                .attr('id', 'bgGradient')
+                .attr('cx', '50%').attr('cy', '50%').attr('r', '50%');
+            bgGradient.append('stop').attr('offset', '0%').attr('stop-color', '#FFFEF5');
+            bgGradient.append('stop').attr('offset', '100%').attr('stop-color', '#F5F0E1');
+
+            g.append('circle')
+                .attr('cx', cx).attr('cy', cy)
+                .attr('r', radius * 1.2)
+                .attr('fill', 'url(#bgGradient)');
+
+            // ========== DRAW BRANCHES ==========
             const branchGenerator = (d) => {
                 const angle = d.x - Math.PI / 2;
-                const radius = d.y;
+                const r = d.y;
                 const parentAngle = d.parent.x - Math.PI / 2;
-                const parentRadius = d.parent.y;
+                const parentR = d.parent.y;
 
-                const x0 = parentRadius * Math.cos(parentAngle);
-                const y0 = parentRadius * Math.sin(parentAngle);
-                const x1 = radius * Math.cos(angle);
-                const y1 = radius * Math.sin(angle);
+                const x0 = parentR * Math.cos(parentAngle);
+                const y0 = parentR * Math.sin(parentAngle);
+                const x1 = r * Math.cos(angle);
+                const y1 = r * Math.sin(angle);
 
-                // Control points for bezier curve
-                const k = (d.y - d.parent.y) / 2;
-                const cp1x = (parentRadius + k) * Math.cos(parentAngle);
-                const cp1y = (parentRadius + k) * Math.sin(parentAngle);
-                const cp2x = (radius - k) * Math.cos(angle);
-                const cp2y = (radius - k) * Math.sin(angle);
+                // Organic bezier curves
+                const midR = (parentR + r) / 2;
+                const cp1x = midR * Math.cos(parentAngle);
+                const cp1y = midR * Math.sin(parentAngle);
+                const cp2x = midR * Math.cos(angle);
+                const cp2y = midR * Math.sin(angle);
 
                 return `M${cx + x0},${cy + y0} C${cx + cp1x},${cy + cp1y} ${cx + cp2x},${cy + cp2y} ${cx + x1},${cy + y1}`;
             };
+
+            // Branch gradient (wood color)
+            const branchGradient = defs.append('linearGradient')
+                .attr('id', 'branchGradient')
+                .attr('x1', '0%').attr('y1', '0%').attr('x2', '100%').attr('y2', '100%');
+            branchGradient.append('stop').attr('offset', '0%').attr('stop-color', '#5D4037');
+            branchGradient.append('stop').attr('offset', '100%').attr('stop-color', '#3E2723');
 
             g.selectAll('.link')
                 .data(root.descendants().slice(1))
@@ -158,36 +170,54 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFul
                 .append('path')
                 .attr('class', 'link')
                 .attr('fill', 'none')
-                .attr('stroke', '#4E342E') // Dark wood color
-                .attr('stroke-width', d => Math.max(1, 15 - d.depth * 2.5)) // Tapering branches
+                .attr('stroke', 'url(#branchGradient)')
+                .attr('stroke-width', d => Math.max(3, 25 - d.depth * 4))
                 .attr('stroke-linecap', 'round')
                 .attr('d', branchGenerator)
-                .style('opacity', 0.8);
+                .style('opacity', 0.9);
 
-            // =========================================================
-            // DRAW TRUNK (Center)
-            // =========================================================
+            // ========== DRAW TRUNK ==========
             const trunkGroup = g.append('g')
                 .attr('transform', `translate(${cx}, ${cy})`);
 
-            // Draw realistic trunk base
-            trunkGroup.append('path')
-                .attr('d', "M-40,0 Q-20,-60 0,-90 Q20,-60 40,0 Q20,20 0,30 Q-20,20 -40,0")
-                .attr('fill', '#3E2723')
-                .attr('stroke', '#281815')
-                .attr('stroke-width', 2);
+            // Large artistic trunk
+            trunkGroup.append('ellipse')
+                .attr('rx', 80)
+                .attr('ry', 100)
+                .attr('fill', '#4E342E')
+                .attr('stroke', '#3E2723')
+                .attr('stroke-width', 4);
 
+            // Inner trunk detail
+            trunkGroup.append('ellipse')
+                .attr('rx', 60)
+                .attr('ry', 75)
+                .attr('fill', '#5D4037');
+
+            // Founder name on trunk
             trunkGroup.append('text')
-                .attr('dy', '10')
+                .attr('y', 5)
                 .attr('text-anchor', 'middle')
                 .attr('fill', '#FFD700')
                 .attr('font-family', "'Cairo', sans-serif")
+                .attr('font-size', '28px')
                 .attr('font-weight', 'bold')
-                .text("محمد الشاعر");
+                .style('text-shadow', '2px 2px 4px rgba(0,0,0,0.5)')
+                .text(root.data.fullName || "محمد الشاعر");
 
-            // =========================================================
-            // DRAW LEAVES (Nodes)
-            // =========================================================
+            // ========== DRAW LEAVES ==========
+            // Leaf gradient
+            const leafGradient = defs.append('linearGradient')
+                .attr('id', 'leafGradient')
+                .attr('x1', '0%').attr('y1', '0%').attr('x2', '100%').attr('y2', '100%');
+            leafGradient.append('stop').attr('offset', '0%').attr('stop-color', '#4CAF50');
+            leafGradient.append('stop').attr('offset', '100%').attr('stop-color', '#2E7D32');
+
+            const darkLeafGradient = defs.append('linearGradient')
+                .attr('id', 'darkLeafGradient')
+                .attr('x1', '0%').attr('y1', '0%').attr('x2', '100%').attr('y2', '100%');
+            darkLeafGradient.append('stop').attr('offset', '0%').attr('stop-color', '#388E3C');
+            darkLeafGradient.append('stop').attr('offset', '100%').attr('stop-color', '#1B5E20');
 
             const nodes = g.selectAll('.node')
                 .data(root.descendants().slice(1))
@@ -202,11 +232,10 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFul
                 })
                 .style('cursor', 'pointer')
                 .on('click', (e, d) => {
-                    // Node click logic from original
                     if (onNodeClick) {
                         const ancestors = [];
                         let current = d.parent;
-                        while (current && current.depth > 0) { // Don't include root in ancestors list
+                        while (current && current.depth > 0) {
                             ancestors.push({
                                 _id: current.data._id,
                                 fullName: current.data.fullName
@@ -221,42 +250,65 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFul
                     }
                 });
 
-            // Draw Leaves using SVG Path
+            // Draw realistic olive leaves
+            const leafWidth = isFullTreeMode ? 80 : 50;
+            const leafHeight = isFullTreeMode ? 140 : 90;
+            const smallLeafWidth = isFullTreeMode ? 60 : 40;
+            const smallLeafHeight = isFullTreeMode ? 100 : 65;
+
             nodes.append('path')
-                .attr('d', LEAF_PATH)
-                .attr('fill', d => d.children ? '#2E7D32' : '#558B2F') // Darker for parents, lighter for leaves
+                .attr('d', d => {
+                    const w = d.children ? leafWidth : smallLeafWidth;
+                    const h = d.children ? leafHeight : smallLeafHeight;
+                    return createLeafPath(w, h);
+                })
+                .attr('fill', d => d.children ? 'url(#darkLeafGradient)' : 'url(#leafGradient)')
                 .attr('stroke', '#1B5E20')
-                .attr('stroke-width', 1)
+                .attr('stroke-width', 2)
                 .attr('transform', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
-                    // Scale leaf based on weight
-                    const scale = d.children ? 2.5 : 1.8;
-                    return `rotate(${angleDeg}) scale(${scale})`;
+                    return `rotate(${angleDeg})`;
                 })
-                .style('filter', 'drop-shadow(1px 2px 2px rgba(0,0,0,0.2))');
+                .style('filter', 'drop-shadow(2px 4px 6px rgba(0,0,0,0.25))');
 
-            // Text Labels
+            // Leaf vein (central line)
+            nodes.append('line')
+                .attr('x1', 0)
+                .attr('y1', d => -(d.children ? leafHeight : smallLeafHeight) / 2 + 10)
+                .attr('x2', 0)
+                .attr('y2', d => (d.children ? leafHeight : smallLeafHeight) / 2 - 10)
+                .attr('stroke', '#1B5E20')
+                .attr('stroke-width', 1.5)
+                .attr('stroke-opacity', 0.5)
+                .attr('transform', d => {
+                    const angleDeg = (d.x * 180 / Math.PI) - 90;
+                    return `rotate(${angleDeg})`;
+                });
+
+            // Text Labels - positioned OUTSIDE the leaf
+            const fontSize = isFullTreeMode ? 28 : 18;
+            const smallFontSize = isFullTreeMode ? 22 : 14;
+
             nodes.append('text')
                 .attr('dy', '0.35em')
                 .attr('text-anchor', d => {
-                    // Logic to flip text on left side of circle for readability
                     const angleDeg = (d.x * 180 / Math.PI) % 360;
-                    return (angleDeg > 180) ? "end" : "start";
+                    return (angleDeg > 90 && angleDeg < 270) ? "end" : "start";
                 })
                 .attr('transform', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
-                    const isLeft = (d.x * 180 / Math.PI) % 360 > 180;
-                    // Flip text if on left side
+                    const isLeft = (d.x * 180 / Math.PI) % 360 > 90 && (d.x * 180 / Math.PI) % 360 < 270;
                     const rotate = isLeft ? angleDeg + 180 : angleDeg;
-                    const offset = d.children ? 45 : 35; // Moved text further out
+                    // Text placed far outside the leaf
+                    const offset = d.children ? (isFullTreeMode ? 120 : 80) : (isFullTreeMode ? 90 : 60);
                     return `rotate(${rotate}) translate(${isLeft ? -offset : offset}, 0)`;
                 })
                 .text(d => d.data.fullName)
-                .attr('fill', '#000') // Black text for readability on light background
-                .attr('font-size', d => d.children ? '24px' : '18px') // Larger text
+                .attr('fill', '#2C1810')
+                .attr('font-size', d => d.children ? fontSize + 'px' : smallFontSize + 'px')
                 .attr('font-family', "'Cairo', sans-serif")
                 .attr('font-weight', 'bold')
-                .style('text-shadow', '0px 0px 4px rgba(255,255,255,0.8)'); // White glow behind text
+                .style('text-shadow', '0 0 8px white, 0 0 8px white, 0 0 8px white');
 
             nodes.append('title').text(d => d.data.fullName);
 
@@ -268,12 +320,12 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {}, isFul
     }, [processedData, isFullTreeMode]);
 
     if (renderError) {
-        return <div className="text-red-600 p-4 text-center">{renderError}</div>;
+        return <div className="text-red-600 p-4 text-center font-bold">{renderError}</div>;
     }
 
     return (
-        <div ref={containerRef} className="w-full h-full relative bg-[#F9F9F0] overflow-hidden" dir="rtl">
-            <svg ref={svgRef} className="w-full h-full block touch-action-none" />
+        <div ref={containerRef} className={`w-full h-full relative bg-[#FFFEF5] overflow-hidden ${className}`} dir="rtl" style={style}>
+            <svg ref={svgRef} className="w-full h-full block" style={{ touchAction: 'none' }} />
         </div>
     );
 };
