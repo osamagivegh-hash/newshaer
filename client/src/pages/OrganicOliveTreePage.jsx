@@ -63,7 +63,12 @@ const OrganicOliveTreePage = () => {
     // Helper function to find a node by name recursively in the tree
     const findNodeByName = (node, namePart) => {
         if (!node) return null;
-        if (node.fullName && node.fullName.includes(namePart)) return node;
+        // Normalize strings for comparison (remove extra spaces)
+        const nodeName = (node.fullName || "").trim();
+        const searchName = namePart.trim();
+
+        if (nodeName.includes(searchName)) return node;
+
         if (node.children) {
             for (const child of node.children) {
                 const found = findNodeByName(child, namePart);
@@ -93,11 +98,22 @@ const OrganicOliveTreePage = () => {
 
         const namePart = IBRAHIM_SUB_BRANCHES[subBranchKey];
         // Find the node in the Ibrahim branch tree
-        const node = findNodeByName(selectedMainBranch, namePart);
+        let node = findNodeByName(selectedMainBranch, namePart);
 
         if (node) {
             setSelectedIbrahimSubBranch(node);
-            setViewStep('SUB_SELECTION');
+
+            // If the node has children, go to sub-selection
+            if (node.children && node.children.length > 0) {
+                setViewStep('SUB_SELECTION');
+            } else {
+                // If no children (or direct leaf), show the tree of this node directly
+                setSelectedSubTreeNode(node);
+                setViewStep('TREE_VIEW');
+            }
+        } else {
+            console.warn(`Could not find sub-branch: ${namePart}`);
+            alert(`عذراً، لم يتم العثور على بيانات لفرع ${namePart}`);
         }
     };
 
