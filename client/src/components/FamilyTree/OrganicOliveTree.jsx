@@ -77,32 +77,66 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
 
             // =========================================================
             // ALGORITHM: Weighted Radial Tree (360 Degrees)
+            // OPTIMIZED: Fixed constants for consistent spacing across ALL branches
             // =========================================================
 
             // Calculate max depth for radial spacing logic
             const maxDepth = root.height;
+            const totalNodes = root.descendants().length;
+
+            // ==================== FIXED CONFIGURATION (Barham Style) ====================
+            // These values ensure consistent spacing regardless of branch size
+            const CONFIG = {
+                // Separation between nodes (fixed values - not dependent on tree size)
+                SIBLING_SEPARATION: 2.5,      // Space between brothers (same parent)
+                COUSIN_SEPARATION: 5,         // Space between cousins (different parents)
+
+                // Radial distance between generations (fixed per depth level)
+                GENERATION_BASE_DISTANCE: 100,  // Minimum distance from center to first generation
+                GENERATION_STEP: 80,           // Fixed distance between each generation level
+                GENERATION_EXTRA_PADDING: 25,  // Additional padding per depth level
+
+                // Minimum arc space per node (prevents crowding in large branches)
+                MIN_ARC_SPACE: 0.08,           // Minimum radians per node
+            };
+
+            // Calculate separation dynamically based on tree density
+            const leafCount = root.leaves().length;
+            const densityFactor = Math.max(1, leafCount / 20); // Scale separation for large trees
 
             const tree = d3.tree()
                 .size([2 * Math.PI, radius])
                 .separation((a, b) => {
-                    // Fix Overlap: Use large constant separation
-                    // Don't divide by depth! This keeps leaves spread out.
+                    // Fixed separation values - consistent across all branches
                     const sameSibling = a.parent === b.parent;
-                    // Separate siblings by 2 units, cousins by 4 units
-                    return sameSibling ? 2 : 4;
+
+                    // Apply consistent separation with slight adjustment for very large branches
+                    const baseSeparation = sameSibling
+                        ? CONFIG.SIBLING_SEPARATION
+                        : CONFIG.COUSIN_SEPARATION;
+
+                    // Ensure minimum arc space for readability
+                    const depthMultiplier = Math.max(1, (6 - Math.min(a.depth, b.depth)) * 0.15);
+
+                    return baseSeparation * depthMultiplier;
                 });
 
             tree(root);
 
             // =========================================================
-            // POST-PROCESS: Adjust radial distances for better spacing
+            // POST-PROCESS: Fixed radial distances for consistent spacing
             // =========================================================
 
-            // Add MORE padding between generations for clearer separation
-            const depthPadding = radius / (maxDepth + 1) * 0.5;
+            // Apply FIXED generation distances (not dependent on maxDepth ratio)
             root.each(node => {
-                // Increase radius for each depth level with extra padding
-                node.y = (node.depth / maxDepth) * radius + (node.depth * depthPadding);
+                if (node.depth === 0) {
+                    node.y = 0; // Root at center
+                } else {
+                    // Fixed formula: base + (depth * step) + (depth * extra padding)
+                    node.y = CONFIG.GENERATION_BASE_DISTANCE
+                        + (node.depth * CONFIG.GENERATION_STEP)
+                        + (node.depth * CONFIG.GENERATION_EXTRA_PADDING);
+                }
             });
 
             // =========================================================
@@ -214,34 +248,40 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     }
                 });
 
-            // Dynamic Leaf Graphics - ENHANCED for patriarch visibility
-            const baseLeafW = 55;
-            const baseLeafH = 24;
-            const minLeafW = 35;
-            const minLeafH = 16;
+            // ==================== FIXED LEAF SIZES (Consistent across all branches) ====================
+            // These fixed values ensure uniform appearance regardless of family size
+            const LEAF_SIZES = {
+                // Patriarch (depth 1-2 with children) - main branch heads
+                PATRIARCH_W: 75,
+                PATRIARCH_H: 35,
 
-            // Patriarch (depth 1-2 with children) sizes
-            const patriarchLeafW = 75;
-            const patriarchLeafH = 35;
+                // Regular nodes - fixed size for consistency
+                REGULAR_W: 50,      // Fixed width for all regular leaves
+                REGULAR_H: 22,      // Fixed height for all regular leaves
+
+                // Sub-patriarch (depth 2 with children)
+                SUB_PATRIARCH_SCALE: 0.85
+            };
 
             nodes.append('ellipse')
                 .attr('rx', d => {
                     // Patriots are larger
                     if (isMainPatriarch(d)) {
-                        return d.depth === 1 ? patriarchLeafW / 2 : (patriarchLeafW / 2) * 0.85;
+                        return d.depth === 1
+                            ? LEAF_SIZES.PATRIARCH_W / 2
+                            : (LEAF_SIZES.PATRIARCH_W / 2) * LEAF_SIZES.SUB_PATRIARCH_SCALE;
                     }
-                    // Regular nodes
-                    const siblings = getSiblingCount(d);
-                    const scaleFactor = Math.max(0.6, 1 - (siblings - 1) * 0.05);
-                    return Math.max(minLeafW / 2, (baseLeafW / 2) * scaleFactor);
+                    // Regular nodes - FIXED size (no dynamic scaling)
+                    return LEAF_SIZES.REGULAR_W / 2;
                 })
                 .attr('ry', d => {
                     if (isMainPatriarch(d)) {
-                        return d.depth === 1 ? patriarchLeafH / 2 : (patriarchLeafH / 2) * 0.85;
+                        return d.depth === 1
+                            ? LEAF_SIZES.PATRIARCH_H / 2
+                            : (LEAF_SIZES.PATRIARCH_H / 2) * LEAF_SIZES.SUB_PATRIARCH_SCALE;
                     }
-                    const siblings = getSiblingCount(d);
-                    const scaleFactor = Math.max(0.6, 1 - (siblings - 1) * 0.05);
-                    return Math.max(minLeafH / 2, (baseLeafH / 2) * scaleFactor);
+                    // Regular nodes - FIXED size (no dynamic scaling)
+                    return LEAF_SIZES.REGULAR_H / 2;
                 })
                 .attr('fill', d => getNodeColor(d).fill)
                 .attr('stroke', d => getNodeColor(d).stroke)
@@ -271,29 +311,32 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 .attr('cx', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     const rad = angleDeg * Math.PI / 180;
-                    return Math.cos(rad) * (patriarchLeafW / 2 + 8);
+                    return Math.cos(rad) * (LEAF_SIZES.PATRIARCH_W / 2 + 8);
                 })
                 .attr('cy', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     const rad = angleDeg * Math.PI / 180;
-                    return Math.sin(rad) * (patriarchLeafW / 2 + 8);
+                    return Math.sin(rad) * (LEAF_SIZES.PATRIARCH_W / 2 + 8);
                 })
                 .style('filter', 'drop-shadow(0px 0px 3px rgba(255,215,0,0.8))');
 
-            // Leaf Labels - Dynamic font size with emphasis on patriarchs
+            // Leaf Labels - FIXED font sizes for consistency across all branches
+            const FONT_SIZES = {
+                PATRIARCH_DEPTH1: '13px',
+                PATRIARCH_DEPTH2: '11px',
+                REGULAR: '9px'  // Fixed font size for regular nodes
+            };
+
             nodes.append('text')
                 .attr('dy', '0.35em')
                 .attr('text-anchor', 'middle')
                 .attr('font-family', "'Cairo', sans-serif")
                 .attr('font-size', d => {
                     if (isMainPatriarch(d)) {
-                        return d.depth === 1 ? '13px' : '11px';
+                        return d.depth === 1 ? FONT_SIZES.PATRIARCH_DEPTH1 : FONT_SIZES.PATRIARCH_DEPTH2;
                     }
-                    const siblings = getSiblingCount(d);
-                    const baseSize = 10;
-                    const minSize = 7;
-                    const scaleFactor = Math.max(0.7, 1 - (siblings - 1) * 0.03);
-                    return `${Math.max(minSize, baseSize * scaleFactor)}px`;
+                    // FIXED font size for regular nodes (no dynamic scaling)
+                    return FONT_SIZES.REGULAR;
                 })
                 .attr('font-weight', d => isMainPatriarch(d) ? '800' : '600')
                 .attr('fill', d => getNodeColor(d).textColor)
