@@ -77,65 +77,118 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
 
             // =========================================================
             // ALGORITHM: Weighted Radial Tree (360 Degrees)
-            // OPTIMIZED: Fixed constants for consistent spacing across ALL branches
+            // OPTIMIZED: Enhanced spacing for large branches (Salman-style)
             // =========================================================
 
             // Calculate max depth for radial spacing logic
             const maxDepth = root.height;
             const totalNodes = root.descendants().length;
+            const leafCount = root.leaves().length;
 
-            // ==================== FIXED CONFIGURATION (Barham Style) ====================
-            // These values ensure consistent spacing regardless of branch size
+            // ==================== ENHANCED CONFIGURATION ====================
+            // Improved values to prevent overlap in large branches like Salman
             const CONFIG = {
-                // Separation between nodes (fixed values - not dependent on tree size)
-                SIBLING_SEPARATION: 2.5,      // Space between brothers (same parent)
-                COUSIN_SEPARATION: 5,         // Space between cousins (different parents)
+                // BASE separation values (will be multiplied by factors)
+                SIBLING_SEPARATION: 3,        // Increased from 2.5
+                COUSIN_SEPARATION: 6,         // Increased from 5
 
-                // Radial distance between generations (fixed per depth level)
-                GENERATION_BASE_DISTANCE: 100,  // Minimum distance from center to first generation
-                GENERATION_STEP: 80,           // Fixed distance between each generation level
-                GENERATION_EXTRA_PADDING: 25,  // Additional padding per depth level
+                // Radial distance between generations
+                GENERATION_BASE_DISTANCE: 120,  // Increased from 100
+                GENERATION_STEP: 100,           // Increased from 80
+                GENERATION_EXTRA_PADDING: 35,   // Increased from 25
 
-                // Minimum arc space per node (prevents crowding in large branches)
-                MIN_ARC_SPACE: 0.08,           // Minimum radians per node
+                // Extra padding for deep generations (3, 4, 8+)
+                DEEP_GENERATION_BONUS: 20,      // Extra space for generations 3+
+                FINAL_GENERATION_BONUS: 40,     // Extra space for last generation
+
+                // Sibling count thresholds for extra spacing
+                MANY_SIBLINGS_THRESHOLD: 5,     // If more than 5 siblings, add extra space
+                MANY_SIBLINGS_MULTIPLIER: 1.5,  // Multiply separation by this
             };
 
-            // Calculate separation dynamically based on tree density
-            const leafCount = root.leaves().length;
-            const densityFactor = Math.max(1, leafCount / 20); // Scale separation for large trees
+            // Calculate how crowded the tree is
+            const densityFactor = Math.max(1, leafCount / 15); // More sensitive to crowding
+            const isLargeBranch = totalNodes > 30;
+            const isVeryLargeBranch = totalNodes > 60;
 
             const tree = d3.tree()
                 .size([2 * Math.PI, radius])
                 .separation((a, b) => {
-                    // Fixed separation values - consistent across all branches
                     const sameSibling = a.parent === b.parent;
+                    const currentDepth = Math.max(a.depth, b.depth);
 
-                    // Apply consistent separation with slight adjustment for very large branches
-                    const baseSeparation = sameSibling
+                    // Count siblings to detect crowded parents
+                    const aSiblingCount = a.parent?.children?.length || 1;
+                    const bSiblingCount = b.parent?.children?.length || 1;
+                    const maxSiblingCount = Math.max(aSiblingCount, bSiblingCount);
+
+                    // Base separation
+                    let baseSeparation = sameSibling
                         ? CONFIG.SIBLING_SEPARATION
                         : CONFIG.COUSIN_SEPARATION;
 
-                    // Ensure minimum arc space for readability
-                    const depthMultiplier = Math.max(1, (6 - Math.min(a.depth, b.depth)) * 0.15);
+                    // === ENHANCEMENT 1: Increase separation for many siblings ===
+                    if (maxSiblingCount >= CONFIG.MANY_SIBLINGS_THRESHOLD) {
+                        baseSeparation *= CONFIG.MANY_SIBLINGS_MULTIPLIER;
+                    }
+                    if (maxSiblingCount >= 10) {
+                        baseSeparation *= 1.3; // Even more for 10+ siblings
+                    }
 
-                    return baseSeparation * depthMultiplier;
+                    // === ENHANCEMENT 2: Increase separation for deep generations ===
+                    // Generations 3, 4, 5+ need more space
+                    if (currentDepth >= 3 && currentDepth <= 5) {
+                        baseSeparation *= 1.3;
+                    } else if (currentDepth >= 6) {
+                        baseSeparation *= 1.5; // Even more for generation 6+
+                    }
+
+                    // === ENHANCEMENT 3: Last generation (leaves) need most space ===
+                    if (!a.children && !b.children) {
+                        baseSeparation *= 1.4; // Leaves need more space
+                    }
+
+                    // === ENHANCEMENT 4: Scale based on overall tree density ===
+                    if (isVeryLargeBranch) {
+                        baseSeparation *= 1.2;
+                    } else if (isLargeBranch) {
+                        baseSeparation *= 1.1;
+                    }
+
+                    return baseSeparation;
                 });
 
             tree(root);
 
             // =========================================================
-            // POST-PROCESS: Fixed radial distances for consistent spacing
+            // POST-PROCESS: Enhanced radial distances for deep generations
             // =========================================================
 
-            // Apply FIXED generation distances (not dependent on maxDepth ratio)
             root.each(node => {
                 if (node.depth === 0) {
                     node.y = 0; // Root at center
                 } else {
-                    // Fixed formula: base + (depth * step) + (depth * extra padding)
-                    node.y = CONFIG.GENERATION_BASE_DISTANCE
+                    // Base distance calculation
+                    let y = CONFIG.GENERATION_BASE_DISTANCE
                         + (node.depth * CONFIG.GENERATION_STEP)
                         + (node.depth * CONFIG.GENERATION_EXTRA_PADDING);
+
+                    // === ENHANCEMENT: Extra padding for deep generations ===
+                    if (node.depth >= 3) {
+                        y += CONFIG.DEEP_GENERATION_BONUS * (node.depth - 2);
+                    }
+
+                    // === ENHANCEMENT: Extra padding for final generation (leaves) ===
+                    if (!node.children && node.depth >= maxDepth - 1) {
+                        y += CONFIG.FINAL_GENERATION_BONUS;
+                    }
+
+                    // === ENHANCEMENT: Scale for very large trees ===
+                    if (isVeryLargeBranch) {
+                        y *= 1.15;
+                    }
+
+                    node.y = y;
                 }
             });
 
