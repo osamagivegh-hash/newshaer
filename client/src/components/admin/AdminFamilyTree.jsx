@@ -32,8 +32,10 @@ const AdminFamilyTree = () => {
     const [eligibleFathers, setEligibleFathers] = useState([]);
     const [selectedBranch, setSelectedBranch] = useState('');
     const [selectedSubBranch, setSelectedSubBranch] = useState('');
+    const [selectedLevel3Branch, setSelectedLevel3Branch] = useState('');
     const [branchCounts, setBranchCounts] = useState(null);
     const [subBranchCounts, setSubBranchCounts] = useState(null);
+    const [level3BranchCounts, setLevel3BranchCounts] = useState(null);
     const [formLoading, setFormLoading] = useState(false);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'tree'
     const [tree, setTree] = useState(null);
@@ -121,11 +123,12 @@ const AdminFamilyTree = () => {
         fetchData();
     }, [fetchData]);
 
-    const fetchEligibleFathers = async (generation, branch = '', subBranch = '') => {
+    const fetchEligibleFathers = async (generation, branch = '', subBranch = '', level3Branch = '') => {
         if (!generation || generation === '0') {
             setEligibleFathers([]);
             setBranchCounts(null);
             setSubBranchCounts(null);
+            setLevel3BranchCounts(null);
             return;
         }
         try {
@@ -140,6 +143,9 @@ const AdminFamilyTree = () => {
             if (subBranch && parseInt(generation) >= 6) {
                 url += `&subBranch=${subBranch}`;
             }
+            if (level3Branch && parseInt(generation) >= 6) {
+                url += `&level3Branch=${level3Branch}`;
+            }
 
             const res = await fetch(url);
             const data = await res.json();
@@ -147,6 +153,7 @@ const AdminFamilyTree = () => {
                 setEligibleFathers(data.data || []);
                 setBranchCounts(data.branchCounts || null);
                 setSubBranchCounts(data.subBranchCounts || null);
+                setLevel3BranchCounts(data.level3BranchCounts || null);
             }
         } catch (error) {
             console.error('Error fetching eligible fathers:', error);
@@ -158,20 +165,29 @@ const AdminFamilyTree = () => {
         setFormData(prev => ({ ...prev, targetGeneration: gen, fatherId: '' }));
         setSelectedBranch('');
         setSelectedSubBranch('');
-        fetchEligibleFathers(gen, '', '');
+        setSelectedLevel3Branch('');
+        fetchEligibleFathers(gen, '', '', '');
     };
 
     const handleBranchChange = (branch) => {
         setSelectedBranch(branch);
         setSelectedSubBranch('');
+        setSelectedLevel3Branch('');
         setFormData(prev => ({ ...prev, fatherId: '' }));
-        fetchEligibleFathers(formData.targetGeneration, branch, '');
+        fetchEligibleFathers(formData.targetGeneration, branch, '', '');
     };
 
     const handleSubBranchChange = (subBranch) => {
         setSelectedSubBranch(subBranch);
+        setSelectedLevel3Branch('');
         setFormData(prev => ({ ...prev, fatherId: '' }));
-        fetchEligibleFathers(formData.targetGeneration, selectedBranch, subBranch);
+        fetchEligibleFathers(formData.targetGeneration, selectedBranch, subBranch, '');
+    };
+
+    const handleLevel3BranchChange = (level3Branch) => {
+        setSelectedLevel3Branch(level3Branch);
+        setFormData(prev => ({ ...prev, fatherId: '' }));
+        fetchEligibleFathers(formData.targetGeneration, selectedBranch, selectedSubBranch, level3Branch);
     };
 
     // Search father by name with debounce
@@ -822,8 +838,8 @@ const AdminFamilyTree = () => {
                                                 setSelectedFatherName('');
                                             }}
                                             className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-center gap-2 ${fatherSearchMode === 'generation'
-                                                    ? 'bg-palestine-green text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-palestine-green text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             🔢 بحث بالجيل
@@ -836,8 +852,8 @@ const AdminFamilyTree = () => {
                                                 setSelectedFatherName('');
                                             }}
                                             className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-center gap-2 ${fatherSearchMode === 'search'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             🔍 بحث بالاسم
@@ -995,6 +1011,39 @@ const AdminFamilyTree = () => {
                                                                     </button>
                                                                 ))}
                                                             </div>
+
+                                                            {/* Level 3 filter for Zahar sub-branches */}
+                                                            {selectedSubBranch && level3BranchCounts?.[selectedSubBranch]?.length > 0 && (
+                                                                <div className="mt-2 pt-2 border-t border-teal-100">
+                                                                    <p className="text-[10px] text-teal-600 mb-1.5 font-medium">🍃 أحفاد {subBranchCounts.zahar.find(s => s.id === selectedSubBranch)?.name || ''}:</p>
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleLevel3BranchChange('')}
+                                                                            className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors ${selectedLevel3Branch === ''
+                                                                                ? 'bg-teal-600 text-white'
+                                                                                : 'bg-teal-50 text-teal-500 hover:bg-teal-100'
+                                                                                }`}
+                                                                        >
+                                                                            الكل
+                                                                        </button>
+                                                                        {level3BranchCounts[selectedSubBranch].map(lvl3 => (
+                                                                            <button
+                                                                                key={lvl3.id}
+                                                                                type="button"
+                                                                                onClick={() => handleLevel3BranchChange(lvl3.id)}
+                                                                                className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors flex items-center gap-0.5 ${selectedLevel3Branch === lvl3.id
+                                                                                    ? 'bg-teal-500 text-white'
+                                                                                    : 'bg-teal-50 text-teal-500 hover:bg-teal-100 border border-teal-100'
+                                                                                    }`}
+                                                                            >
+                                                                                {lvl3.name}
+                                                                                <span className="bg-white/30 px-0.5 rounded text-[8px]">{lvl3.count}</span>
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
 
@@ -1028,6 +1077,105 @@ const AdminFamilyTree = () => {
                                                                     </button>
                                                                 ))}
                                                             </div>
+
+                                                            {/* Level 3 filter for Saleh sub-branches */}
+                                                            {selectedSubBranch && level3BranchCounts?.[selectedSubBranch]?.length > 0 && (
+                                                                <div className="mt-2 pt-2 border-t border-amber-100">
+                                                                    <p className="text-[10px] text-amber-600 mb-1.5 font-medium">🍃 أحفاد {subBranchCounts.saleh.find(s => s.id === selectedSubBranch)?.name || ''}:</p>
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleLevel3BranchChange('')}
+                                                                            className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors ${selectedLevel3Branch === ''
+                                                                                ? 'bg-amber-600 text-white'
+                                                                                : 'bg-amber-50 text-amber-500 hover:bg-amber-100'
+                                                                                }`}
+                                                                        >
+                                                                            الكل
+                                                                        </button>
+                                                                        {level3BranchCounts[selectedSubBranch].map(lvl3 => (
+                                                                            <button
+                                                                                key={lvl3.id}
+                                                                                type="button"
+                                                                                onClick={() => handleLevel3BranchChange(lvl3.id)}
+                                                                                className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors flex items-center gap-0.5 ${selectedLevel3Branch === lvl3.id
+                                                                                    ? 'bg-amber-500 text-white'
+                                                                                    : 'bg-amber-50 text-amber-500 hover:bg-amber-100 border border-amber-100'
+                                                                                    }`}
+                                                                            >
+                                                                                {lvl3.name}
+                                                                                <span className="bg-white/30 px-0.5 rounded text-[8px]">{lvl3.count}</span>
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Sub-branch filter for Ibrahim */}
+                                                    {selectedBranch === 'ibrahim' && subBranchCounts?.ibrahim?.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-violet-200">
+                                                            <p className="text-xs text-violet-700 mb-2 font-medium">🌿 أبناء إبراهيم:</p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSubBranchChange('')}
+                                                                    className={`px-2 py-1 text-[11px] rounded-full transition-colors ${selectedSubBranch === ''
+                                                                        ? 'bg-violet-700 text-white'
+                                                                        : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                                                                        }`}
+                                                                >
+                                                                    كل أبناء إبراهيم
+                                                                </button>
+                                                                {subBranchCounts.ibrahim.map(sub => (
+                                                                    <button
+                                                                        key={sub.id}
+                                                                        type="button"
+                                                                        onClick={() => handleSubBranchChange(sub.id)}
+                                                                        className={`px-2 py-1 text-[11px] rounded-full transition-colors flex items-center gap-1 ${selectedSubBranch === sub.id
+                                                                            ? 'bg-violet-600 text-white'
+                                                                            : 'bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200'
+                                                                            }`}
+                                                                    >
+                                                                        {sub.name}
+                                                                        <span className="bg-white/40 px-1 rounded-full text-[9px]">{sub.count}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* Level 3 filter for Ibrahim sub-branches */}
+                                                            {selectedSubBranch && level3BranchCounts?.[selectedSubBranch]?.length > 0 && (
+                                                                <div className="mt-2 pt-2 border-t border-violet-100">
+                                                                    <p className="text-[10px] text-violet-600 mb-1.5 font-medium">🍃 أحفاد {subBranchCounts.ibrahim.find(s => s.id === selectedSubBranch)?.name || ''}:</p>
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleLevel3BranchChange('')}
+                                                                            className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors ${selectedLevel3Branch === ''
+                                                                                ? 'bg-violet-600 text-white'
+                                                                                : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
+                                                                                }`}
+                                                                        >
+                                                                            الكل
+                                                                        </button>
+                                                                        {level3BranchCounts[selectedSubBranch].map(lvl3 => (
+                                                                            <button
+                                                                                key={lvl3.id}
+                                                                                type="button"
+                                                                                onClick={() => handleLevel3BranchChange(lvl3.id)}
+                                                                                className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors flex items-center gap-0.5 ${selectedLevel3Branch === lvl3.id
+                                                                                    ? 'bg-violet-500 text-white'
+                                                                                    : 'bg-violet-50 text-violet-500 hover:bg-violet-100 border border-violet-100'
+                                                                                    }`}
+                                                                            >
+                                                                                {lvl3.name}
+                                                                                <span className="bg-white/30 px-0.5 rounded text-[8px]">{lvl3.count}</span>
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>

@@ -173,11 +173,12 @@ router.get('/tree/:id', async (req, res) => {
 /**
  * @route   GET /api/persons/eligible-fathers
  * @desc    Get eligible fathers for a new person (generation-based filtering)
+ * @desc    Supports multi-level branch filtering (main branch, sub-branch, level3)
  * @access  Public
  */
 router.get('/eligible-fathers', async (req, res) => {
     try {
-        const { generation, excludeId, branch, subBranch } = req.query;
+        const { generation, excludeId, branch, subBranch, level3Branch } = req.query;
 
         let query = { gender: 'male' };
 
@@ -228,35 +229,43 @@ router.get('/eligible-fathers', async (req, res) => {
             return null;
         };
 
-        // Helper to get sub-branch (generation 2 ancestor)
-        const getSubBranch = (personId) => {
+        // Helper to get ancestor at specific generation
+        const getAncestorAtGeneration = (personId, targetGeneration) => {
             let current = personMap.get(personId?.toString());
             const visited = new Set();
 
-            while (current && current.fatherId && !visited.has(current._id.toString())) {
+            while (current && !visited.has(current._id.toString())) {
                 visited.add(current._id.toString());
-                if (current.generation === 2) {
+                if (current.generation === targetGeneration) {
                     return current._id.toString();
                 }
+                if (!current.fatherId) break;
                 current = personMap.get(current.fatherId?.toString());
             }
             return null;
         };
 
-        // Get sub-branch info
-        const getSubBranchInfo = (personId) => {
+        // Helper to get ancestor info at specific generation
+        const getAncestorInfoAtGeneration = (personId, targetGeneration) => {
             let current = personMap.get(personId?.toString());
             const visited = new Set();
 
-            while (current && current.fatherId && !visited.has(current._id.toString())) {
+            while (current && !visited.has(current._id.toString())) {
                 visited.add(current._id.toString());
-                if (current.generation === 2) {
+                if (current.generation === targetGeneration) {
                     return { id: current._id.toString(), name: current.fullName };
                 }
+                if (!current.fatherId) break;
                 current = personMap.get(current.fatherId?.toString());
             }
             return null;
         };
+
+        // Legacy helpers (kept for backward compatibility)
+        const getSubBranch = (personId) => getAncestorAtGeneration(personId, 2);
+        const getSubBranchInfo = (personId) => getAncestorInfoAtGeneration(personId, 2);
+        const getLevel3Branch = (personId) => getAncestorAtGeneration(personId, 3);
+        const getLevel3BranchInfo = (personId) => getAncestorInfoAtGeneration(personId, 3);
 
         // Branch filtering for generations 6+
         if (targetGen >= 6) {
@@ -267,11 +276,19 @@ router.get('/eligible-fathers', async (req, res) => {
                 });
             }
 
-            // Sub-branch filtering
+            // Sub-branch filtering (generation 2)
             if (subBranch) {
                 eligibleFathers = eligibleFathers.filter(father => {
                     const fatherSubBranch = getSubBranch(father._id.toString());
                     return fatherSubBranch === subBranch;
+                });
+            }
+
+            // Level 3 branch filtering (generation 3)
+            if (level3Branch) {
+                eligibleFathers = eligibleFathers.filter(father => {
+                    const fatherLevel3 = getLevel3Branch(father._id.toString());
+                    return fatherLevel3 === level3Branch;
                 });
             }
         }
@@ -279,6 +296,7 @@ router.get('/eligible-fathers', async (req, res) => {
         // Get branch and sub-branch counts for UI (only for gen 6+)
         let branchCounts = null;
         let subBranchCounts = null;
+        let level3BranchCounts = null;
 
         if (targetGen >= 6) {
             const allFathersForGen = await Person.find({
@@ -288,25 +306,40 @@ router.get('/eligible-fathers', async (req, res) => {
 
             branchCounts = { zahar: 0, saleh: 0, ibrahim: 0 };
 
-            // Sub-branch structure
+            // Sub-branch structure (generation 2)
             const subBranchData = {
-                zahar: {},  // Will contain: { subBranchId: { name, count } }
-                saleh: {}   // Will contain: { subBranchId: { name, count } }
+                zahar: {},
+                saleh: {},
+                ibrahim: {}
             };
+
+            // Level 3 branch structure (generation 3) - keyed by subBranch id
+            const level3BranchData = {};
 
             allFathersForGen.forEach(f => {
                 const b = getMainBranch(f._id.toString());
                 if (b && branchCounts[b] !== undefined) {
                     branchCounts[b]++;
 
-                    // Count sub-branches for zahar and saleh
-                    if (b === 'zahar' || b === 'saleh') {
-                        const subInfo = getSubBranchInfo(f._id.toString());
-                        if (subInfo) {
-                            if (!subBranchData[b][subInfo.id]) {
-                                subBranchData[b][subInfo.id] = { name: subInfo.name, count: 0 };
+                    // Count sub-branches for all main branches
+                    const subInfo = getSubBranchInfo(f._id.toString());
+                    if (subInfo) {
+                        if (!subBranchData[b]) subBranchData[b] = {};
+                        if (!subBranchData[b][subInfo.id]) {
+                            subBranchData[b][subInfo.id] = { name: subInfo.name, count: 0 };
+                        }
+                        subBranchData[b][subInfo.id].count++;
+
+                        // Count level 3 branches under each sub-branch
+                        const level3Info = getLevel3BranchInfo(f._id.toString());
+                        if (level3Info) {
+                            if (!level3BranchData[subInfo.id]) {
+                                level3BranchData[subInfo.id] = {};
                             }
-                            subBranchData[b][subInfo.id].count++;
+                            if (!level3BranchData[subInfo.id][level3Info.id]) {
+                                level3BranchData[subInfo.id][level3Info.id] = { name: level3Info.name, count: 0 };
+                            }
+                            level3BranchData[subInfo.id][level3Info.id].count++;
                         }
                     }
                 }
@@ -314,17 +347,32 @@ router.get('/eligible-fathers', async (req, res) => {
 
             // Convert sub-branch data to array format
             subBranchCounts = {
-                zahar: Object.entries(subBranchData.zahar).map(([id, data]) => ({
+                zahar: Object.entries(subBranchData.zahar || {}).map(([id, data]) => ({
                     id,
                     name: data.name,
                     count: data.count
                 })),
-                saleh: Object.entries(subBranchData.saleh).map(([id, data]) => ({
+                saleh: Object.entries(subBranchData.saleh || {}).map(([id, data]) => ({
+                    id,
+                    name: data.name,
+                    count: data.count
+                })),
+                ibrahim: Object.entries(subBranchData.ibrahim || {}).map(([id, data]) => ({
                     id,
                     name: data.name,
                     count: data.count
                 }))
             };
+
+            // Convert level 3 branch data - organized by subBranch id
+            level3BranchCounts = {};
+            Object.entries(level3BranchData).forEach(([subBranchId, level3Data]) => {
+                level3BranchCounts[subBranchId] = Object.entries(level3Data).map(([id, data]) => ({
+                    id,
+                    name: data.name,
+                    count: data.count
+                }));
+            });
         }
 
         res.json({
@@ -342,6 +390,7 @@ router.get('/eligible-fathers', async (req, res) => {
             total: eligibleFathers.length,
             branchCounts,
             subBranchCounts,
+            level3BranchCounts,
             hasBranchFilter: targetGen >= 6
         });
     } catch (error) {
