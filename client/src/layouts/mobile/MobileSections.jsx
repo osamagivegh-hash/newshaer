@@ -41,8 +41,8 @@ export const MobileHomeSection = ({ data }) => {
             description: 'استكشف شجرة عائلة الشاعر',
             icon: '🌳',
             gradient: 'from-green-600 to-green-800',
-            // Navigate to the actual family tree gateway page
-            path: '/family-tree'
+            // Navigate to family tree section with rectangular buttons
+            section: 'family-tree'
         },
         {
             id: 'news',
