@@ -260,8 +260,8 @@ const OrganicOliveTreePage = () => {
 
                 {/* STEP 1: Main Branch Selection */}
                 {viewStep === 'MAIN_SELECTION' && (
-                    <div className="w-full max-w-4xl px-4 animate-fade-in-up">
-                        <div className="grid grid-cols-2 gap-4 md:gap-8 justify-items-center">
+                    <div className="w-full max-w-lg px-4 animate-fade-in-up">
+                        <div className="flex flex-col gap-4 md:gap-6 items-center">
                             {/* Zahar */}
                             <BranchCard
                                 title="آل زهار"
@@ -280,16 +280,14 @@ const OrganicOliveTreePage = () => {
                                 className="w-full"
                             />
 
-                            {/* Ibrahim - Centered in the next row if grid-cols-2 */}
-                            <div className="col-span-2 w-full md:w-1/2 mt-4">
-                                <BranchCard
-                                    title="آل إبراهيم"
-                                    color="from-blue-700 to-blue-900"
-                                    onClick={() => handleMainBranchSelect('براهيم')}
-                                    icon="🍀"
-                                    className="w-full"
-                                />
-                            </div>
+                            {/* Ibrahim */}
+                            <BranchCard
+                                title="آل إبراهيم"
+                                color="from-blue-700 to-blue-900"
+                                onClick={() => handleMainBranchSelect('براهيم')}
+                                icon="🍀"
+                                className="w-full"
+                            />
                         </div>
                     </div>
                 )}
@@ -373,12 +371,16 @@ const OrganicOliveTreePage = () => {
 const BranchCard = ({ title, color, onClick, icon }) => (
     <button
         onClick={onClick}
-        className={`group relative overflow-hidden rounded-3xl p-8 h-64 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br ${color} text-white flex flex-col items-center justify-center text-center`}
+        className={`group relative overflow-hidden rounded-3xl p-6 h-40 w-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br ${color} text-white flex flex-row items-center justify-between px-8 text-right`}
     >
         <div className="absolute top-0 left-0 w-full h-full bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-        <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform">{icon}</div>
-        <h3 className="text-4xl font-bold mb-2 shadow-sm">{title}</h3>
-        <p className="text-white/90 mt-2 font-medium">اضغط لاستعراض الفروع</p>
+
+        <div className="z-10 flex flex-col items-start">
+            <h3 className="text-3xl font-bold mb-1 shadow-sm">{title}</h3>
+            <p className="text-white/90 text-sm font-medium">اضغط لاستعراض الفروع</p>
+        </div>
+
+        <div className="text-5xl transform group-hover:scale-110 transition-transform z-10 opacity-90">{icon}</div>
     </button>
 );
 
