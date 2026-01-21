@@ -382,19 +382,48 @@ const BranchCard = ({ title, color, onClick, icon }) => (
     </button>
 );
 
-const SubBranchCard = ({ node, onClick }) => (
-    <button
-        onClick={onClick}
-        className="bg-white p-6 rounded-2xl shadow-md border border-[#CCD5AE] hover:border-[#558B2F] hover:shadow-xl hover:bg-[#FEFAE0] transition-all duration-300 flex flex-col items-center text-center group"
-    >
-        <div className="w-16 h-16 rounded-full bg-[#E9EDC9] text-[#558B2F] flex items-center justify-center text-2xl font-bold mb-3 group-hover:bg-[#558B2F] group-hover:text-white transition-colors">
-            {node.fullName.split(' ')[0][0]}
-        </div>
-        <h4 className="text-xl font-bold text-[#5D4037] mb-1">{node.fullName}</h4>
-        <span className="text-sm text-gray-500">
-            {node.children ? node.children.length : 0} أحفاد
-        </span>
-    </button>
-);
+// Family sub-names mapping for specific branches
+const FAMILY_SUB_NAMES = {
+    'إبراهيم': ['الدجان', 'مقلد', 'أبو عيد'],
+    'سلمان': ['الزقامطه', 'المحامده', 'العرادات', 'العوايضه', 'القريدات', 'أبو مدلله', 'أبو مهاوش', 'حسن']
+};
+
+const SubBranchCard = ({ node, onClick }) => {
+    // Check if this node has sub-family names
+    const firstName = node.fullName.split(' ')[0];
+    const subFamilyNames = FAMILY_SUB_NAMES[firstName] || [];
+
+    return (
+        <button
+            onClick={onClick}
+            className="bg-white p-6 rounded-2xl shadow-md border border-[#CCD5AE] hover:border-[#558B2F] hover:shadow-xl hover:bg-[#FEFAE0] transition-all duration-300 flex flex-col items-center text-center group min-h-[200px]"
+        >
+            <div className="w-16 h-16 rounded-full bg-[#E9EDC9] text-[#558B2F] flex items-center justify-center text-2xl font-bold mb-3 group-hover:bg-[#558B2F] group-hover:text-white transition-colors">
+                {firstName[0]}
+            </div>
+            <h4 className="text-xl font-bold text-[#5D4037] mb-1">{node.fullName}</h4>
+            <span className="text-sm text-gray-500 mb-3">
+                {node.children ? node.children.length : 0} أحفاد
+            </span>
+
+            {/* Sub-family names */}
+            {subFamilyNames.length > 0 && (
+                <div className="mt-auto pt-3 border-t border-[#E9EDC9] w-full">
+                    <p className="text-xs text-[#558B2F] font-semibold mb-2">العائلات الفرعية:</p>
+                    <div className="flex flex-wrap justify-center gap-1.5">
+                        {subFamilyNames.map((name, idx) => (
+                            <span
+                                key={idx}
+                                className="inline-block px-2.5 py-1 text-[11px] font-medium rounded-full bg-gradient-to-r from-[#E9EDC9] to-[#D4E8BE] text-[#3E5A23] shadow-sm border border-[#CCD5AE]/50 hover:from-[#558B2F] hover:to-[#6B9B3C] hover:text-white hover:border-[#558B2F] transition-all duration-200"
+                            >
+                                {name}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </button>
+    );
+};
 
 export default OrganicOliveTreePage;
