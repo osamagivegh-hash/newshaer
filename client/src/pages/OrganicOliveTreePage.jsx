@@ -260,8 +260,8 @@ const OrganicOliveTreePage = () => {
 
                 {/* STEP 1: Main Branch Selection */}
                 {viewStep === 'MAIN_SELECTION' && (
-                    <div className="w-full max-w-lg px-4 animate-fade-in-up">
-                        <div className="flex flex-col gap-4 md:gap-6 items-center">
+                    <div className="w-full max-w-lg md:max-w-6xl px-4 animate-fade-in-up">
+                        <div className="flex flex-col gap-4 md:grid md:grid-cols-3 md:gap-8 justify-items-center w-full">
                             {/* Zahar */}
                             <BranchCard
                                 title="آل زهار"
@@ -387,7 +387,7 @@ const BranchCard = ({ title, color, onClick, icon }) => (
 // Family sub-names mapping for specific branches
 const FAMILY_SUB_NAMES = {
     'إبراهيم': ['الدجان', 'مقلد', 'أبو عيد'],
-    'سلمان': ['الزقامطه', 'المحامده', 'العرادات', 'العوايضه', 'القريدات', 'أبو مدلله', 'أبو مهاوش', 'حسن']
+    'سلمان': ['الزقامطه', 'المحامده', 'العرادات', 'العوايضه', 'القريدات', 'أبو مدلله', 'أبو مهاوش']
 };
 
 const SubBranchCard = ({ node, onClick }) => {
