@@ -33,9 +33,11 @@ const AdminFamilyTree = () => {
     const [selectedBranch, setSelectedBranch] = useState('');
     const [selectedSubBranch, setSelectedSubBranch] = useState('');
     const [selectedLevel3Branch, setSelectedLevel3Branch] = useState('');
+    const [selectedLevel4Branch, setSelectedLevel4Branch] = useState('');
     const [branchCounts, setBranchCounts] = useState(null);
     const [subBranchCounts, setSubBranchCounts] = useState(null);
     const [level3BranchCounts, setLevel3BranchCounts] = useState(null);
+    const [level4BranchCounts, setLevel4BranchCounts] = useState(null);
     const [formLoading, setFormLoading] = useState(false);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'tree'
     const [tree, setTree] = useState(null);
@@ -123,12 +125,13 @@ const AdminFamilyTree = () => {
         fetchData();
     }, [fetchData]);
 
-    const fetchEligibleFathers = async (generation, branch = '', subBranch = '', level3Branch = '') => {
+    const fetchEligibleFathers = async (generation, branch = '', subBranch = '', level3Branch = '', level4Branch = '') => {
         if (!generation || generation === '0') {
             setEligibleFathers([]);
             setBranchCounts(null);
             setSubBranchCounts(null);
             setLevel3BranchCounts(null);
+            setLevel4BranchCounts(null);
             return;
         }
         try {
@@ -146,6 +149,9 @@ const AdminFamilyTree = () => {
             if (level3Branch && parseInt(generation) >= 6) {
                 url += `&level3Branch=${level3Branch}`;
             }
+            if (level4Branch && parseInt(generation) >= 6) {
+                url += `&level4Branch=${level4Branch}`;
+            }
 
             const res = await fetch(url);
             const data = await res.json();
@@ -154,6 +160,7 @@ const AdminFamilyTree = () => {
                 setBranchCounts(data.branchCounts || null);
                 setSubBranchCounts(data.subBranchCounts || null);
                 setLevel3BranchCounts(data.level3BranchCounts || null);
+                setLevel4BranchCounts(data.level4BranchCounts || null);
             }
         } catch (error) {
             console.error('Error fetching eligible fathers:', error);
@@ -166,28 +173,38 @@ const AdminFamilyTree = () => {
         setSelectedBranch('');
         setSelectedSubBranch('');
         setSelectedLevel3Branch('');
-        fetchEligibleFathers(gen, '', '', '');
+        setSelectedLevel4Branch('');
+        fetchEligibleFathers(gen, '', '', '', '');
     };
 
     const handleBranchChange = (branch) => {
         setSelectedBranch(branch);
         setSelectedSubBranch('');
         setSelectedLevel3Branch('');
+        setSelectedLevel4Branch('');
         setFormData(prev => ({ ...prev, fatherId: '' }));
-        fetchEligibleFathers(formData.targetGeneration, branch, '', '');
+        fetchEligibleFathers(formData.targetGeneration, branch, '', '', '');
     };
 
     const handleSubBranchChange = (subBranch) => {
         setSelectedSubBranch(subBranch);
         setSelectedLevel3Branch('');
+        setSelectedLevel4Branch('');
         setFormData(prev => ({ ...prev, fatherId: '' }));
-        fetchEligibleFathers(formData.targetGeneration, selectedBranch, subBranch, '');
+        fetchEligibleFathers(formData.targetGeneration, selectedBranch, subBranch, '', '');
     };
 
     const handleLevel3BranchChange = (level3Branch) => {
         setSelectedLevel3Branch(level3Branch);
+        setSelectedLevel4Branch('');
         setFormData(prev => ({ ...prev, fatherId: '' }));
-        fetchEligibleFathers(formData.targetGeneration, selectedBranch, selectedSubBranch, level3Branch);
+        fetchEligibleFathers(formData.targetGeneration, selectedBranch, selectedSubBranch, level3Branch, '');
+    };
+
+    const handleLevel4BranchChange = (level4Branch) => {
+        setSelectedLevel4Branch(level4Branch);
+        setFormData(prev => ({ ...prev, fatherId: '' }));
+        fetchEligibleFathers(formData.targetGeneration, selectedBranch, selectedSubBranch, selectedLevel3Branch, level4Branch);
     };
 
     // Search father by name with debounce
@@ -1042,6 +1059,39 @@ const AdminFamilyTree = () => {
                                                                             </button>
                                                                         ))}
                                                                     </div>
+
+                                                                    {/* Level 4 filter for Zahar - under level 3 */}
+                                                                    {selectedLevel3Branch && level4BranchCounts?.[selectedLevel3Branch]?.length > 0 && (
+                                                                        <div className="mt-1.5 pt-1.5 border-t border-teal-50">
+                                                                            <p className="text-[9px] text-teal-500 mb-1 font-medium">🌱 أبناء {level3BranchCounts[selectedSubBranch]?.find(l => l.id === selectedLevel3Branch)?.name || ''}:</p>
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleLevel4BranchChange('')}
+                                                                                    className={`px-1 py-0.5 text-[9px] rounded-full transition-colors ${selectedLevel4Branch === ''
+                                                                                        ? 'bg-teal-500 text-white'
+                                                                                        : 'bg-teal-50 text-teal-400 hover:bg-teal-100'
+                                                                                        }`}
+                                                                                >
+                                                                                    الكل
+                                                                                </button>
+                                                                                {level4BranchCounts[selectedLevel3Branch].map(lvl4 => (
+                                                                                    <button
+                                                                                        key={lvl4.id}
+                                                                                        type="button"
+                                                                                        onClick={() => handleLevel4BranchChange(lvl4.id)}
+                                                                                        className={`px-1 py-0.5 text-[9px] rounded-full transition-colors flex items-center gap-0.5 ${selectedLevel4Branch === lvl4.id
+                                                                                            ? 'bg-teal-400 text-white'
+                                                                                            : 'bg-teal-50 text-teal-400 hover:bg-teal-100 border border-teal-50'
+                                                                                            }`}
+                                                                                    >
+                                                                                        {lvl4.name}
+                                                                                        <span className="bg-white/20 px-0.5 rounded text-[7px]">{lvl4.count}</span>
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1108,6 +1158,39 @@ const AdminFamilyTree = () => {
                                                                             </button>
                                                                         ))}
                                                                     </div>
+
+                                                                    {/* Level 4 filter for Saleh - under level 3 */}
+                                                                    {selectedLevel3Branch && level4BranchCounts?.[selectedLevel3Branch]?.length > 0 && (
+                                                                        <div className="mt-1.5 pt-1.5 border-t border-amber-50">
+                                                                            <p className="text-[9px] text-amber-500 mb-1 font-medium">🌱 أبناء {level3BranchCounts[selectedSubBranch]?.find(l => l.id === selectedLevel3Branch)?.name || ''}:</p>
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleLevel4BranchChange('')}
+                                                                                    className={`px-1 py-0.5 text-[9px] rounded-full transition-colors ${selectedLevel4Branch === ''
+                                                                                        ? 'bg-amber-500 text-white'
+                                                                                        : 'bg-amber-50 text-amber-400 hover:bg-amber-100'
+                                                                                        }`}
+                                                                                >
+                                                                                    الكل
+                                                                                </button>
+                                                                                {level4BranchCounts[selectedLevel3Branch].map(lvl4 => (
+                                                                                    <button
+                                                                                        key={lvl4.id}
+                                                                                        type="button"
+                                                                                        onClick={() => handleLevel4BranchChange(lvl4.id)}
+                                                                                        className={`px-1 py-0.5 text-[9px] rounded-full transition-colors flex items-center gap-0.5 ${selectedLevel4Branch === lvl4.id
+                                                                                            ? 'bg-amber-400 text-white'
+                                                                                            : 'bg-amber-50 text-amber-400 hover:bg-amber-100 border border-amber-50'
+                                                                                            }`}
+                                                                                    >
+                                                                                        {lvl4.name}
+                                                                                        <span className="bg-white/20 px-0.5 rounded text-[7px]">{lvl4.count}</span>
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1174,6 +1257,39 @@ const AdminFamilyTree = () => {
                                                                             </button>
                                                                         ))}
                                                                     </div>
+
+                                                                    {/* Level 4 filter for Ibrahim - under level 3 */}
+                                                                    {selectedLevel3Branch && level4BranchCounts?.[selectedLevel3Branch]?.length > 0 && (
+                                                                        <div className="mt-1.5 pt-1.5 border-t border-violet-50">
+                                                                            <p className="text-[9px] text-violet-500 mb-1 font-medium">🌱 أبناء {level3BranchCounts[selectedSubBranch]?.find(l => l.id === selectedLevel3Branch)?.name || ''}:</p>
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleLevel4BranchChange('')}
+                                                                                    className={`px-1 py-0.5 text-[9px] rounded-full transition-colors ${selectedLevel4Branch === ''
+                                                                                        ? 'bg-violet-500 text-white'
+                                                                                        : 'bg-violet-50 text-violet-400 hover:bg-violet-100'
+                                                                                        }`}
+                                                                                >
+                                                                                    الكل
+                                                                                </button>
+                                                                                {level4BranchCounts[selectedLevel3Branch].map(lvl4 => (
+                                                                                    <button
+                                                                                        key={lvl4.id}
+                                                                                        type="button"
+                                                                                        onClick={() => handleLevel4BranchChange(lvl4.id)}
+                                                                                        className={`px-1 py-0.5 text-[9px] rounded-full transition-colors flex items-center gap-0.5 ${selectedLevel4Branch === lvl4.id
+                                                                                            ? 'bg-violet-400 text-white'
+                                                                                            : 'bg-violet-50 text-violet-400 hover:bg-violet-100 border border-violet-50'
+                                                                                            }`}
+                                                                                    >
+                                                                                        {lvl4.name}
+                                                                                        <span className="bg-white/20 px-0.5 rounded text-[7px]">{lvl4.count}</span>
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>

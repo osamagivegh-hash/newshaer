@@ -173,12 +173,12 @@ router.get('/tree/:id', async (req, res) => {
 /**
  * @route   GET /api/persons/eligible-fathers
  * @desc    Get eligible fathers for a new person (generation-based filtering)
- * @desc    Supports multi-level branch filtering (main branch, sub-branch, level3)
+ * @desc    Supports multi-level branch filtering (main branch, sub-branch, level3, level4)
  * @access  Public
  */
 router.get('/eligible-fathers', async (req, res) => {
     try {
-        const { generation, excludeId, branch, subBranch, level3Branch } = req.query;
+        const { generation, excludeId, branch, subBranch, level3Branch, level4Branch } = req.query;
 
         let query = { gender: 'male' };
 
@@ -266,6 +266,8 @@ router.get('/eligible-fathers', async (req, res) => {
         const getSubBranchInfo = (personId) => getAncestorInfoAtGeneration(personId, 2);
         const getLevel3Branch = (personId) => getAncestorAtGeneration(personId, 3);
         const getLevel3BranchInfo = (personId) => getAncestorInfoAtGeneration(personId, 3);
+        const getLevel4Branch = (personId) => getAncestorAtGeneration(personId, 4);
+        const getLevel4BranchInfo = (personId) => getAncestorInfoAtGeneration(personId, 4);
 
         // Branch filtering for generations 6+
         if (targetGen >= 6) {
@@ -291,12 +293,21 @@ router.get('/eligible-fathers', async (req, res) => {
                     return fatherLevel3 === level3Branch;
                 });
             }
+
+            // Level 4 branch filtering (generation 4)
+            if (level4Branch) {
+                eligibleFathers = eligibleFathers.filter(father => {
+                    const fatherLevel4 = getLevel4Branch(father._id.toString());
+                    return fatherLevel4 === level4Branch;
+                });
+            }
         }
 
         // Get branch and sub-branch counts for UI (only for gen 6+)
         let branchCounts = null;
         let subBranchCounts = null;
         let level3BranchCounts = null;
+        let level4BranchCounts = null;
 
         if (targetGen >= 6) {
             const allFathersForGen = await Person.find({
@@ -315,6 +326,9 @@ router.get('/eligible-fathers', async (req, res) => {
 
             // Level 3 branch structure (generation 3) - keyed by subBranch id
             const level3BranchData = {};
+
+            // Level 4 branch structure (generation 4) - keyed by level3Branch id
+            const level4BranchData = {};
 
             allFathersForGen.forEach(f => {
                 const b = getMainBranch(f._id.toString());
@@ -340,6 +354,18 @@ router.get('/eligible-fathers', async (req, res) => {
                                 level3BranchData[subInfo.id][level3Info.id] = { name: level3Info.name, count: 0 };
                             }
                             level3BranchData[subInfo.id][level3Info.id].count++;
+
+                            // Count level 4 branches under each level 3 branch
+                            const level4Info = getLevel4BranchInfo(f._id.toString());
+                            if (level4Info) {
+                                if (!level4BranchData[level3Info.id]) {
+                                    level4BranchData[level3Info.id] = {};
+                                }
+                                if (!level4BranchData[level3Info.id][level4Info.id]) {
+                                    level4BranchData[level3Info.id][level4Info.id] = { name: level4Info.name, count: 0 };
+                                }
+                                level4BranchData[level3Info.id][level4Info.id].count++;
+                            }
                         }
                     }
                 }
@@ -373,6 +399,16 @@ router.get('/eligible-fathers', async (req, res) => {
                     count: data.count
                 }));
             });
+
+            // Convert level 4 branch data - organized by level3Branch id
+            level4BranchCounts = {};
+            Object.entries(level4BranchData).forEach(([level3BranchId, level4Data]) => {
+                level4BranchCounts[level3BranchId] = Object.entries(level4Data).map(([id, data]) => ({
+                    id,
+                    name: data.name,
+                    count: data.count
+                }));
+            });
         }
 
         res.json({
@@ -391,6 +427,7 @@ router.get('/eligible-fathers', async (req, res) => {
             branchCounts,
             subBranchCounts,
             level3BranchCounts,
+            level4BranchCounts,
             hasBranchFilter: targetGen >= 6
         });
     } catch (error) {
