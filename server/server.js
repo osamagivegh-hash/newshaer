@@ -143,6 +143,7 @@ app.get('/api/storage/status', (req, res) => {
 // API Routes
 app.use('/api/news', newsRouter);
 app.use('/api/persons', require('./routes/persons'));
+app.use('/api/branches', require('./routes/branches')); // NEW: Safe, scalable branch-based API
 app.use('/api/family-tree-content', require('./routes/familyTreeContent'));
 app.use('/api/dev-team', require('./routes/devTeam'));
 app.use('/api', require('./routes/api'));
