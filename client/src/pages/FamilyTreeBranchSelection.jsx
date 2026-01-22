@@ -7,14 +7,6 @@ const FamilyTreeBranchSelection = () => {
 
     const buttons = [
         {
-            id: 'general',
-            label: 'الشجرة العامة',
-            color: '#007A3D', // Palestine Green
-            icon: '🌳',
-            description: 'عرض شجرة العائلة كاملة بجميع فروعها',
-            path: '/family-tree/visual?branch=general'
-        },
-        {
             id: 'zahar',
             label: 'فرع زهار',
             color: '#0d9488', // Teal
