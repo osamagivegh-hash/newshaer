@@ -380,7 +380,7 @@ const BranchCard = ({
     );
 };
 
-// ============ TREE NODE COMPONENT (Recursive, Lazy) ============
+// ============ TREE NODE COMPONENT (Recursive, Lazy, Mobile-Responsive) ============
 const TreeNode = ({
     node,
     level,
@@ -404,97 +404,109 @@ const TreeNode = ({
 
     // Different colors for each level for visual distinction
     const levelConfigs = [
-        { bg: 'bg-amber-50', border: 'border-amber-400', accent: 'bg-amber-500' },
-        { bg: 'bg-emerald-50', border: 'border-emerald-400', accent: 'bg-emerald-500' },
-        { bg: 'bg-blue-50', border: 'border-blue-400', accent: 'bg-blue-500' },
-        { bg: 'bg-purple-50', border: 'border-purple-400', accent: 'bg-purple-500' },
-        { bg: 'bg-pink-50', border: 'border-pink-400', accent: 'bg-pink-500' },
-        { bg: 'bg-cyan-50', border: 'border-cyan-400', accent: 'bg-cyan-500' },
-        { bg: 'bg-orange-50', border: 'border-orange-400', accent: 'bg-orange-500' },
-        { bg: 'bg-teal-50', border: 'border-teal-400', accent: 'bg-teal-500' },
+        { bg: 'bg-amber-50', border: 'border-amber-400', accent: 'bg-amber-500', borderLine: 'border-amber-300' },
+        { bg: 'bg-emerald-50', border: 'border-emerald-400', accent: 'bg-emerald-500', borderLine: 'border-emerald-300' },
+        { bg: 'bg-blue-50', border: 'border-blue-400', accent: 'bg-blue-500', borderLine: 'border-blue-300' },
+        { bg: 'bg-purple-50', border: 'border-purple-400', accent: 'bg-purple-500', borderLine: 'border-purple-300' },
+        { bg: 'bg-pink-50', border: 'border-pink-400', accent: 'bg-pink-500', borderLine: 'border-pink-300' },
+        { bg: 'bg-cyan-50', border: 'border-cyan-400', accent: 'bg-cyan-500', borderLine: 'border-cyan-300' },
+        { bg: 'bg-orange-50', border: 'border-orange-400', accent: 'bg-orange-500', borderLine: 'border-orange-300' },
+        { bg: 'bg-teal-50', border: 'border-teal-400', accent: 'bg-teal-500', borderLine: 'border-teal-300' },
     ];
 
     const config = levelConfigs[level % levelConfigs.length];
 
+    // Mobile-responsive margin: minimal on mobile, increasing on desktop
+    // Max indent is capped to prevent overflow
+    const desktopMargin = Math.min(level * 16, 80); // Cap at 80px max
+
     return (
         <div className="tree-node-container">
+            {/* Node Card - Mobile-responsive layout */}
             <div
-                className={`flex items-center gap-3 p-4 rounded-xl ${config.bg} border-2 ${config.border} mb-3 hover:shadow-lg transition-all`}
-                style={{ marginRight: `${level * 20}px` }}
+                className={`
+                    flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 
+                    p-3 sm:p-4 rounded-xl ${config.bg} border-2 ${config.border} 
+                    mb-2 sm:mb-3 hover:shadow-lg transition-all
+                `}
+                style={{
+                    marginRight: window.innerWidth < 640 ? `${Math.min(level * 8, 32)}px` : `${desktopMargin}px`
+                }}
             >
-                {/* EXPAND BUTTON - جعله واضح جداً */}
-                {hasChildren && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggle(node._id, true);
-                        }}
-                        className={`
-                            flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white
-                            ${config.accent} hover:brightness-110 active:scale-95
-                            transition-all shadow-md hover:shadow-lg
-                            ${!isExpanded ? 'animate-pulse' : ''}
-                        `}
-                    >
-                        {isLoading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span className="text-sm">جاري التحميل</span>
-                            </>
-                        ) : isExpanded ? (
-                            <>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
-                                </svg>
-                                <span className="text-sm">إغلاق</span>
-                            </>
-                        ) : (
-                            <>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                </svg>
-                                <span className="text-sm">عرض {childrenCount} أبناء</span>
-                            </>
-                        )}
-                    </button>
-                )}
-
-                {/* Person Info - الشخص */}
+                {/* Top row on mobile: Name + Generation */}
                 <div
-                    className="flex-1 cursor-pointer hover:opacity-80"
+                    className="flex-1 cursor-pointer hover:opacity-80 order-1"
                     onClick={() => onPersonClick(node)}
                 >
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-gray-800 text-lg">{node.fullName}</span>
+                        <span className="font-bold text-gray-800 text-base sm:text-lg">{node.fullName}</span>
                         {node.nickname && (
-                            <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-medium">
+                            <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium">
                                 {node.nickname}
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mt-1">
                         <span className="bg-gray-200 px-2 py-0.5 rounded">الجيل {node.generation}</span>
-                        {!hasChildren && (
-                            <span className="text-gray-400 italic">لا يوجد أبناء مسجلين</span>
+                        {hasChildren && !isExpanded && (
+                            <span className="text-gray-500">{childrenCount} أبناء</span>
                         )}
                     </div>
                 </div>
 
-                {/* View Details Button - زر التفاصيل */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onPersonClick(node);
-                    }}
-                    className="text-sm bg-gray-700 text-white px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors font-medium shadow"
-                >
-                    📋 التفاصيل
-                </button>
+                {/* Buttons row - stacked on mobile */}
+                <div className="flex items-center gap-2 order-2 sm:order-3 mt-2 sm:mt-0">
+                    {/* Expand Button */}
+                    {hasChildren && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggle(node._id, true);
+                            }}
+                            className={`
+                                flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 
+                                px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl font-bold text-white text-sm
+                                ${config.accent} hover:brightness-110 active:scale-95
+                                transition-all shadow-md
+                                ${!isExpanded ? 'animate-pulse' : ''}
+                            `}
+                        >
+                            {isLoading ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : isExpanded ? (
+                                <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                                    </svg>
+                                    <span className="hidden sm:inline">إغلاق</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                    <span>{childrenCount}</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {/* Details Button */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPersonClick(node);
+                        }}
+                        className="flex-1 sm:flex-none text-sm bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl hover:bg-gray-800 transition-colors font-medium shadow"
+                    >
+                        📋 <span className="hidden sm:inline">التفاصيل</span>
+                    </button>
+                </div>
             </div>
 
-            {/* Children Container - الأبناء */}
+            {/* Children Container - Less indent on mobile */}
             {showChildren && (
-                <div className="children-container mr-6 border-r-4 border-gray-300 pr-4 mt-2 mb-4">
+                <div className={`children-container mr-2 sm:mr-4 border-r-2 sm:border-r-4 ${config.borderLine} pr-2 sm:pr-4 mt-1 mb-2 sm:mb-4`}>
                     {children.map(child => (
                         <TreeNode
                             key={child._id}
@@ -512,10 +524,10 @@ const TreeNode = ({
 
             {/* Loading indicator when expanding but no children yet */}
             {isExpanded && isLoading && children.length === 0 && (
-                <div className="mr-6 border-r-4 border-gray-300 pr-4 py-4">
-                    <div className="flex items-center gap-3 text-gray-500">
-                        <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                        <span>جاري تحميل الأبناء...</span>
+                <div className={`mr-2 sm:mr-4 border-r-2 sm:border-r-4 ${config.borderLine} pr-2 sm:pr-4 py-3`}>
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                        <span>جاري التحميل...</span>
                     </div>
                 </div>
             )}
