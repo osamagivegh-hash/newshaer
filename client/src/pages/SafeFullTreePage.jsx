@@ -202,9 +202,17 @@ const SafeFullTreePage = () => {
         });
     };
 
-    // Handle search
-    const handleSearch = useCallback(async (query) => {
+    // Debounce timer ref
+    const searchTimerRef = useRef(null);
+
+    // Handle search with debounce
+    const handleSearch = useCallback((query) => {
         setSearchQuery(query);
+
+        // Clear previous timer
+        if (searchTimerRef.current) {
+            clearTimeout(searchTimerRef.current);
+        }
 
         if (!query || query.trim().length < 2) {
             setSearchResults([]);
@@ -212,19 +220,25 @@ const SafeFullTreePage = () => {
             return;
         }
 
-        setIsSearching(true);
         setShowSearchResults(true);
 
-        try {
-            const result = await searchPersons(query, 30);
-            if (result.success) {
-                setSearchResults(result.data);
+        // Debounce: wait 500ms after user stops typing
+        searchTimerRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            console.log('[Frontend Search] Sending query:', query);
+
+            try {
+                const result = await searchPersons(query.trim(), 30);
+                console.log('[Frontend Search] Results:', result);
+                if (result.success) {
+                    setSearchResults(result.data);
+                }
+            } catch (err) {
+                console.error('Search error:', err);
+            } finally {
+                setIsSearching(false);
             }
-        } catch (err) {
-            console.error('Search error:', err);
-        } finally {
-            setIsSearching(false);
-        }
+        }, 500);
     }, []);
 
     // Clear search

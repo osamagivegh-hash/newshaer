@@ -368,6 +368,10 @@ router.get('/search', async (req, res) => {
         // Split the search query into parts (names)
         const nameParts = searchQuery.split(/\s+/).filter(part => part.length > 0);
 
+        console.log('[Search] Query:', searchQuery);
+        console.log('[Search] Name parts:', nameParts);
+        console.log('[Search] Search type:', nameParts.length > 1 ? 'LINEAGE' : 'SIMPLE');
+
         let results = [];
 
         if (nameParts.length === 1) {
