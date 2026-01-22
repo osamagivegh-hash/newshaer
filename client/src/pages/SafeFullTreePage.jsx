@@ -183,8 +183,8 @@ const SafeFullTreePage = () => {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F9F0]">
                 <div className="w-16 h-16 border-4 border-[#558B2F] border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-[#5D4037] font-bold text-lg">جاري تحميل بيانات الفروع...</p>
-                <p className="text-gray-500 text-sm mt-2">يتم تحميل البيانات بطريقة آمنة وتدريجية</p>
+                <p className="text-[#5D4037] font-bold text-lg">جاري تحميل الشجرة...</p>
+                <p className="text-gray-500 text-sm mt-2">الرجاء الانتظار</p>
             </div>
         );
     }
@@ -219,8 +219,8 @@ const SafeFullTreePage = () => {
                             </svg>
                         </Link>
                         <div>
-                            <h1 className="font-bold text-xl">الشجرة الكاملة (عرض آمن)</h1>
-                            <p className="text-xs text-green-100 opacity-80">استعراض جميع الفروع بشكل تدريجي</p>
+                            <h1 className="font-bold text-xl">الشجرة الكاملة</h1>
+                            <p className="text-xs text-green-100 opacity-80">استعراض جميع فروع العائلة</p>
                         </div>
                     </div>
 
@@ -288,7 +288,7 @@ const SafeFullTreePage = () => {
             {/* Info Footer */}
             <div className="bg-gray-100 border-t border-gray-200 p-4 mt-8">
                 <div className="max-w-7xl mx-auto text-center text-sm text-gray-600">
-                    <p>💡 <strong>تلميح:</strong> اضغط على أي فرع لاستعراض أفراده. يتم تحميل البيانات تدريجياً لضمان الاستقرار.</p>
+                    <p>💡 <strong>تلميح:</strong> اضغط على أي فرع لاستعراض أفراده.</p>
                 </div>
             </div>
         </div>

@@ -83,7 +83,7 @@ const FamilyTreeGateway = () => {
             label: 'الشجرة الكاملة',
             color: '#6B21A8',
             icon: '🌲',
-            description: 'استعراض جميع الأفراد بشكل آمن وتدريجي',
+            description: 'استعراض جميع فروع العائلة',
             path: '/family-tree/safe-full-tree'
         },
         {
