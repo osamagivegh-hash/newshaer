@@ -36,6 +36,7 @@ import ZaharBranchSelection from './pages/ZaharBranchSelection'
 import SalehBranchSelection from './pages/SalehBranchSelection'
 import SalmanBranchSelection from './pages/SalmanBranchSelection'
 import DevTeamPage from './pages/DevTeamPage'
+import PersonLineagePage from './pages/PersonLineagePage'
 
 // CMS Admin Components
 import AdminLogin from './components/admin/AdminLogin'
@@ -93,6 +94,7 @@ function App() {
                   <Route path="/family-tree/organic-olive" element={<OrganicOliveTreePage />} />
                   <Route path="/family-tree/full-organic-olive" element={<FullOrganicTreePage />} />
                   <Route path="/family-tree/safe-full-tree" element={<SafeFullTreePage />} />
+                  <Route path="/family-tree/lineage/:personId" element={<PersonLineagePage />} />
                   <Route path="/family-tree/dev-team" element={<DevTeamPage />} />
                   {/* Legacy route - redirects to gateway */}
                   <Route path="/family-tree-old" element={<FamilyTreePage />} />

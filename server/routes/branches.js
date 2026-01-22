@@ -400,6 +400,69 @@ router.get('/search', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/branches/lineage/:personId
+ * @desc    Get full lineage of a person (from person to root)
+ * @access  Public
+ */
+router.get('/lineage/:personId', async (req, res) => {
+    try {
+        const { personId } = req.params;
+
+        // Validate personId
+        if (!mongoose.Types.ObjectId.isValid(personId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'معرف الشخص غير صالح'
+            });
+        }
+
+        // Get the person
+        const person = await Person.findById(personId)
+            .select('_id fullName nickname generation fatherId birthDate deathDate isAlive occupation')
+            .lean();
+
+        if (!person) {
+            return res.status(404).json({
+                success: false,
+                error: 'الشخص غير موجود'
+            });
+        }
+
+        // Build lineage from person to root
+        const lineage = [person];
+        let currentId = person.fatherId;
+        const visited = new Set([personId.toString()]);
+
+        while (currentId && !visited.has(currentId.toString())) {
+            visited.add(currentId.toString());
+            const ancestor = await Person.findById(currentId)
+                .select('_id fullName nickname generation fatherId birthDate deathDate isAlive occupation')
+                .lean();
+
+            if (!ancestor) break;
+
+            lineage.push(ancestor);
+            currentId = ancestor.fatherId;
+        }
+
+        res.json({
+            success: true,
+            person,
+            lineage,
+            totalGenerations: lineage.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching lineage:', error);
+        res.status(500).json({
+            success: false,
+            error: 'خطأ في جلب النسب',
+            message: error.message
+        });
+    }
+});
+
+/**
  * Get ancestors path for a person (from root to parent)
  */
 async function getAncestorsPath(personId) {

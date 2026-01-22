@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchBranches, fetchBranchTree, fetchNodeChildren, fetchBranchStats, searchPersons } from '../utils/branchApi';
 import { PersonModal } from '../components/FamilyTree';
 
@@ -32,6 +32,8 @@ const useIsMobile = () => {
 };
 
 const SafeFullTreePage = () => {
+    const navigate = useNavigate();
+
     // State
     const [branches, setBranches] = useState([]);
     const [rootInfo, setRootInfo] = useState(null);
@@ -345,8 +347,8 @@ const SafeFullTreePage = () => {
                                             key={person._id}
                                             className="p-4 hover:bg-white cursor-pointer transition-colors"
                                             onClick={() => {
-                                                handlePersonClick(person);
                                                 clearSearch();
+                                                navigate(`/family-tree/lineage/${person._id}`);
                                             }}
                                         >
                                             <div className="flex items-center justify-between gap-3">
@@ -362,7 +364,7 @@ const SafeFullTreePage = () => {
                                                     <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">
                                                         الجيل {person.generation}
                                                     </span>
-                                                    <span className="text-gray-400">←</span>
+                                                    <span className="text-green-600 font-bold">عرض النسب ←</span>
                                                 </div>
                                             </div>
                                         </div>
