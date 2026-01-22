@@ -15,7 +15,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchBranches, fetchBranchTree, fetchNodeChildren, fetchBranchStats } from '../utils/branchApi';
+import { fetchBranches, fetchBranchTree, fetchNodeChildren, fetchBranchStats, searchPersons } from '../utils/branchApi';
 import { PersonModal } from '../components/FamilyTree';
 
 // Custom hook to detect mobile devices
@@ -54,6 +54,12 @@ const SafeFullTreePage = () => {
 
     // Scroll container ref for virtualization
     const scrollContainerRef = useRef(null);
+
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
 
     // Detect mobile device
     const isMobile = useIsMobile();
@@ -194,6 +200,38 @@ const SafeFullTreePage = () => {
         });
     };
 
+    // Handle search
+    const handleSearch = useCallback(async (query) => {
+        setSearchQuery(query);
+
+        if (!query || query.trim().length < 2) {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
+
+        setIsSearching(true);
+        setShowSearchResults(true);
+
+        try {
+            const result = await searchPersons(query, 30);
+            if (result.success) {
+                setSearchResults(result.data);
+            }
+        } catch (err) {
+            console.error('Search error:', err);
+        } finally {
+            setIsSearching(false);
+        }
+    }, []);
+
+    // Clear search
+    const clearSearch = () => {
+        setSearchQuery('');
+        setSearchResults([]);
+        setShowSearchResults(false);
+    };
+
     // Loading state
     if (loading) {
         return (
@@ -264,6 +302,77 @@ const SafeFullTreePage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Search Section */}
+            <div className="bg-white border-b shadow-sm sticky top-16 z-10">
+                <div className="max-w-7xl mx-auto p-4">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            placeholder="🔍 ابحث عن اسم (مثال: محمد أحمد علي)"
+                            className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-gray-300 focus:border-green-500 focus:outline-none text-right transition-colors"
+                            dir="rtl"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={clearSearch}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                            >
+                                ✕
+                            </button>
+                        )}
+                        {isSearching && (
+                            <div className="absolute left-10 top-1/2 -translate-y-1/2">
+                                <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Search Results */}
+                    {showSearchResults && (
+                        <div className="mt-4 bg-gray-50 rounded-xl border border-gray-200 max-h-96 overflow-y-auto">
+                            {searchResults.length === 0 && !isSearching ? (
+                                <div className="p-6 text-center text-gray-500">
+                                    <div className="text-3xl mb-2">🔍</div>
+                                    <p>لم يتم العثور على نتائج</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-200">
+                                    {searchResults.map((person) => (
+                                        <div
+                                            key={person._id}
+                                            className="p-4 hover:bg-white cursor-pointer transition-colors"
+                                            onClick={() => {
+                                                handlePersonClick(person);
+                                                clearSearch();
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-bold text-gray-800">{person.fullName}</div>
+                                                    {person.ancestorsPath && (
+                                                        <div className="text-xs text-gray-400 mt-1 truncate">
+                                                            📍 {person.ancestorsPath}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">
+                                                        الجيل {person.generation}
+                                                    </span>
+                                                    <span className="text-gray-400">←</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* Main Content - Branch List */}
             <div className="max-w-7xl mx-auto p-4" ref={scrollContainerRef}>

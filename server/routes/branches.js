@@ -337,6 +337,97 @@ router.get('/stats/overview', async (req, res) => {
     }
 });
 
+/**
+ * @route   GET /api/branches/search
+ * @desc    Search for persons by name (supports partial matching)
+ * @access  Public
+ * 
+ * Query params:
+ * - q: Search query (required, min 2 characters)
+ * - limit: Max results (default: 20, max: 50)
+ */
+router.get('/search', async (req, res) => {
+    try {
+        const { q, limit = 20 } = req.query;
+
+        // Validate query
+        if (!q || q.trim().length < 2) {
+            return res.status(400).json({
+                success: false,
+                error: 'يرجى إدخال حرفين على الأقل للبحث'
+            });
+        }
+
+        const searchQuery = q.trim();
+        const safeLimit = Math.min(Math.max(1, parseInt(limit) || 20), 50);
+
+        // Search using regex for partial matching (Arabic-friendly)
+        const results = await Person.find({
+            fullName: { $regex: searchQuery, $options: 'i' }
+        })
+            .select('_id fullName nickname generation fatherId birthDate isAlive')
+            .sort({ generation: 1, fullName: 1 })
+            .limit(safeLimit)
+            .lean();
+
+        // Get ancestors path for each result
+        const resultsWithPath = await Promise.all(
+            results.map(async (person) => {
+                const ancestors = await getAncestorsPath(person._id);
+                return {
+                    ...person,
+                    ancestorsPath: ancestors.map(a => a.fullName).join(' > '),
+                    ancestorIds: ancestors.map(a => a._id)
+                };
+            })
+        );
+
+        res.json({
+            success: true,
+            data: resultsWithPath,
+            query: searchQuery,
+            total: resultsWithPath.length
+        });
+
+    } catch (error) {
+        console.error('Error searching:', error);
+        res.status(500).json({
+            success: false,
+            error: 'خطأ في البحث',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Get ancestors path for a person (from root to parent)
+ */
+async function getAncestorsPath(personId) {
+    const ancestors = [];
+    let currentId = personId;
+    const visited = new Set();
+
+    // First get the person to find their father
+    const person = await Person.findById(currentId).select('fatherId').lean();
+    if (!person || !person.fatherId) return ancestors;
+
+    currentId = person.fatherId;
+
+    while (currentId && !visited.has(currentId.toString())) {
+        visited.add(currentId.toString());
+        const ancestor = await Person.findById(currentId)
+            .select('_id fullName fatherId')
+            .lean();
+
+        if (!ancestor) break;
+
+        ancestors.unshift(ancestor); // Add to beginning
+        currentId = ancestor.fatherId;
+    }
+
+    return ancestors;
+}
+
 // ============ HELPER FUNCTIONS ============
 
 /**

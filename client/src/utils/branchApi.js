@@ -131,11 +131,34 @@ export const buildTreeFromMembers = (members, rootId) => {
     return root;
 };
 
+/**
+ * Search for persons by name
+ * @param {string} query - Search query (min 2 characters)
+ * @param {number} limit - Max results (default: 20)
+ * @returns {Promise<{ success: boolean, data: Array, total: number }>}
+ */
+export const searchPersons = async (query, limit = 20) => {
+    if (!query || query.trim().length < 2) {
+        return { success: true, data: [], total: 0 };
+    }
+
+    const params = new URLSearchParams();
+    params.append('q', query.trim());
+    params.append('limit', limit.toString());
+
+    const response = await fetch(`${API_URL}/api/branches/search?${params}`);
+    if (!response.ok) {
+        throw new Error('Failed to search');
+    }
+    return response.json();
+};
+
 export default {
     fetchBranches,
     fetchBranchMembers,
     fetchBranchTree,
     fetchNodeChildren,
     fetchBranchStats,
-    buildTreeFromMembers
+    buildTreeFromMembers,
+    searchPersons
 };
