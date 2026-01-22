@@ -178,6 +178,14 @@ export const MobileFamilyTreeSection = () => {
             path: '/family-tree/organic-olive'
         },
         {
+            id: 'safe-full-tree',
+            label: 'الشجرة الكاملة',
+            color: '#6B21A8',
+            icon: '🌲',
+            description: 'استعراض جميع الأفراد بشكل آمن وتدريجي',
+            path: '/family-tree/safe-full-tree'
+        },
+        {
             id: 'devTeam',
             label: 'فريق التطوير',
             color: '#0d9488',
