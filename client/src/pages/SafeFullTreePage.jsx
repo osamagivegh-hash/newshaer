@@ -551,7 +551,7 @@ const DesktopTreeNode = ({
     );
 };
 
-// ============ MOBILE TREE NODE (Simple vertical list, no indentation) ============
+// ============ MOBILE TREE NODE (Zero indentation - all cards full width) ============
 const MobileTreeNode = ({
     node,
     level,
@@ -572,32 +572,40 @@ const MobileTreeNode = ({
 
     const showChildren = isExpanded && children.length > 0;
 
-    // Simple color based on level
+    // Different border colors for each level
     const levelColors = [
-        'border-l-amber-500 bg-amber-50',
-        'border-l-emerald-500 bg-emerald-50',
-        'border-l-blue-500 bg-blue-50',
-        'border-l-purple-500 bg-purple-50',
-        'border-l-pink-500 bg-pink-50',
-        'border-l-cyan-500 bg-cyan-50',
+        'border-l-amber-500',
+        'border-l-emerald-500',
+        'border-l-blue-500',
+        'border-l-purple-500',
+        'border-l-pink-500',
+        'border-l-cyan-500',
+        'border-l-orange-500',
+        'border-l-teal-500',
     ];
 
-    const colorClass = levelColors[level % levelColors.length];
+    const borderColor = levelColors[level % levelColors.length];
 
     return (
-        <div className="mobile-tree-node">
-            {/* Simple Card - No horizontal indentation */}
-            <div className={`p-3 mb-2 rounded-lg border-l-4 ${colorClass} shadow-sm`}>
-                {/* Header: Name + Expand */}
+        <>
+            {/* Card - Full width, no margin/padding that causes narrowing */}
+            <div className={`p-3 mb-1.5 bg-white rounded-lg border-r-4 ${borderColor} shadow-sm`}>
                 <div className="flex items-center justify-between gap-2">
+                    {/* Person Info */}
                     <div
                         className="flex-1 min-w-0"
                         onClick={() => onPersonClick(node)}
                     >
-                        <div className="font-bold text-gray-800 truncate">{node.fullName}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                            <span className="bg-gray-200 px-1.5 py-0.5 rounded">جيل {node.generation}</span>
-                            {hasChildren && <span>{childrenCount} أبناء</span>}
+                        <div className="font-bold text-gray-800 text-sm leading-tight">
+                            {node.fullName}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-1">
+                            <span className={`px-1.5 py-0.5 rounded text-white text-[10px] font-bold ${borderColor.replace('border-l-', 'bg-')}`}>
+                                جيل {node.generation}
+                            </span>
+                            {hasChildren && (
+                                <span className="text-gray-400">• {childrenCount} أبناء</span>
+                            )}
                         </div>
                     </div>
 
@@ -610,17 +618,17 @@ const MobileTreeNode = ({
                                     onToggle(node._id, true);
                                 }}
                                 className={`
-                                    w-10 h-10 flex items-center justify-center rounded-full
-                                    ${isExpanded ? 'bg-gray-600' : 'bg-green-600'} text-white
-                                    active:scale-95 transition-transform
+                                    w-9 h-9 flex items-center justify-center rounded-full
+                                    ${isExpanded ? 'bg-gray-500' : 'bg-green-600'} text-white
+                                    active:scale-95 transition-all text-xs font-bold
                                 `}
                             >
                                 {isLoading ? (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : isExpanded ? (
+                                    <span>▲</span>
                                 ) : (
-                                    <svg className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
+                                    <span>{childrenCount}</span>
                                 )}
                             </button>
                         )}
@@ -629,7 +637,7 @@ const MobileTreeNode = ({
                                 e.stopPropagation();
                                 onPersonClick(node);
                             }}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-white active:scale-95 transition-transform"
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-700 text-white active:scale-95 transition-all text-sm"
                         >
                             📋
                         </button>
@@ -637,34 +645,28 @@ const MobileTreeNode = ({
                 </div>
             </div>
 
-            {/* Children - Slightly indented with colored border */}
-            {showChildren && (
-                <div className="mr-3 pr-3 border-r-2 border-gray-300 mb-2">
-                    {children.map(child => (
-                        <MobileTreeNode
-                            key={child._id}
-                            node={child}
-                            level={level + 1}
-                            expandedNodes={expandedNodes}
-                            nodeChildren={nodeChildren}
-                            loadingNodes={loadingNodes}
-                            onToggle={onToggle}
-                            onPersonClick={onPersonClick}
-                        />
-                    ))}
-                </div>
-            )}
+            {/* Children - NO indentation, just render sequentially */}
+            {showChildren && children.map(child => (
+                <MobileTreeNode
+                    key={child._id}
+                    node={child}
+                    level={level + 1}
+                    expandedNodes={expandedNodes}
+                    nodeChildren={nodeChildren}
+                    loadingNodes={loadingNodes}
+                    onToggle={onToggle}
+                    onPersonClick={onPersonClick}
+                />
+            ))}
 
             {/* Loading */}
             {isExpanded && isLoading && children.length === 0 && (
-                <div className="mr-3 pr-3 border-r-2 border-gray-300 py-3">
-                    <div className="flex items-center gap-2 text-gray-500 text-sm">
-                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                        <span>جاري التحميل...</span>
-                    </div>
+                <div className="p-3 mb-1.5 bg-gray-100 rounded-lg flex items-center gap-2 text-gray-500 text-sm">
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span>جاري التحميل...</span>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 
