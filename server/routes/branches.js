@@ -339,8 +339,12 @@ router.get('/stats/overview', async (req, res) => {
 
 /**
  * @route   GET /api/branches/search
- * @desc    Search for persons by name (supports partial matching)
+ * @desc    Smart search for persons by name chain (person > father > grandfather)
  * @access  Public
+ * 
+ * Search understands Arabic naming convention:
+ * - "محمد عيسى" = Find persons named "محمد" whose father is named "عيسى"
+ * - "أسامة محمد موسى" = Find "أسامة" son of "محمد" son of "موسى"
  * 
  * Query params:
  * - q: Search query (required, min 2 characters)
@@ -361,14 +365,46 @@ router.get('/search', async (req, res) => {
         const searchQuery = q.trim();
         const safeLimit = Math.min(Math.max(1, parseInt(limit) || 20), 50);
 
-        // Search using regex for partial matching (Arabic-friendly)
-        const results = await Person.find({
-            fullName: { $regex: searchQuery, $options: 'i' }
-        })
-            .select('_id fullName nickname generation fatherId birthDate isAlive')
-            .sort({ generation: 1, fullName: 1 })
-            .limit(safeLimit)
-            .lean();
+        // Split the search query into parts (names)
+        const nameParts = searchQuery.split(/\s+/).filter(part => part.length > 0);
+
+        let results = [];
+
+        if (nameParts.length === 1) {
+            // Single name: search by first name only
+            const firstName = nameParts[0];
+            results = await Person.find({
+                fullName: { $regex: `^${escapeRegex(firstName)}`, $options: 'i' }
+            })
+                .select('_id fullName nickname generation fatherId birthDate isAlive')
+                .sort({ generation: 1, fullName: 1 })
+                .limit(safeLimit * 2) // Get more to filter later
+                .lean();
+
+        } else {
+            // Multiple names: search by lineage chain
+            // First name = person's name, second = father's name, etc.
+            const personFirstName = nameParts[0];
+
+            // Find all persons whose first name matches
+            const candidates = await Person.find({
+                fullName: { $regex: `^${escapeRegex(personFirstName)}`, $options: 'i' }
+            })
+                .select('_id fullName nickname generation fatherId birthDate isAlive')
+                .lean();
+
+            // Filter candidates by checking their ancestry chain
+            for (const person of candidates) {
+                const isMatch = await checkAncestryChain(person, nameParts.slice(1));
+                if (isMatch) {
+                    results.push(person);
+                    if (results.length >= safeLimit) break;
+                }
+            }
+        }
+
+        // Limit results
+        results = results.slice(0, safeLimit);
 
         // Get ancestors path for each result
         const resultsWithPath = await Promise.all(
@@ -376,7 +412,7 @@ router.get('/search', async (req, res) => {
                 const ancestors = await getAncestorsPath(person._id);
                 return {
                     ...person,
-                    ancestorsPath: ancestors.map(a => a.fullName).join(' > '),
+                    ancestorsPath: ancestors.map(a => a.fullName.split(' ')[0]).join(' > '),
                     ancestorIds: ancestors.map(a => a._id)
                 };
             })
@@ -386,7 +422,8 @@ router.get('/search', async (req, res) => {
             success: true,
             data: resultsWithPath,
             query: searchQuery,
-            total: resultsWithPath.length
+            total: resultsWithPath.length,
+            searchType: nameParts.length > 1 ? 'lineage' : 'simple'
         });
 
     } catch (error) {
@@ -398,6 +435,45 @@ router.get('/search', async (req, res) => {
         });
     }
 });
+
+/**
+ * Check if a person's ancestry chain matches the given name parts
+ * @param {Object} person - The person to check
+ * @param {Array} namePartsToMatch - Array of ancestor names to match [father, grandfather, ...]
+ * @returns {boolean} - True if all ancestors match
+ */
+async function checkAncestryChain(person, namePartsToMatch) {
+    if (namePartsToMatch.length === 0) return true;
+
+    let currentId = person.fatherId;
+
+    for (const expectedName of namePartsToMatch) {
+        if (!currentId) return false;
+
+        const ancestor = await Person.findById(currentId)
+            .select('fullName fatherId')
+            .lean();
+
+        if (!ancestor) return false;
+
+        // Check if ancestor's first name matches
+        const ancestorFirstName = ancestor.fullName.split(' ')[0];
+        if (!ancestorFirstName.toLowerCase().startsWith(expectedName.toLowerCase())) {
+            return false;
+        }
+
+        currentId = ancestor.fatherId;
+    }
+
+    return true;
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * @route   GET /api/branches/lineage/:personId
