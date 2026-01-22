@@ -208,8 +208,18 @@ const FamilyTreeGateway = () => {
                     ))}
                 </div>
 
+                {/* Notice for Full Tree */}
+                <div className="mt-8 bg-purple-100 border border-purple-300 rounded-xl px-6 py-4 max-w-xl mx-auto text-center shadow-md">
+                    <div className="flex items-center justify-center gap-2 text-purple-800">
+                        <span className="text-xl">💻</span>
+                        <p className="font-bold text-sm md:text-base">
+                            للحصول على نتائج عرض أفضل للشجرة الكاملة، يُرجى استخدام الكمبيوتر أو اللابتوب
+                        </p>
+                    </div>
+                </div>
+
                 {/* Decorative Elements */}
-                <div className="mt-20 flex items-center gap-4 text-gray-400">
+                <div className="mt-12 flex items-center gap-4 text-gray-400">
                     <div className="h-px w-16 bg-gray-300"></div>
                     <span className="text-sm">تراث العائلة</span>
                     <div className="h-px w-16 bg-gray-300"></div>
