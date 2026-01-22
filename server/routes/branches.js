@@ -17,7 +17,7 @@ const router = express.Router();
 // Constants for safe pagination
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
-const MAX_DEPTH = 3; // Maximum depth for single-request tree building
+const MAX_DEPTH = 10; // Maximum depth for single-request tree building
 
 /**
  * @route   GET /api/branches
@@ -202,7 +202,7 @@ router.get('/:branchId/members', async (req, res) => {
 router.get('/:branchId/tree', async (req, res) => {
     try {
         const { branchId } = req.params;
-        const { depth = 2 } = req.query;
+        const { depth = 3 } = req.query;
 
         // Validate branchId
         if (!mongoose.Types.ObjectId.isValid(branchId)) {
