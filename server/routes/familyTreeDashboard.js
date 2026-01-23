@@ -95,13 +95,132 @@ router.get('/stats', authenticateFTToken, async (req, res) => {
  */
 router.get('/persons', authenticateFTToken, requireFTPermission('manage-members'), async (req, res) => {
     try {
-        const persons = await Person.find({})
-            .populate('fatherId', 'fullName generation')
-            .sort({ generation: 1, order: 1 });
+        const { search, generation } = req.query;
+        let query = {};
+
+        // Handle Generation Filter
+        if (generation && generation !== '0' && generation !== '') {
+            query.generation = parseInt(generation);
+        }
+
+        // 1. No Search - Standard List
+        if (!search || !search.trim()) {
+            const persons = await Person.find(query)
+                .populate('fatherId', 'fullName generation')
+                .sort({ generation: 1, order: 1 });
+
+            return res.json({
+                success: true,
+                data: persons
+            });
+        }
+
+        // 2. Search Logic
+        const searchQuery = search.trim();
+        const nameParts = searchQuery.split(/\s+/).filter(part => part.length > 0);
+        let results = [];
+
+        if (nameParts.length === 1) {
+            // Single name search
+            query.fullName = { $regex: new RegExp(escapeRegex(nameParts[0]), 'i') };
+            results = await Person.find(query)
+                .populate('fatherId', 'fullName generation')
+                .sort({ generation: 1, order: 1 });
+        } else {
+            // Multi-part name search (Person > Father > Grandfather)
+            // Use aggregation to match the chain
+            const pipeline = [];
+
+            // 1. Match Person Name
+            pipeline.push({
+                $match: {
+                    fullName: { $regex: `^${escapeRegex(nameParts[0])}`, $options: 'i' },
+                    ...query // Apply generation filter if enabled
+                }
+            });
+
+            // 2. Lookup Father
+            pipeline.push(
+                {
+                    $lookup: {
+                        from: 'persons',
+                        localField: 'fatherId',
+                        foreignField: '_id',
+                        as: 'father'
+                    }
+                },
+                { $unwind: { path: '$father', preserveNullAndEmptyArrays: true } }
+            );
+
+            // 3. Match Father Name (if 2+ parts)
+            if (nameParts.length >= 2) {
+                pipeline.push({
+                    $match: {
+                        'father.fullName': { $regex: `^${escapeRegex(nameParts[1])}`, $options: 'i' }
+                    }
+                });
+            }
+
+            // 4. Lookup Grandfather (if 3+ parts)
+            if (nameParts.length >= 3) {
+                pipeline.push(
+                    {
+                        $lookup: {
+                            from: 'persons',
+                            localField: 'father.fatherId',
+                            foreignField: '_id',
+                            as: 'grandfather'
+                        }
+                    },
+                    { $unwind: { path: '$grandfather', preserveNullAndEmptyArrays: true } },
+                    {
+                        $match: {
+                            'grandfather.fullName': { $regex: `^${escapeRegex(nameParts[2])}`, $options: 'i' }
+                        }
+                    }
+                );
+            }
+
+            // 5. Project to match frontend expected structure
+            // Frontend expects: { _id, fullName, fatherId: { fullName, generation }, ... }
+            pipeline.push({
+                $project: {
+                    _id: 1,
+                    fullName: 1,
+                    nickname: 1,
+                    generation: 1,
+                    gender: 1,
+                    birthDate: 1,
+                    deathDate: 1,
+                    isAlive: 1,
+                    birthPlace: 1,
+                    currentResidence: 1,
+                    occupation: 1,
+                    biography: 1,
+                    notes: 1,
+                    siblingOrder: 1,
+                    order: 1,
+                    createdBy: 1,
+                    createdAt: 1,
+                    lastModifiedBy: 1,
+                    fatherId: {
+                        _id: '$father._id',
+                        fullName: '$father.fullName',
+                        generation: '$father.generation'
+                    },
+                    isRoot: 1
+                }
+            });
+
+            // 6. Sort
+            pipeline.push({ $sort: { generation: 1, order: 1 } });
+
+            results = await Person.aggregate(pipeline);
+        }
 
         res.json({
             success: true,
-            data: persons
+            data: results
         });
     } catch (error) {
         console.error('[FT-DASHBOARD] Get persons error:', error);
@@ -543,3 +662,8 @@ router.get('/audit-logs', authenticateFTToken, requireFTSuperAdmin, async (req, 
 });
 
 module.exports = router;
+
+// Helper: Escape regex special characters
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
