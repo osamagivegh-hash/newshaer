@@ -368,54 +368,140 @@ router.get('/search', async (req, res) => {
         // Split the search query into parts (names)
         const nameParts = searchQuery.split(/\s+/).filter(part => part.length > 0);
 
-        console.log('[Search] Query:', searchQuery);
-        console.log('[Search] Name parts:', nameParts);
-        console.log('[Search] Search type:', nameParts.length > 1 ? 'LINEAGE' : 'SIMPLE');
+        const startTime = Date.now();
+        console.log('[Search] Query:', searchQuery, '| Parts:', nameParts.length);
 
         let results = [];
 
         if (nameParts.length === 1) {
-            // Single name: search by first name only
-            const firstName = nameParts[0];
+            // Single name: simple search
             results = await Person.find({
-                fullName: { $regex: `^${escapeRegex(firstName)}`, $options: 'i' }
+                fullName: { $regex: `^${escapeRegex(nameParts[0])}`, $options: 'i' }
             })
                 .select('_id fullName nickname generation fatherId birthDate isAlive')
-                .sort({ generation: 1, fullName: 1 })
-                .limit(safeLimit * 2) // Get more to filter later
+                .sort({ generation: 1 })
+                .limit(safeLimit)
                 .lean();
 
-        } else {
-            // Multiple names: search by lineage chain
-            // First name = person's name, second = father's name, etc.
-            const personFirstName = nameParts[0];
+        } else if (nameParts.length === 2) {
+            // Two names: person + father - Use aggregation with single $lookup
+            const [personName, fatherName] = nameParts;
 
-            // Find all persons whose first name matches
-            const candidates = await Person.find({
-                fullName: { $regex: `^${escapeRegex(personFirstName)}`, $options: 'i' }
-            })
-                .select('_id fullName nickname generation fatherId birthDate isAlive')
-                .lean();
+            results = await Person.aggregate([
+                // Match persons by first name
+                { $match: { fullName: { $regex: `^${escapeRegex(personName)}`, $options: 'i' } } },
+                // Join with father
+                {
+                    $lookup: {
+                        from: 'persons',
+                        localField: 'fatherId',
+                        foreignField: '_id',
+                        as: 'father'
+                    }
+                },
+                { $unwind: { path: '$father', preserveNullAndEmptyArrays: false } },
+                // Filter by father's name
+                { $match: { 'father.fullName': { $regex: `^${escapeRegex(fatherName)}`, $options: 'i' } } },
+                // Project needed fields
+                {
+                    $project: {
+                        _id: 1,
+                        fullName: 1,
+                        nickname: 1,
+                        generation: 1,
+                        fatherId: 1,
+                        birthDate: 1,
+                        isAlive: 1,
+                        fatherName: '$father.fullName'
+                    }
+                },
+                { $sort: { generation: 1 } },
+                { $limit: safeLimit }
+            ]);
 
-            // Filter candidates by checking their ancestry chain
-            for (const person of candidates) {
-                const isMatch = await checkAncestryChain(person, nameParts.slice(1));
-                if (isMatch) {
-                    results.push(person);
-                    if (results.length >= safeLimit) break;
+        } else if (nameParts.length >= 3) {
+            // Three+ names: person + father + grandfather - Use double $lookup
+            const [personName, fatherName, grandfatherName] = nameParts;
+
+            results = await Person.aggregate([
+                // Match persons by first name
+                { $match: { fullName: { $regex: `^${escapeRegex(personName)}`, $options: 'i' } } },
+                // Join with father
+                {
+                    $lookup: {
+                        from: 'persons',
+                        localField: 'fatherId',
+                        foreignField: '_id',
+                        as: 'father'
+                    }
+                },
+                { $unwind: { path: '$father', preserveNullAndEmptyArrays: false } },
+                // Filter by father's name
+                { $match: { 'father.fullName': { $regex: `^${escapeRegex(fatherName)}`, $options: 'i' } } },
+                // Join with grandfather
+                {
+                    $lookup: {
+                        from: 'persons',
+                        localField: 'father.fatherId',
+                        foreignField: '_id',
+                        as: 'grandfather'
+                    }
+                },
+                { $unwind: { path: '$grandfather', preserveNullAndEmptyArrays: false } },
+                // Filter by grandfather's name
+                { $match: { 'grandfather.fullName': { $regex: `^${escapeRegex(grandfatherName)}`, $options: 'i' } } },
+                // If 4+ names, we need to check more ancestors (use slower method for remaining)
+                // Project needed fields
+                {
+                    $project: {
+                        _id: 1,
+                        fullName: 1,
+                        nickname: 1,
+                        generation: 1,
+                        fatherId: 1,
+                        birthDate: 1,
+                        isAlive: 1,
+                        fatherName: '$father.fullName',
+                        grandfatherName: '$grandfather.fullName'
+                    }
+                },
+                { $sort: { generation: 1 } },
+                { $limit: safeLimit * 2 }
+            ]);
+
+            // If 4+ names, filter further
+            if (nameParts.length > 3) {
+                const additionalNames = nameParts.slice(3);
+                const filteredResults = [];
+                for (const person of results) {
+                    const isMatch = await checkAncestryChainFromGrandfather(person.fatherId, additionalNames);
+                    if (isMatch) {
+                        filteredResults.push(person);
+                        if (filteredResults.length >= safeLimit) break;
+                    }
                 }
+                results = filteredResults;
             }
         }
 
         // Limit results
         results = results.slice(0, safeLimit);
 
-        // Get ancestors path for each result
+        const searchTime = Date.now() - startTime;
+        console.log('[Search] Found', results.length, 'results in', searchTime, 'ms');
+
+        // Get ancestors path for each result (in parallel)
         const resultsWithPath = await Promise.all(
             results.map(async (person) => {
                 const ancestors = await getAncestorsPath(person._id);
                 return {
-                    ...person,
+                    _id: person._id,
+                    fullName: person.fullName,
+                    nickname: person.nickname,
+                    generation: person.generation,
+                    fatherId: person.fatherId,
+                    birthDate: person.birthDate,
+                    isAlive: person.isAlive,
                     ancestorsPath: ancestors.map(a => a.fullName.split(' ')[0]).join(' > '),
                     ancestorIds: ancestors.map(a => a._id)
                 };
@@ -427,7 +513,8 @@ router.get('/search', async (req, res) => {
             data: resultsWithPath,
             query: searchQuery,
             total: resultsWithPath.length,
-            searchType: nameParts.length > 1 ? 'lineage' : 'simple'
+            searchType: nameParts.length > 1 ? 'lineage' : 'simple',
+            searchTimeMs: searchTime
         });
 
     } catch (error) {
@@ -461,6 +548,43 @@ async function checkAncestryChain(person, namePartsToMatch) {
         if (!ancestor) return false;
 
         // Check if ancestor's first name matches
+        const ancestorFirstName = ancestor.fullName.split(' ')[0];
+        if (!ancestorFirstName.toLowerCase().startsWith(expectedName.toLowerCase())) {
+            return false;
+        }
+
+        currentId = ancestor.fatherId;
+    }
+
+    return true;
+}
+
+/**
+ * Check ancestry chain starting from a given ancestor ID (for 4+ name searches)
+ * @param {ObjectId} fatherId - Start checking from this person's father
+ * @param {Array} namePartsToMatch - Names to match starting from great-grandfather
+ * @returns {boolean}
+ */
+async function checkAncestryChainFromGrandfather(fatherId, namePartsToMatch) {
+    if (namePartsToMatch.length === 0) return true;
+    if (!fatherId) return false;
+
+    // First get the grandfather
+    const father = await Person.findById(fatherId).select('fatherId').lean();
+    if (!father || !father.fatherId) return false;
+
+    // Now check from grandfather onwards
+    let currentId = father.fatherId;
+
+    for (const expectedName of namePartsToMatch) {
+        if (!currentId) return false;
+
+        const ancestor = await Person.findById(currentId)
+            .select('fullName fatherId')
+            .lean();
+
+        if (!ancestor) return false;
+
         const ancestorFirstName = ancestor.fullName.split(' ')[0];
         if (!ancestorFirstName.toLowerCase().startsWith(expectedName.toLowerCase())) {
             return false;
