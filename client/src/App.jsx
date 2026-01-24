@@ -20,6 +20,7 @@ import NewsDetail from './components/NewsDetail'
 import NotFound from './components/common/NotFound'
 import ScrollToTop from './components/common/ScrollToTop'
 import ArchivePage from './pages/Archive'
+import NewsPage from './pages/NewsPage'
 import FamilyTreePage from './pages/FamilyTreePage'
 
 // Family Tree Section Pages
@@ -80,6 +81,7 @@ function App() {
                   {/* Public Routes - Uses Responsive Layout Wrapper */}
                   <Route path="/" element={<ResponsiveLayoutWrapper />} />
                   <Route path="/archive" element={<ArchivePage />} />
+                  <Route path="/news" element={<NewsPage />} />
 
                   {/* Family Tree Section Routes */}
                   <Route path="/family-tree" element={<FamilyTreeGateway />} />
