@@ -198,6 +198,13 @@ app.get('/api/storage/status', (req, res) => {
   }
 });
 
+// !!! TEMPORARY: Intentional Error for Testing Logs !!!
+app.get('/api/force-error', (req, res) => {
+  console.error("⚠️ Triggering intentional error for testing...");
+  // This simulation represents a critical database failure or logic crash
+  throw new Error("تجربة: فشل حرج في الاتصال بقاعدة البيانات (خطأ متعمد)");
+});
+
 // API Routes
 app.use('/api/news', newsRouter);
 app.use('/api/persons', require('./routes/persons'));
