@@ -59,6 +59,24 @@ const botBlocker = (req, res, next) => {
 // Apply bot blocker as first middleware
 app.use(botBlocker);
 
+// ============================================================
+// LOG ANALYZER INTEGRATION (OPTIONAL / SAFE MODE)
+// Safely import and use the log adapter if available
+// ============================================================
+try {
+  const logAdapter = require('./utils/logAnalyzerAdapter');
+  // Log all API requests (skip static files and health checks)
+  app.use(logAdapter.middleware({
+    logLevel: 'info',
+    skipPaths: ['/api/health', '/uploads', '/static', '/favicon.ico']
+  }));
+  console.log('Log Analyzer integration enabled');
+} catch (e) {
+  // Silently fail if adapter is missing - do not break the app
+  console.warn('Log Analyzer adapter not found or failed to load (running in safe mode)');
+}
+
+
 // Connect to MongoDB Atlas
 connectDB().then(async () => {
   // Initialize CMS admin user after DB connection
