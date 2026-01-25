@@ -88,6 +88,57 @@ router.get('/stats', authenticateFTToken, async (req, res) => {
     }
 });
 
+/**
+ * Get latest 50 additions to the family tree
+ * Shows full lineage for each person
+ */
+router.get('/latest-additions', authenticateFTToken, async (req, res) => {
+    try {
+        const { buildFullLineage } = require('../utils/arabicNormalizer');
+
+        // Fetch last 50 persons sorted by creation date (newest first)
+        const latestPersons = await Person.find()
+            .sort({ createdAt: -1 })
+            .limit(50)
+            .select('fullName fatherId createdBy createdAt updatedAt')
+            .lean();
+
+        // Build rich payload with full lineage
+        const results = await Promise.all(latestPersons.map(async (person) => {
+            // Get ancestors chain for full name construction
+            const ancestors = await Person.getAncestors(person._id);
+
+            // Combine person + ancestors for full lineage
+            const fullLineageChain = [person, ...ancestors];
+
+            // Build full name string (adds 'Al-Shaer' automatically)
+            let fullName = '';
+            try {
+                fullName = buildFullLineage(fullLineageChain, ' بن ');
+            } catch (e) {
+                fullName = fullLineageChain.map(p => p.fullName.split(' ')[0]).join(' بن ') + ' الشاعر';
+            }
+
+            return {
+                id: person._id,
+                shortName: person.fullName,
+                fullName: fullName,
+                createdBy: person.createdBy || 'System',
+                createdAt: person.createdAt,
+                updatedAt: person.updatedAt
+            };
+        }));
+
+        res.json({
+            success: true,
+            data: results
+        });
+    } catch (error) {
+        console.error('[FT-DASHBOARD] Latest additions error:', error);
+        res.status(500).json({ success: false, message: 'خطأ في جلب آخر الإضافات' });
+    }
+});
+
 // ==================== PERSON MANAGEMENT ====================
 
 /**

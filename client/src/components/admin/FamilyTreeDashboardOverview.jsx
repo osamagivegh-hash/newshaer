@@ -13,19 +13,27 @@ import toast from 'react-hot-toast'
 const FamilyTreeDashboardOverview = () => {
     const { isFTSuperAdmin } = useFamilyTreeAuth()
     const [stats, setStats] = useState(null)
+    const [latestAdditions, setLatestAdditions] = useState([])
     const [loading, setLoading] = useState(true)
     const [creatingBackup, setCreatingBackup] = useState(false)
     const navigate = useNavigate()
 
     useEffect(() => {
-        fetchStats()
+        fetchData()
     }, [])
 
-    const fetchStats = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true)
-            const response = await familyTreeDashboardApi.getStats()
-            setStats(response.data)
+
+            // Fetch stats and latest additions in parallel
+            const [statsResponse, additionsResponse] = await Promise.all([
+                familyTreeDashboardApi.getStats(),
+                familyTreeDashboardApi.getLatestAdditions().catch(() => ({ data: [] }))
+            ])
+
+            setStats(statsResponse.data)
+            setLatestAdditions(additionsResponse.data || [])
         } catch (error) {
             toast.error(error.message)
         } finally {
@@ -257,6 +265,64 @@ const FamilyTreeDashboardOverview = () => {
                                 <p className="text-2xl font-bold text-emerald-600">{gen.count}</p>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Latest 50 Additions Table */}
+            {latestAdditions.length > 0 && (
+                <div className="bg-white rounded-xl shadow-lg border border-emerald-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <span>📝</span>
+                            آخر 50 إضافة لشجرة العائلة
+                        </h2>
+                        <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs">
+                            بأثر رجعي
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-right">
+                            <thead className="bg-gray-50 text-gray-700 border-b border-gray-200">
+                                <tr>
+                                    <th className="px-4 py-3 font-semibold text-sm">الاسم</th>
+                                    <th className="px-4 py-3 font-semibold text-sm">النسب الكامل إلى الشاعر</th>
+                                    <th className="px-4 py-3 font-semibold text-sm">أضيف بواسطة</th>
+                                    <th className="px-4 py-3 font-semibold text-sm">التاريخ</th>
+                                    <th className="px-4 py-3 font-semibold text-sm">الوقت</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {latestAdditions.map((person) => (
+                                    <tr key={person.id} className="hover:bg-emerald-50/50 transition-colors">
+                                        <td className="px-4 py-3 font-bold text-gray-800 text-sm whitespace-nowrap">
+                                            {person.shortName}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600 text-xs leading-relaxed">
+                                            {person.fullName}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${person.createdBy === 'System'
+                                                    ? 'bg-gray-100 text-gray-600'
+                                                    : 'bg-emerald-100 text-emerald-800'
+                                                }`}>
+                                                {person.createdBy}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600 text-sm font-medium whitespace-nowrap">
+                                            {new Date(person.createdAt).toLocaleDateString('ar-SA')}
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-500 text-sm font-mono whitespace-nowrap" dir="ltr">
+                                            {new Date(person.createdAt).toLocaleTimeString('en-US', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: true
+                                            })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}

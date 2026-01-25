@@ -71,6 +71,16 @@ export const familyTreeDashboardApi = {
         }
     },
 
+    // Get Latest 50 Additions
+    getLatestAdditions: async () => {
+        try {
+            const response = await ftApi.get('/api/dashboard/family-tree/latest-additions')
+            return response.data
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'خطأ في جلب آخر الإضافات')
+        }
+    },
+
     // Get All Persons
     getPersons: async (search = '', generation = '') => {
         try {

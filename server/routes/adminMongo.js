@@ -113,54 +113,6 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
-// Latest additions to Family Tree (Last 50)
-router.get('/metrics/latest-additions', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const Person = require('../models/Person');
-    const { buildFullLineage } = require('../utils/arabicNormalizer');
-
-    // Fetch last 50 persons sorted by creation date (newest first)
-    const latestPersons = await Person.find()
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .select('fullName fatherId createdBy createdAt updatedAt') // Optimize selection
-      .lean();
-
-    // Build rich payload with full lineage
-    const results = await Promise.all(latestPersons.map(async (person) => {
-      // Get ancestors chain for full name construction
-      const ancestors = await Person.getAncestors(person._id);
-
-      // Combine person + ancestors for full lineage
-      const fullLineageChain = [person, ...ancestors];
-
-      // Build full name string using the utility (adds 'Al-Shaer' automatically)
-      // If utility fails or returns empty, fallback to simple join
-      let fullName = '';
-      try {
-        fullName = buildFullLineage(fullLineageChain, ' بن ');
-      } catch (e) {
-        fullName = fullLineageChain.map(p => p.fullName.split(' ')[0]).join(' بن ') + ' الشاعر';
-      }
-
-      return {
-        id: person._id,
-        shortName: person.fullName, // The name as entered
-        fullName: fullName,         // The calculated full lineage
-        createdBy: person.createdBy || 'System',
-        createdAt: person.createdAt,
-        timeAgo: person.createdAt,   // Frontend can process this
-        updatedAt: person.updatedAt
-      };
-    }));
-
-    res.json(normalizeDocument(results));
-  } catch (error) {
-    console.error('Latest additions error:', error);
-    res.status(500).json({ message: 'خطأ في جلب آخر الإضافات' });
-  }
-});
-
 // Generic CRUD operations for MongoDB collections
 const createCRUDRoutes = (sectionName, Model) => {
   const mongoose = require('mongoose');

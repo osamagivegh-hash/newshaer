@@ -106,15 +106,6 @@ export const adminDashboard = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'خطأ في جلب الإحصائيات')
     }
-  },
-
-  getLatestAdditions: async () => {
-    try {
-      const response = await adminApi.get('/metrics/latest-additions')
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'خطأ في جلب آخر الإضافات')
-    }
   }
 }
 
