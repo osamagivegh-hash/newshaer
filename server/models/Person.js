@@ -237,10 +237,26 @@ personSchema.statics.getFullTree = async function () {
   return root;
 };
 
-// Static method to build nested tree structure (OPTIMIZED - single query)
-personSchema.statics.buildTree = async function (personId = null) {
-  // Fetch ALL persons in a single query - MUCH faster than recursive queries
-  const allPersons = await this.find({}).lean();
+// Static method to build nested tree structure (OPTIMIZED - single query + projection)
+personSchema.statics.buildTree = async function (personId = null, fullDetails = false) {
+  // MEMORY OPTIMIZATION: Only fetch essential fields for tree visualization
+  // Full details can be fetched on-demand for individual person modal
+  const projection = fullDetails ? {} : {
+    _id: 1,
+    fullName: 1,
+    nickname: 1,
+    fatherId: 1,
+    generation: 1,
+    gender: 1,
+    isAlive: 1,
+    isRoot: 1,
+    siblingOrder: 1,
+    birthDate: 1,
+    deathDate: 1
+  };
+
+  // Fetch persons with projection - reduces memory significantly
+  const allPersons = await this.find({}).select(projection).lean();
 
   if (allPersons.length === 0) return null;
 

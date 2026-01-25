@@ -20,6 +20,45 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ============================================================
+// TRUST PROXY - Required for Render/Heroku deployment
+// Must be set BEFORE any rate-limiting middleware
+// ============================================================
+app.set('trust proxy', 1);
+
+// ============================================================
+// BOT & SCAN BLOCKER - Drop common attack/scan requests early
+// This saves CPU cycles by rejecting these requests immediately
+// ============================================================
+const botBlocker = (req, res, next) => {
+  const blockedPaths = [
+    '/wp-admin', '/wp-login', '/wp-content', '/wp-includes',
+    '/wordpress', '/phpmyadmin', '/pma', '/admin.php',
+    '/.env', '/.git', '/.htaccess', '/config.php',
+    '/xmlrpc.php', '/eval-stdin.php', '/shell',
+    '/cgi-bin', '/.well-known/security.txt'
+  ];
+
+  const blockedExtensions = ['.php', '.asp', '.aspx', '.jsp', '.cgi'];
+
+  const requestPath = req.path.toLowerCase();
+
+  // Check blocked paths
+  if (blockedPaths.some(blocked => requestPath.startsWith(blocked))) {
+    return res.status(404).send('Not Found');
+  }
+
+  // Check blocked extensions
+  if (blockedExtensions.some(ext => requestPath.endsWith(ext))) {
+    return res.status(404).send('Not Found');
+  }
+
+  next();
+};
+
+// Apply bot blocker as first middleware
+app.use(botBlocker);
+
 // Connect to MongoDB Atlas
 connectDB().then(async () => {
   // Initialize CMS admin user after DB connection
@@ -32,13 +71,14 @@ connectDB().then(async () => {
   startBackupScheduler();
 
   // Pre-warm the family tree cache for instant first load
+  // Using memory-efficient mode
   await treeCache.warmUp();
 });
 
 // General rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // limit each IP to 500 requests per windowMs (reduced from 2000)
+  max: 500, // limit each IP to 500 requests per windowMs
   message: { success: false, message: 'تم تجاوز الحد المسموح من الطلبات، حاول مرة أخرى لاحقاً' },
   standardHeaders: true,
   legacyHeaders: false

@@ -37,9 +37,8 @@ const adminSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Admin Indexes
-adminSchema.index({ username: 1 });
-adminSchema.index({ email: 1 });
+// Admin Indexes - Note: unique:true already creates indexes for username/email
+// Only add additional indexes for query performance
 adminSchema.index({ role: 1 });
 
 const NEWS_CATEGORIES = ['General', 'Obituaries', 'Events', 'Celebrations', 'Other'];

@@ -127,8 +127,8 @@ const familyTreeAdminSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
-familyTreeAdminSchema.index({ username: 1 });
-familyTreeAdminSchema.index({ email: 1 });
+// Note: unique:true on username/email already creates indexes
+// Only add additional indexes for query patterns
 familyTreeAdminSchema.index({ role: 1 });
 familyTreeAdminSchema.index({ isActive: 1 });
 
