@@ -7,6 +7,7 @@ import LoadingSpinner from '../LoadingSpinner'
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null)
+  const [latestAdditions, setLatestAdditions] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { user } = useAdmin()
@@ -24,10 +25,23 @@ const AdminDashboard = () => {
   const isFullAdmin = user?.role === 'super-admin' || user?.role === 'admin';
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const data = await adminDashboard.getStats()
-        setStats(data)
+        setLoading(true)
+
+        // Parallel requests
+        const promises = [adminDashboard.getStats()]
+
+        // Fetch latest additions only for full admins
+        if (isFullAdmin) {
+          promises.push(adminDashboard.getLatestAdditions().catch(() => []))
+        }
+
+        const [statsData, additionsData] = await Promise.all(promises)
+
+        setStats(statsData)
+        if (additionsData) setLatestAdditions(additionsData)
+
       } catch (error) {
         toast.error(error.message)
       } finally {
@@ -35,8 +49,8 @@ const AdminDashboard = () => {
       }
     }
 
-    fetchStats()
-  }, [])
+    if (user) fetchData()
+  }, [user, isFullAdmin])
 
   // All possible stat cards with their required permissions
   const allStatCards = [
@@ -333,6 +347,58 @@ const AdminDashboard = () => {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Latest Additions Table - Only for Admins */}
+      {isFullAdmin && latestAdditions.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-8 border border-emerald-100">
+          <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-4 flex justify-between items-center">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <span>🌳</span>
+              <span>آخر 50 إضافة لشجرة العائلة</span>
+            </h3>
+            <span className="bg-emerald-500/30 text-white px-3 py-1 rounded-full text-xs">
+              بأثر رجعي
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-right">
+              <thead className="bg-gray-50 text-gray-700 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 font-semibold text-sm">الاسم</th>
+                  <th className="px-6 py-3 font-semibold text-sm">النسب الكامل إلى المؤسس</th>
+                  <th className="px-6 py-3 font-semibold text-sm">أضيف بواسطة</th>
+                  <th className="px-6 py-3 font-semibold text-sm">التاريخ</th>
+                  <th className="px-6 py-3 font-semibold text-sm">الوقت</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {latestAdditions.map((person) => (
+                  <tr key={person.id} className="hover:bg-emerald-50/50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-gray-800 text-sm">
+                      {person.shortName}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 text-xs leading-relaxed max-w-md">
+                      {person.fullName}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${person.createdBy === 'System' ? 'bg-gray-100 text-gray-600' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                        {person.createdBy}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 text-sm font-medium">
+                      {new Date(person.createdAt).toLocaleDateString('ar-SA')}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500 text-sm font-mono" dir="ltr text-right">
+                      {new Date(person.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
