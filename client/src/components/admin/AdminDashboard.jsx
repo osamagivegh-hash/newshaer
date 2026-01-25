@@ -29,20 +29,41 @@ const AdminDashboard = () => {
       try {
         setLoading(true)
 
+        console.log('[DEBUG] User:', user);
+        console.log('[DEBUG] isFullAdmin:', isFullAdmin);
+
         // Parallel requests
         const promises = [adminDashboard.getStats()]
 
         // Fetch latest additions only for full admins
         if (isFullAdmin) {
-          promises.push(adminDashboard.getLatestAdditions().catch(() => []))
+          console.log('[DEBUG] Fetching latest additions...');
+          promises.push(
+            adminDashboard.getLatestAdditions()
+              .then(data => {
+                console.log('[DEBUG] Latest additions data:', data);
+                return data;
+              })
+              .catch(err => {
+                console.error('[DEBUG] Latest additions error:', err);
+                return [];
+              })
+          )
         }
 
         const [statsData, additionsData] = await Promise.all(promises)
 
+        console.log('[DEBUG] Stats:', statsData);
+        console.log('[DEBUG] Additions:', additionsData);
+
         setStats(statsData)
-        if (additionsData) setLatestAdditions(additionsData)
+        if (additionsData) {
+          console.log('[DEBUG] Setting latestAdditions with', additionsData.length, 'items');
+          setLatestAdditions(additionsData)
+        }
 
       } catch (error) {
+        console.error('[DEBUG] Fetch error:', error);
         toast.error(error.message)
       } finally {
         setLoading(false)
