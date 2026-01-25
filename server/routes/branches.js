@@ -11,6 +11,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Person = require('../models/Person');
+const { createArabicSearchPattern, formatAncestorsPath, arabicStartsWith } = require('../utils/arabicNormalizer');
 
 const router = express.Router();
 
@@ -374,9 +375,10 @@ router.get('/search', async (req, res) => {
         let results = [];
 
         if (nameParts.length === 1) {
-            // Single name: simple search
+            // Single name: simple search with Arabic normalization
+            const searchPattern = createArabicSearchPattern(nameParts[0]);
             results = await Person.find({
-                fullName: { $regex: `^${escapeRegex(nameParts[0])}`, $options: 'i' }
+                fullName: { $regex: `^${searchPattern}`, $options: 'i' }
             })
                 .select('_id fullName nickname generation fatherId birthDate isAlive')
                 .sort({ generation: 1 })
@@ -387,9 +389,11 @@ router.get('/search', async (req, res) => {
             // Two names: person + father - Use aggregation with single $lookup
             const [personName, fatherName] = nameParts;
 
+            const personPattern = createArabicSearchPattern(personName);
+            const fatherPattern = createArabicSearchPattern(fatherName);
             results = await Person.aggregate([
-                // Match persons by first name
-                { $match: { fullName: { $regex: `^${escapeRegex(personName)}`, $options: 'i' } } },
+                // Match persons by first name (with Arabic normalization)
+                { $match: { fullName: { $regex: `^${personPattern}`, $options: 'i' } } },
                 // Join with father
                 {
                     $lookup: {
@@ -400,8 +404,8 @@ router.get('/search', async (req, res) => {
                     }
                 },
                 { $unwind: { path: '$father', preserveNullAndEmptyArrays: false } },
-                // Filter by father's name
-                { $match: { 'father.fullName': { $regex: `^${escapeRegex(fatherName)}`, $options: 'i' } } },
+                // Filter by father's name (with Arabic normalization)
+                { $match: { 'father.fullName': { $regex: `^${fatherPattern}`, $options: 'i' } } },
                 // Project needed fields
                 {
                     $project: {
@@ -423,9 +427,12 @@ router.get('/search', async (req, res) => {
             // Three+ names: person + father + grandfather - Use double $lookup
             const [personName, fatherName, grandfatherName] = nameParts;
 
+            const personPattern3 = createArabicSearchPattern(personName);
+            const fatherPattern3 = createArabicSearchPattern(fatherName);
+            const gfPattern = createArabicSearchPattern(grandfatherName);
             results = await Person.aggregate([
-                // Match persons by first name
-                { $match: { fullName: { $regex: `^${escapeRegex(personName)}`, $options: 'i' } } },
+                // Match persons by first name (with Arabic normalization)
+                { $match: { fullName: { $regex: `^${personPattern3}`, $options: 'i' } } },
                 // Join with father
                 {
                     $lookup: {
@@ -436,8 +443,8 @@ router.get('/search', async (req, res) => {
                     }
                 },
                 { $unwind: { path: '$father', preserveNullAndEmptyArrays: false } },
-                // Filter by father's name
-                { $match: { 'father.fullName': { $regex: `^${escapeRegex(fatherName)}`, $options: 'i' } } },
+                // Filter by father's name (with Arabic normalization)
+                { $match: { 'father.fullName': { $regex: `^${fatherPattern3}`, $options: 'i' } } },
                 // Join with grandfather
                 {
                     $lookup: {
@@ -448,8 +455,8 @@ router.get('/search', async (req, res) => {
                     }
                 },
                 { $unwind: { path: '$grandfather', preserveNullAndEmptyArrays: false } },
-                // Filter by grandfather's name
-                { $match: { 'grandfather.fullName': { $regex: `^${escapeRegex(grandfatherName)}`, $options: 'i' } } },
+                // Filter by grandfather's name (with Arabic normalization)
+                { $match: { 'grandfather.fullName': { $regex: `^${gfPattern}`, $options: 'i' } } },
                 // If 4+ names, we need to check more ancestors (use slower method for remaining)
                 // Project needed fields
                 {
@@ -502,7 +509,7 @@ router.get('/search', async (req, res) => {
                     fatherId: person.fatherId,
                     birthDate: person.birthDate,
                     isAlive: person.isAlive,
-                    ancestorsPath: ancestors.map(a => a.fullName.split(' ')[0]).join(' > '),
+                    ancestorsPath: formatAncestorsPath(ancestors, ' > '),
                     ancestorIds: ancestors.map(a => a._id)
                 };
             })
@@ -547,9 +554,9 @@ async function checkAncestryChain(person, namePartsToMatch) {
 
         if (!ancestor) return false;
 
-        // Check if ancestor's first name matches
+        // Check if ancestor's first name matches (using Arabic normalization)
         const ancestorFirstName = ancestor.fullName.split(' ')[0];
-        if (!ancestorFirstName.toLowerCase().startsWith(expectedName.toLowerCase())) {
+        if (!arabicStartsWith(ancestorFirstName, expectedName)) {
             return false;
         }
 
@@ -585,8 +592,9 @@ async function checkAncestryChainFromGrandfather(fatherId, namePartsToMatch) {
 
         if (!ancestor) return false;
 
+        // Use Arabic normalization for matching
         const ancestorFirstName = ancestor.fullName.split(' ')[0];
-        if (!ancestorFirstName.toLowerCase().startsWith(expectedName.toLowerCase())) {
+        if (!arabicStartsWith(ancestorFirstName, expectedName)) {
             return false;
         }
 
