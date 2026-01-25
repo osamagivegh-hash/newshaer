@@ -657,6 +657,16 @@ router.get('/lineage/:personId', async (req, res) => {
             currentId = ancestor.fatherId;
         }
 
+        // Append "Al-Shaer" as the final ancestor/root
+        // This ensures the frontend displays "... bin Al-Shaer" at the end of the chain
+        lineage.push({
+            _id: 'ALSHAER_ROOT', // Virtual ID
+            fullName: 'الشاعر',
+            nickname: 'الجد المؤسس',
+            generation: 0,
+            isAlive: false
+        });
+
         res.json({
             success: true,
             person,
