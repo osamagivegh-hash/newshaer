@@ -146,15 +146,18 @@ class TreeCache {
 
     /**
      * Build a memory-efficient tree structure
-     * Only includes essential fields needed for tree visualization
+     * Only includes essential fields needed for tree visualization + PersonModal
      */
     buildLightweightTree(allPersons) {
         if (!allPersons || allPersons.length === 0) return null;
 
-        // Essential fields only - reduces memory by ~70%
+        // Essential fields for tree visualization + PersonModal display
+        // Removed only: contact, verification, profileImage (rarely used), timestamps
         const essentialFields = [
             '_id', 'fullName', 'nickname', 'fatherId', 'generation',
-            'gender', 'isAlive', 'isRoot', 'siblingOrder', 'birthDate', 'deathDate'
+            'gender', 'isAlive', 'isRoot', 'siblingOrder', 'birthDate', 'deathDate',
+            // Additional fields for PersonModal
+            'birthPlace', 'currentResidence', 'occupation', 'biography', 'notes'
         ];
 
         // Create a map with only essential data
@@ -216,9 +219,9 @@ class TreeCache {
             // Import Person model here to avoid circular dependency
             const Person = require('../models/Person');
 
-            // Fetch only essential fields from database
+            // Fetch essential fields + PersonModal fields from database
             const allPersons = await Person.find({}).select(
-                '_id fullName nickname fatherId generation gender isAlive isRoot siblingOrder birthDate deathDate'
+                '_id fullName nickname fatherId generation gender isAlive isRoot siblingOrder birthDate deathDate birthPlace currentResidence occupation biography notes'
             ).lean();
 
             if (allPersons.length === 0) {

@@ -239,8 +239,9 @@ personSchema.statics.getFullTree = async function () {
 
 // Static method to build nested tree structure (OPTIMIZED - single query + projection)
 personSchema.statics.buildTree = async function (personId = null, fullDetails = false) {
-  // MEMORY OPTIMIZATION: Only fetch essential fields for tree visualization
-  // Full details can be fetched on-demand for individual person modal
+  // MEMORY OPTIMIZATION: Fetch only necessary fields
+  // For tree visualization + PersonModal display
+  // Removed only: contact, verification, profile image (rarely used), timestamps
   const projection = fullDetails ? {} : {
     _id: 1,
     fullName: 1,
@@ -252,7 +253,13 @@ personSchema.statics.buildTree = async function (personId = null, fullDetails = 
     isRoot: 1,
     siblingOrder: 1,
     birthDate: 1,
-    deathDate: 1
+    deathDate: 1,
+    // Additional fields needed for PersonModal
+    birthPlace: 1,
+    currentResidence: 1,
+    occupation: 1,
+    biography: 1,
+    notes: 1
   };
 
   // Fetch persons with projection - reduces memory significantly
