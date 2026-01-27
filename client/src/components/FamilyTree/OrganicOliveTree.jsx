@@ -30,9 +30,19 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             if (!data || Object.keys(data).length === 0) return null;
 
             // 1. Hierarchy & Sort
-            // Sort by children length to balance the tree visually
+            // Sort by siblingOrder to match the order entered in the form
+            // This ensures siblings appear in the same order as in Lineage Tree
             const root = d3.hierarchy(data)
-                .sort((a, b) => (b.height - a.height) || (a.data.fullName || "").localeCompare(b.data.fullName || ""));
+                .sort((a, b) => {
+                    // First, sort by siblingOrder (the order entered in the form)
+                    const orderA = a.data.siblingOrder || 0;
+                    const orderB = b.data.siblingOrder || 0;
+                    if (orderA !== orderB) {
+                        return orderA - orderB;
+                    }
+                    // If siblingOrder is the same, fall back to fullName for consistent ordering
+                    return (a.data.fullName || "").localeCompare(b.data.fullName || "");
+                });
 
             // 2. Count Leaves (Weight)
             root.count();

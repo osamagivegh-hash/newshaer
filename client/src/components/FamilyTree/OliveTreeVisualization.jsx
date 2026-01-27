@@ -75,7 +75,18 @@ const OliveTreeVisualization = ({ data, onNodeClick, className = '', style = {} 
         svg.call(zoom);
 
         // Hierarchical Layout
-        const root = d3.hierarchy(data);
+        // Sort by siblingOrder to match the order entered in the form
+        const root = d3.hierarchy(data)
+            .sort((a, b) => {
+                // First, sort by siblingOrder (the order entered in the form)
+                const orderA = a.data.siblingOrder || 0;
+                const orderB = b.data.siblingOrder || 0;
+                if (orderA !== orderB) {
+                    return orderA - orderB;
+                }
+                // If siblingOrder is the same, fall back to fullName for consistent ordering
+                return (a.data.fullName || "").localeCompare(b.data.fullName || "");
+            });
         const nodeCount = root.descendants().length;
 
         // Dynamic sizing based on tree size
