@@ -1,21 +1,99 @@
 /**
- * شجرة العائلة - إصدار "غصن الزيتون" - دائري كامل 360 درجة
- * Organic Olive Branch - Full 360 Radial Layout
+ * شجرة العائلة - إصدار "غصن الزيتون" - نسخة محسّنة لمنع التداخل
+ * Organic Olive Branch - Enhanced Version with Anti-Overlap Algorithm
+ * 
+ * التحسينات:
+ * 1. خوارزمية متقدمة لمنع تداخل الأوراق
+ * 2. تمييز الآباء حتى الجيل الخامس بألوان وأحجام مختلفة
+ * 3. مسافات ديناميكية تتكيف مع حجم الفرع
+ * 4. عرض تدريجي للتفاصيل حسب مستوى التكبير
  */
 
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 
-// ==================== CONFIGURATION ====================
+// ==================== ENHANCED COLOR SCHEME ====================
 const COLORS = {
     bg: '#F9F9F0',
-    trunk: '#3E2723', // Darker brown
-    branch: '#5D4037', // Dark brown
-    leafFill: '#2E7D32', // Vibrant green
-    leafStroke: '#1B5E20',
-    text: '#FFFFFF',
+    trunk: '#3E2723',
+    branch: '#5D4037',
+    branchLight: '#8D6E63',
+
+    // Patriarch colors by depth (generations 1-5)
+    patriarch: {
+        1: { fill: '#B8860B', stroke: '#8B6914', text: '#FFFFFF', glow: 'rgba(184, 134, 11, 0.6)' },  // Dark Gold
+        2: { fill: '#8B4513', stroke: '#5D3A1A', text: '#FFD700', glow: 'rgba(139, 69, 19, 0.5)' },   // Saddle Brown
+        3: { fill: '#2E7D32', stroke: '#1B5E20', text: '#FFFFFF', glow: 'rgba(46, 125, 50, 0.5)' },   // Forest Green
+        4: { fill: '#1565C0', stroke: '#0D47A1', text: '#FFFFFF', glow: 'rgba(21, 101, 192, 0.5)' },  // Blue
+        5: { fill: '#6A1B9A', stroke: '#4A148C', text: '#FFFFFF', glow: 'rgba(106, 27, 154, 0.5)' }   // Purple
+    },
+
+    // Regular leaves
+    leaf: {
+        fill: '#4CAF50',
+        stroke: '#2E7D32',
+        text: '#FFFFFF'
+    },
+
+    // Leaf without children (final generation)
+    leafFinal: {
+        fill: '#81C784',
+        stroke: '#4CAF50',
+        text: '#1B5E20'
+    },
+
     gold: '#FFD700',
     rootText: '#FFFFFF'
+};
+
+// ==================== ENHANCED CONFIGURATION ====================
+const CONFIG = {
+    // Dynamic separation based on tree size
+    getConfig: (totalNodes, leafCount, maxDepth) => {
+        const isSmall = totalNodes < 50;
+        const isMedium = totalNodes >= 50 && totalNodes < 150;
+        const isLarge = totalNodes >= 150 && totalNodes < 300;
+        const isVeryLarge = totalNodes >= 300;
+
+        // Base multipliers
+        let separationMultiplier = 1;
+        let radiusMultiplier = 1;
+
+        if (isVeryLarge) {
+            separationMultiplier = 2.5;
+            radiusMultiplier = 1.8;
+        } else if (isLarge) {
+            separationMultiplier = 2.0;
+            radiusMultiplier = 1.5;
+        } else if (isMedium) {
+            separationMultiplier = 1.5;
+            radiusMultiplier = 1.2;
+        }
+
+        return {
+            // Separation between siblings
+            SIBLING_SEPARATION: 4 * separationMultiplier,
+            COUSIN_SEPARATION: 8 * separationMultiplier,
+
+            // Radial distances
+            GENERATION_BASE_DISTANCE: 150 * radiusMultiplier,
+            GENERATION_STEP: 120 * radiusMultiplier,
+            GENERATION_EXTRA_PADDING: 40 * radiusMultiplier,
+
+            // Extra padding for crowded areas
+            MANY_SIBLINGS_THRESHOLD: 4,
+            MANY_SIBLINGS_MULTIPLIER: 1.8,
+            CROWDED_PARENT_MULTIPLIER: 2.0,
+
+            // Deep generation bonuses
+            DEEP_GENERATION_BONUS: 30 * radiusMultiplier,
+            FINAL_GENERATION_BONUS: 50 * radiusMultiplier,
+
+            // Scale factors
+            separationMultiplier,
+            radiusMultiplier
+        };
+    }
 };
 
 const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => {
@@ -23,31 +101,33 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
     const containerRef = useRef(null);
     const [selectedNode, setSelectedNode] = useState(null);
     const [renderError, setRenderError] = useState(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     // ==================== DATA PROCESSING ====================
     const processedData = useMemo(() => {
         try {
             if (!data || Object.keys(data).length === 0) return null;
 
-            // 1. Hierarchy & Sort
-            // Sort by siblingOrder to match the order entered in the form
-            // This ensures siblings appear in the same order as in Lineage Tree
+            // Create hierarchy with siblingOrder sorting
             const root = d3.hierarchy(data)
                 .sort((a, b) => {
-                    // First, sort by siblingOrder (the order entered in the form)
                     const orderA = a.data.siblingOrder || 0;
                     const orderB = b.data.siblingOrder || 0;
                     if (orderA !== orderB) {
                         return orderA - orderB;
                     }
-                    // If siblingOrder is the same, fall back to fullName for consistent ordering
                     return (a.data.fullName || "").localeCompare(b.data.fullName || "");
                 });
 
-            // 2. Count Leaves (Weight)
+            // Count leaves for weighting
             root.count();
 
-            return { root };
+            // Calculate statistics
+            const totalNodes = root.descendants().length;
+            const leafCount = root.leaves().length;
+            const maxDepth = root.height;
+
+            return { root, totalNodes, leafCount, maxDepth };
         } catch (err) {
             console.error("Error processing hierarchy:", err);
             setRenderError("خطأ في معالجة بيانات الشجرة");
@@ -61,65 +141,70 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
         if (!svgRef.current || !containerRef.current) return;
 
         try {
+            const { root, totalNodes, leafCount, maxDepth } = processedData;
 
-            const { root } = processedData;
+            // Get dynamic configuration
+            const config = CONFIG.getConfig(totalNodes, leafCount, maxDepth);
 
             // Setup Dimensions
             const rect = containerRef.current.getBoundingClientRect();
-            const width = Math.max(rect.width || 1200, 1200);
-            const height = Math.max(rect.height || 1200, 1200);
+            const baseWidth = Math.max(rect.width || 1400, 1400);
+            const baseHeight = Math.max(rect.height || 1400, 1400);
+
+            // Scale canvas based on tree size
+            const width = baseWidth * config.radiusMultiplier;
+            const height = baseHeight * config.radiusMultiplier;
 
             const cx = width / 2;
             const cy = height / 2;
-            // Use a larger radius for a fuller look (Barham style)
-            const radius = Math.min(width, height) / 2 * 0.95;
+            const radius = Math.min(width, height) / 2 * 0.92;
 
             // Clear SVG
             const svg = d3.select(svgRef.current);
             svg.selectAll('*').remove();
 
+            // Setup SVG attributes
+            svg.attr('viewBox', `0 0 ${width} ${height}`)
+                .attr('preserveAspectRatio', 'xMidYMid meet');
+
+            // Create defs for gradients and filters
+            const defs = svg.append('defs');
+
+            // Glow filters for patriarchs
+            Object.entries(COLORS.patriarch).forEach(([depth, colors]) => {
+                const filter = defs.append('filter')
+                    .attr('id', `glow-depth-${depth}`)
+                    .attr('x', '-50%').attr('y', '-50%')
+                    .attr('width', '200%').attr('height', '200%');
+                filter.append('feGaussianBlur')
+                    .attr('stdDeviation', '3')
+                    .attr('result', 'blur');
+                filter.append('feFlood')
+                    .attr('flood-color', colors.glow)
+                    .attr('result', 'color');
+                filter.append('feComposite')
+                    .attr('in', 'color')
+                    .attr('in2', 'blur')
+                    .attr('operator', 'in')
+                    .attr('result', 'shadow');
+                const merge = filter.append('feMerge');
+                merge.append('feMergeNode').attr('in', 'shadow');
+                merge.append('feMergeNode').attr('in', 'SourceGraphic');
+            });
+
             // Setup Zoom Group
             const g = svg.append('g').attr('class', 'tree-layer');
             const zoom = d3.zoom()
-                .scaleExtent([0.1, 8])
-                .on('zoom', (e) => g.attr('transform', e.transform));
+                .scaleExtent([0.1, 10])
+                .on('zoom', (e) => {
+                    g.attr('transform', e.transform);
+                    setZoomLevel(e.transform.k);
+                });
             svg.call(zoom);
 
             // =========================================================
-            // ALGORITHM: Weighted Radial Tree (360 Degrees)
-            // OPTIMIZED: Enhanced spacing for large branches (Salman-style)
+            // ENHANCED TREE LAYOUT with Anti-Overlap Algorithm
             // =========================================================
-
-            // Calculate max depth for radial spacing logic
-            const maxDepth = root.height;
-            const totalNodes = root.descendants().length;
-            const leafCount = root.leaves().length;
-
-            // ==================== ENHANCED CONFIGURATION ====================
-            // Improved values to prevent overlap in large branches like Salman
-            const CONFIG = {
-                // BASE separation values (will be multiplied by factors)
-                SIBLING_SEPARATION: 3,        // Increased from 2.5
-                COUSIN_SEPARATION: 6,         // Increased from 5
-
-                // Radial distance between generations
-                GENERATION_BASE_DISTANCE: 120,  // Increased from 100
-                GENERATION_STEP: 100,           // Increased from 80
-                GENERATION_EXTRA_PADDING: 35,   // Increased from 25
-
-                // Extra padding for deep generations (3, 4, 8+)
-                DEEP_GENERATION_BONUS: 20,      // Extra space for generations 3+
-                FINAL_GENERATION_BONUS: 40,     // Extra space for last generation
-
-                // Sibling count thresholds for extra spacing
-                MANY_SIBLINGS_THRESHOLD: 5,     // If more than 5 siblings, add extra space
-                MANY_SIBLINGS_MULTIPLIER: 1.5,  // Multiply separation by this
-            };
-
-            // Calculate how crowded the tree is
-            const densityFactor = Math.max(1, leafCount / 15); // More sensitive to crowding
-            const isLargeBranch = totalNodes > 30;
-            const isVeryLargeBranch = totalNodes > 60;
 
             const tree = d3.tree()
                 .size([2 * Math.PI, radius])
@@ -127,42 +212,49 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     const sameSibling = a.parent === b.parent;
                     const currentDepth = Math.max(a.depth, b.depth);
 
-                    // Count siblings to detect crowded parents
+                    // Get sibling counts
                     const aSiblingCount = a.parent?.children?.length || 1;
                     const bSiblingCount = b.parent?.children?.length || 1;
                     const maxSiblingCount = Math.max(aSiblingCount, bSiblingCount);
 
+                    // Get descendant counts (for weighted separation)
+                    const aDescendants = a.descendants().length;
+                    const bDescendants = b.descendants().length;
+                    const maxDescendants = Math.max(aDescendants, bDescendants);
+
                     // Base separation
                     let baseSeparation = sameSibling
-                        ? CONFIG.SIBLING_SEPARATION
-                        : CONFIG.COUSIN_SEPARATION;
+                        ? config.SIBLING_SEPARATION
+                        : config.COUSIN_SEPARATION;
 
-                    // === ENHANCEMENT 1: Increase separation for many siblings ===
-                    if (maxSiblingCount >= CONFIG.MANY_SIBLINGS_THRESHOLD) {
-                        baseSeparation *= CONFIG.MANY_SIBLINGS_MULTIPLIER;
+                    // === ENHANCEMENT 1: Extra space for nodes with many siblings ===
+                    if (maxSiblingCount >= config.MANY_SIBLINGS_THRESHOLD) {
+                        baseSeparation *= config.MANY_SIBLINGS_MULTIPLIER;
                     }
-                    if (maxSiblingCount >= 10) {
-                        baseSeparation *= 1.3; // Even more for 10+ siblings
+                    if (maxSiblingCount >= 8) {
+                        baseSeparation *= 1.5;
                     }
-
-                    // === ENHANCEMENT 2: Increase separation for deep generations ===
-                    // Generations 3, 4, 5+ need more space
-                    if (currentDepth >= 3 && currentDepth <= 5) {
+                    if (maxSiblingCount >= 12) {
                         baseSeparation *= 1.3;
-                    } else if (currentDepth >= 6) {
-                        baseSeparation *= 1.5; // Even more for generation 6+
                     }
 
-                    // === ENHANCEMENT 3: Last generation (leaves) need most space ===
+                    // === ENHANCEMENT 2: Extra space for nodes with many descendants ===
+                    if (maxDescendants > 20) {
+                        baseSeparation *= 1 + (maxDescendants / 100);
+                    }
+
+                    // === ENHANCEMENT 3: Progressive increase for deeper generations ===
+                    if (currentDepth >= 3 && currentDepth <= 5) {
+                        baseSeparation *= 1.4;
+                    } else if (currentDepth >= 6 && currentDepth <= 8) {
+                        baseSeparation *= 1.8;
+                    } else if (currentDepth > 8) {
+                        baseSeparation *= 2.2;
+                    }
+
+                    // === ENHANCEMENT 4: Extra space for leaf nodes ===
                     if (!a.children && !b.children) {
-                        baseSeparation *= 1.4; // Leaves need more space
-                    }
-
-                    // === ENHANCEMENT 4: Scale based on overall tree density ===
-                    if (isVeryLargeBranch) {
-                        baseSeparation *= 1.2;
-                    } else if (isLargeBranch) {
-                        baseSeparation *= 1.1;
+                        baseSeparation *= 1.5;
                     }
 
                     return baseSeparation;
@@ -171,31 +263,40 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             tree(root);
 
             // =========================================================
-            // POST-PROCESS: Enhanced radial distances for deep generations
+            // POST-PROCESS: Dynamic radial distances
             // =========================================================
 
             root.each(node => {
                 if (node.depth === 0) {
-                    node.y = 0; // Root at center
+                    node.y = 0;
                 } else {
-                    // Base distance calculation
-                    let y = CONFIG.GENERATION_BASE_DISTANCE
-                        + (node.depth * CONFIG.GENERATION_STEP)
-                        + (node.depth * CONFIG.GENERATION_EXTRA_PADDING);
+                    // Calculate children count in subtree for spacing
+                    const subtreeSize = node.descendants().length;
+                    const siblingCount = node.parent?.children?.length || 1;
 
-                    // === ENHANCEMENT: Extra padding for deep generations ===
+                    // Base distance
+                    let y = config.GENERATION_BASE_DISTANCE
+                        + (node.depth * config.GENERATION_STEP)
+                        + (node.depth * config.GENERATION_EXTRA_PADDING);
+
+                    // Extra padding for deep generations
                     if (node.depth >= 3) {
-                        y += CONFIG.DEEP_GENERATION_BONUS * (node.depth - 2);
+                        y += config.DEEP_GENERATION_BONUS * (node.depth - 2);
                     }
 
-                    // === ENHANCEMENT: Extra padding for final generation (leaves) ===
+                    // Extra padding for generations with many siblings
+                    if (siblingCount >= 6) {
+                        y += 20 * (siblingCount / 6);
+                    }
+
+                    // Extra padding for final generation
                     if (!node.children && node.depth >= maxDepth - 1) {
-                        y += CONFIG.FINAL_GENERATION_BONUS;
+                        y += config.FINAL_GENERATION_BONUS;
                     }
 
-                    // === ENHANCEMENT: Scale for very large trees ===
-                    if (isVeryLargeBranch) {
-                        y *= 1.15;
+                    // Scale for large subtrees
+                    if (subtreeSize > 30) {
+                        y *= 1 + (subtreeSize / 500);
                     }
 
                     node.y = y;
@@ -203,7 +304,7 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             });
 
             // =========================================================
-            // DRAW LINKS (BRANCHES)
+            // DRAW LINKS (BRANCHES) with gradient thickness
             // =========================================================
 
             const linkGenerator = d3.linkRadial()
@@ -216,68 +317,158 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 .append('path')
                 .attr('class', 'link')
                 .attr('fill', 'none')
-                .attr('stroke', COLORS.branch)
-                // Thinner branches to avoid overlap
-                .attr('stroke-width', d => Math.max(1, 8 - d.target.depth * 1.5))
-                .attr('stroke-opacity', 0.7)
+                .attr('stroke', d => {
+                    // Color branches based on depth
+                    if (d.target.depth <= 2) return COLORS.trunk;
+                    if (d.target.depth <= 4) return COLORS.branch;
+                    return COLORS.branchLight;
+                })
+                .attr('stroke-width', d => {
+                    // Thicker branches for patriarchs
+                    const baseWidth = Math.max(1.5, 12 - d.target.depth * 1.5);
+                    const descendants = d.target.descendants().length;
+                    return baseWidth * Math.min(2, 1 + descendants / 100);
+                })
+                .attr('stroke-opacity', d => d.target.depth <= 3 ? 0.85 : 0.6)
                 .attr('stroke-linecap', 'round')
                 .attr('d', linkGenerator)
                 .attr('transform', `translate(${cx},${cy})`);
 
             // =========================================================
-            // DRAW CENTERS (Root Visuals)
+            // DRAW ROOT (Center)
             // =========================================================
 
             const trunkGroup = g.append('g').attr('class', 'trunk-group')
                 .attr('transform', `translate(${cx}, ${cy})`);
 
-            // Central Core Circle for Founder
+            // Outer glow ring
             trunkGroup.append('circle')
-                .attr('r', 40)
-                .attr('fill', COLORS.trunk)
+                .attr('r', 55)
+                .attr('fill', 'none')
                 .attr('stroke', COLORS.gold)
                 .attr('stroke-width', 3)
-                .style('filter', 'drop-shadow(0px 0px 10px rgba(93, 64, 55, 0.5))');
+                .attr('opacity', 0.3);
 
+            // Main root circle
+            trunkGroup.append('circle')
+                .attr('r', 48)
+                .attr('fill', COLORS.trunk)
+                .attr('stroke', COLORS.gold)
+                .attr('stroke-width', 4)
+                .style('filter', 'drop-shadow(0px 0px 15px rgba(93, 64, 55, 0.7))');
+
+            // Crown icon
             trunkGroup.append('text')
-                .attr('dy', '0.35em')
+                .attr('dy', '-5')
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '20px')
+                .text('👑');
+
+            // Root name
+            trunkGroup.append('text')
+                .attr('dy', '15')
                 .attr('text-anchor', 'middle')
                 .attr('font-family', "'Cairo', sans-serif")
                 .attr('font-weight', '800')
                 .attr('fill', COLORS.gold)
-                .attr('font-size', '14px')
-                .text(root.data.fullName || "محمد الشاعر");
+                .attr('font-size', '12px')
+                .text(root.data.fullName || "الشاعر");
 
             // =========================================================
-            // DRAW LEAVES (NODES) - Enhanced for Parents & Children
+            // HELPER FUNCTIONS for Node Rendering
             // =========================================================
 
-            // Calculate siblings count for each node to determine leaf size
-            const getSiblingCount = (node) => {
-                if (!node.parent) return 1;
-                return node.parent.children?.length || 1;
+            // Check if node is a patriarch (has children and depth <= 5)
+            const isPatriarch = (node) => {
+                return node.children && node.children.length > 0 && node.depth <= 5;
             };
 
-            // Check if node is a main patriarch (depth 1 or 2 with children)
-            const isMainPatriarch = (node) => {
-                return (node.depth <= 2 && node.children && node.children.length > 0);
-            };
+            // Get node styling based on depth and type
+            const getNodeStyle = (node) => {
+                const depth = node.depth;
+                const hasChildren = node.children && node.children.length > 0;
 
-            // Get different colors for different levels
-            const getNodeColor = (node) => {
-                if (node.depth === 1) {
-                    return { fill: '#8B4513', stroke: '#5D3A1A', textColor: '#FFD700' }; // Brown/Gold for main branches
-                } else if (node.depth === 2 && node.children && node.children.length > 0) {
-                    return { fill: '#2E7D32', stroke: '#1B5E20', textColor: '#FFFFFF' }; // Darker green for sub-branches
+                if (depth <= 5 && hasChildren) {
+                    // Patriarch styling
+                    const colors = COLORS.patriarch[depth] || COLORS.patriarch[5];
+                    const baseSize = Math.max(30, 70 - depth * 8);
+                    return {
+                        width: baseSize * 1.8,
+                        height: baseSize,
+                        fill: colors.fill,
+                        stroke: colors.stroke,
+                        textColor: colors.text,
+                        fontSize: Math.max(10, 16 - depth),
+                        fontWeight: '700',
+                        filter: `url(#glow-depth-${depth})`,
+                        isPatriarch: true
+                    };
+                } else if (!hasChildren) {
+                    // Leaf node (no children)
+                    return {
+                        width: 40,
+                        height: 18,
+                        fill: COLORS.leafFinal.fill,
+                        stroke: COLORS.leafFinal.stroke,
+                        textColor: COLORS.leafFinal.text,
+                        fontSize: 8,
+                        fontWeight: '500',
+                        filter: 'none',
+                        isPatriarch: false
+                    };
+                } else {
+                    // Regular parent (depth > 5)
+                    return {
+                        width: 50,
+                        height: 22,
+                        fill: COLORS.leaf.fill,
+                        stroke: COLORS.leaf.stroke,
+                        textColor: COLORS.leaf.text,
+                        fontSize: 9,
+                        fontWeight: '600',
+                        filter: 'none',
+                        isPatriarch: false
+                    };
                 }
-                return { fill: COLORS.leafFill, stroke: COLORS.leafStroke, textColor: 'white' };
             };
+
+            // Format name for display
+            const formatName = (node) => {
+                if (!node.data.fullName) return '';
+                const name = node.data.fullName.trim();
+                const words = name.split(' ');
+                const style = getNodeStyle(node);
+
+                // Compound Arabic prefixes
+                const compoundPrefixes = ['أبو', 'ابو', 'عبد', 'عبدال', 'ابن', 'أم', 'ام', 'بنت'];
+                const firstWord = words[0];
+
+                // Patriarchs show more of the name
+                if (style.isPatriarch) {
+                    if (words.length > 1 && compoundPrefixes.some(p => firstWord === p || firstWord.startsWith(p))) {
+                        return words.slice(0, 2).join(' ');
+                    }
+                    if (name.length <= 15) return name;
+                    return words.slice(0, 2).join(' ');
+                }
+
+                // Regular nodes show first word only
+                if (words.length > 1 && compoundPrefixes.some(p => firstWord === p || firstWord.startsWith(p))) {
+                    return words[0] + ' ' + words[1];
+                }
+                if (name.length <= 8) return name;
+                return firstWord;
+            };
+
+            // =========================================================
+            // DRAW NODES
+            // =========================================================
 
             const nodes = g.selectAll('.node')
-                .data(root.descendants().slice(1)) // Skip root
+                .data(root.descendants().slice(1))
                 .enter()
                 .append('g')
-                .attr('class', d => `node ${isMainPatriarch(d) ? 'patriarch' : 'regular'}`)
+                .attr('class', d => `node depth-${d.depth} ${isPatriarch(d) ? 'patriarch' : 'regular'}`)
                 .attr('transform', d => {
                     const r = d.y;
                     const a = d.x - Math.PI / 2;
@@ -290,7 +481,6 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     e.stopPropagation();
                     setSelectedNode(d.data);
                     if (onNodeClick) {
-                        // Build full ancestry chain by traversing up the tree
                         const ancestors = [];
                         let current = d.parent;
                         while (current) {
@@ -300,151 +490,124 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                             });
                             current = current.parent;
                         }
-
-                        // Include parent (father) and full ancestry
-                        const nodeWithAncestry = {
+                        onNodeClick({
                             ...d.data,
                             parentNode: d.parent ? d.parent.data : null,
-                            ancestors: ancestors // Full lineage chain
-                        };
-                        onNodeClick(nodeWithAncestry);
+                            ancestors
+                        });
                     }
                 });
 
-            // ==================== FIXED LEAF SIZES (Consistent across all branches) ====================
-            // These fixed values ensure uniform appearance regardless of family size
-            const LEAF_SIZES = {
-                // Patriarch (depth 1-2 with children) - main branch heads
-                PATRIARCH_W: 75,
-                PATRIARCH_H: 35,
-
-                // Regular nodes - fixed size for consistency
-                REGULAR_W: 50,      // Fixed width for all regular leaves
-                REGULAR_H: 22,      // Fixed height for all regular leaves
-
-                // Sub-patriarch (depth 2 with children)
-                SUB_PATRIARCH_SCALE: 0.85
-            };
-
+            // Draw ellipse for each node
             nodes.append('ellipse')
-                .attr('rx', d => {
-                    // Patriots are larger
-                    if (isMainPatriarch(d)) {
-                        return d.depth === 1
-                            ? LEAF_SIZES.PATRIARCH_W / 2
-                            : (LEAF_SIZES.PATRIARCH_W / 2) * LEAF_SIZES.SUB_PATRIARCH_SCALE;
-                    }
-                    // Regular nodes - FIXED size (no dynamic scaling)
-                    return LEAF_SIZES.REGULAR_W / 2;
-                })
-                .attr('ry', d => {
-                    if (isMainPatriarch(d)) {
-                        return d.depth === 1
-                            ? LEAF_SIZES.PATRIARCH_H / 2
-                            : (LEAF_SIZES.PATRIARCH_H / 2) * LEAF_SIZES.SUB_PATRIARCH_SCALE;
-                    }
-                    // Regular nodes - FIXED size (no dynamic scaling)
-                    return LEAF_SIZES.REGULAR_H / 2;
-                })
-                .attr('fill', d => getNodeColor(d).fill)
-                .attr('stroke', d => getNodeColor(d).stroke)
-                .attr('stroke-width', d => isMainPatriarch(d) ? 3 : 1.5)
+                .attr('rx', d => getNodeStyle(d).width / 2)
+                .attr('ry', d => getNodeStyle(d).height / 2)
+                .attr('fill', d => getNodeStyle(d).fill)
+                .attr('stroke', d => getNodeStyle(d).stroke)
+                .attr('stroke-width', d => isPatriarch(d) ? 3 : 1.5)
                 .attr('transform', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     return `rotate(${angleDeg})`;
                 })
-                .style('filter', d => isMainPatriarch(d) ? 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))' : 'none')
+                .style('filter', d => getNodeStyle(d).filter)
                 .on('mouseover', function (e, d) {
-                    if (isMainPatriarch(d)) {
-                        d3.select(this).attr('fill', '#A0522D').attr('stroke', COLORS.gold);
-                    } else {
-                        d3.select(this).attr('fill', '#4CAF50').attr('stroke', COLORS.gold);
-                    }
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('stroke', COLORS.gold)
+                        .attr('stroke-width', 4);
                 })
                 .on('mouseout', function (e, d) {
-                    const colors = getNodeColor(d);
-                    d3.select(this).attr('fill', colors.fill).attr('stroke', colors.stroke);
+                    const style = getNodeStyle(d);
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('stroke', style.stroke)
+                        .attr('stroke-width', isPatriarch(d) ? 3 : 1.5);
                 });
 
-            // Draw small connecting dots for patriarchs to show they have children
-            nodes.filter(d => isMainPatriarch(d))
+            // Add children count indicator for patriarchs
+            nodes.filter(d => isPatriarch(d))
                 .append('circle')
-                .attr('r', 4)
+                .attr('r', 8)
                 .attr('fill', COLORS.gold)
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 1.5)
                 .attr('cx', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     const rad = angleDeg * Math.PI / 180;
-                    return Math.cos(rad) * (LEAF_SIZES.PATRIARCH_W / 2 + 8);
+                    const style = getNodeStyle(d);
+                    return Math.cos(rad) * (style.width / 2 + 12);
                 })
                 .attr('cy', d => {
                     const angleDeg = (d.x * 180 / Math.PI) - 90;
                     const rad = angleDeg * Math.PI / 180;
-                    return Math.sin(rad) * (LEAF_SIZES.PATRIARCH_W / 2 + 8);
+                    const style = getNodeStyle(d);
+                    return Math.sin(rad) * (style.width / 2 + 12);
+                });
+
+            // Children count text
+            nodes.filter(d => isPatriarch(d))
+                .append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('font-size', '7px')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#000')
+                .attr('x', d => {
+                    const angleDeg = (d.x * 180 / Math.PI) - 90;
+                    const rad = angleDeg * Math.PI / 180;
+                    const style = getNodeStyle(d);
+                    return Math.cos(rad) * (style.width / 2 + 12);
                 })
-                .style('filter', 'drop-shadow(0px 0px 3px rgba(255,215,0,0.8))');
+                .attr('y', d => {
+                    const angleDeg = (d.x * 180 / Math.PI) - 90;
+                    const rad = angleDeg * Math.PI / 180;
+                    const style = getNodeStyle(d);
+                    return Math.sin(rad) * (style.width / 2 + 12);
+                })
+                .text(d => d.children.length);
 
-            // Leaf Labels - FIXED font sizes for consistency across all branches
-            const FONT_SIZES = {
-                PATRIARCH_DEPTH1: '13px',
-                PATRIARCH_DEPTH2: '11px',
-                REGULAR: '9px'  // Fixed font size for regular nodes
-            };
-
+            // Node labels
             nodes.append('text')
                 .attr('dy', '0.35em')
                 .attr('text-anchor', 'middle')
                 .attr('font-family', "'Cairo', sans-serif")
-                .attr('font-size', d => {
-                    if (isMainPatriarch(d)) {
-                        return d.depth === 1 ? FONT_SIZES.PATRIARCH_DEPTH1 : FONT_SIZES.PATRIARCH_DEPTH2;
-                    }
-                    // FIXED font size for regular nodes (no dynamic scaling)
-                    return FONT_SIZES.REGULAR;
-                })
-                .attr('font-weight', d => isMainPatriarch(d) ? '800' : '600')
-                .attr('fill', d => getNodeColor(d).textColor)
-                .text(d => {
-                    if (!d.data.fullName) return '';
-                    const name = d.data.fullName.trim();
-                    const words = name.split(' ');
-
-                    // Handle compound Arabic names
-                    const compoundPrefixes = ['أبو', 'ابو', 'عبد', 'عبدال', 'ابن', 'أم', 'ام', 'بنت'];
-                    const firstWord = words[0];
-
-                    // If first word is a compound prefix and there's a second word, combine them
-                    if (words.length > 1 && compoundPrefixes.some(prefix => firstWord === prefix || firstWord.startsWith(prefix))) {
-                        return words[0] + ' ' + words[1];
-                    }
-
-                    // For short names or single words, return as is
-                    if (name.length <= 10 || words.length === 1) {
-                        return name;
-                    }
-
-                    // Otherwise return first word only
-                    return firstWord;
-                })
+                .attr('font-size', d => `${getNodeStyle(d).fontSize}px`)
+                .attr('font-weight', d => getNodeStyle(d).fontWeight)
+                .attr('fill', d => getNodeStyle(d).textColor)
+                .text(d => formatName(d))
                 .attr('transform', d => {
                     let angleDeg = (d.x * 180 / Math.PI) - 90;
-
-                    // SMART ROTATION 360:
                     let normalizedAngle = angleDeg % 360;
                     if (normalizedAngle < 0) normalizedAngle += 360;
-
                     if (normalizedAngle > 90 && normalizedAngle < 270) {
                         angleDeg += 180;
                     }
-
                     return `rotate(${angleDeg})`;
                 });
 
-            nodes.append('title').text(d => d.data.fullName);
+            // Tooltips
+            nodes.append('title')
+                .text(d => {
+                    const childCount = d.children ? d.children.length : 0;
+                    const descendantCount = d.descendants().length - 1;
+                    let tooltip = d.data.fullName || 'غير معروف';
+                    if (childCount > 0) {
+                        tooltip += `\n👶 ${childCount} أبناء مباشرين`;
+                        tooltip += `\n👥 ${descendantCount} من الذرية`;
+                    }
+                    tooltip += `\n🌳 الجيل ${d.depth}`;
+                    return tooltip;
+                });
 
-            // Initial Zoom to fit center
-            const initialScale = 0.95;
+            // =========================================================
+            // INITIAL VIEW - Zoom to fit
+            // =========================================================
+
+            const initialScale = 0.6 / config.radiusMultiplier;
             svg.call(zoom.transform, d3.zoomIdentity
-                .translate(width / 2, height / 2)
+                .translate(rect.width / 2, rect.height / 2)
                 .scale(initialScale)
                 .translate(-cx, -cy)
             );
@@ -469,6 +632,62 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
 
     return (
         <div ref={containerRef} className="w-full h-full relative bg-[#F9F9F0] overflow-hidden" dir="rtl">
+            {/* Legend */}
+            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg z-10 text-sm border border-amber-200">
+                <h3 className="font-bold mb-3 text-gray-800 border-b pb-2">🌳 دليل الألوان:</h3>
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.patriarch[1].fill }}></span>
+                        <span className="text-xs">الجيل الأول (الأبناء)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.patriarch[2].fill }}></span>
+                        <span className="text-xs">الجيل الثاني (الأحفاد)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.patriarch[3].fill }}></span>
+                        <span className="text-xs">الجيل الثالث</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.patriarch[4].fill }}></span>
+                        <span className="text-xs">الجيل الرابع</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.patriarch[5].fill }}></span>
+                        <span className="text-xs">الجيل الخامس</span>
+                    </div>
+                    <div className="flex items-center gap-2 border-t pt-2 mt-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.leaf.fill }}></span>
+                        <span className="text-xs">آباء (جيل 6+)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-3 rounded-full" style={{ backgroundColor: COLORS.leafFinal.fill }}></span>
+                        <span className="text-xs">أوراق الشجرة (بدون أبناء)</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Zoom indicator */}
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-xs z-10">
+                🔍 {Math.round(zoomLevel * 100)}%
+            </div>
+
+            {/* Statistics */}
+            {processedData && (
+                <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg z-10 text-sm border border-amber-200">
+                    <div className="flex gap-4">
+                        <span>👥 {processedData.totalNodes} فرد</span>
+                        <span>🌿 {processedData.leafCount} ورقة</span>
+                        <span>📊 {processedData.maxDepth} أجيال</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Instructions */}
+            <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-xs z-10">
+                🖱️ اسحب للتنقل • 🔍 قرّب للتكبير • 👆 اضغط للتفاصيل
+            </div>
+
             <svg ref={svgRef} className="w-full h-full block touch-action-none" />
         </div>
     );
