@@ -41,6 +41,10 @@ const auditLogSchema = new mongoose.Schema({
             'DATA_CREATED',
             'DATA_UPDATED',
             'DATA_DELETED',
+            // Family Tree actions
+            'FT_PERSON_CREATED',
+            'FT_PERSON_UPDATED',
+            'FT_PERSON_DELETED',
             // System actions
             'SYSTEM_STARTUP',
             'SCHEDULED_BACKUP_TRIGGERED',
@@ -53,7 +57,7 @@ const auditLogSchema = new mongoose.Schema({
     // Category for filtering
     category: {
         type: String,
-        enum: ['backup', 'restore', 'auth', 'user', 'data', 'system'],
+        enum: ['backup', 'restore', 'auth', 'user', 'data', 'system', 'data-management'],
         required: true,
         index: true
     },
@@ -80,7 +84,7 @@ const auditLogSchema = new mongoose.Schema({
     // User role at time of action
     userRole: {
         type: String,
-        enum: ['super-admin', 'admin', 'editor', 'system'],
+        enum: ['super-admin', 'admin', 'editor', 'ft-editor', 'system'],
         default: 'system'
     },
 
