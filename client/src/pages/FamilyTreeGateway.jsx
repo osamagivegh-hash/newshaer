@@ -59,7 +59,7 @@ const FamilyTreeGateway = () => {
             label: currentSettings.buttonLabels?.appreciation || defaultSettings.buttonLabels.appreciation,
             color: currentSettings.buttonColors?.appreciation || defaultSettings.buttonColors.appreciation,
             icon: '🏆',
-            description: 'تعرف على تاريخ مؤسس شجرة العائلة وإرثه الخالد',
+            description: 'تقدير ووفاء للمؤسس',
             path: '/family-tree/appreciation'
         },
         {
