@@ -142,7 +142,13 @@ const PostCard = ({ post }) => {
     // Article layout for isArticle posts
     if (post.isArticle) {
         return (
-            <article className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${post.isPinned ? 'ring-2 ring-teal-500' : ''}`}>
+            <article className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${post.isFounderPost ? 'ring-4 ring-yellow-400 shadow-yellow-200' : post.isPinned ? 'ring-2 ring-teal-500' : ''}`}>
+                {/* Special Post Banner - Subtle */}
+                {post.isFounderPost && (
+                    <div className="bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 py-1 px-4 flex items-center justify-center">
+                        <span className="text-amber-600 text-sm">⭐</span>
+                    </div>
+                )}
                 {/* Featured Image - Full width for articles */}
                 {post.featuredImage && (
                     <div className="h-64 md:h-80 w-full overflow-hidden">
@@ -159,6 +165,9 @@ const PostCard = ({ post }) => {
                     <header className="mb-8 pb-6 border-b border-gray-200">
                         {/* Badges */}
                         <div className="flex flex-wrap items-center gap-2 mb-4">
+                            {post.isFounderPost && (
+                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium" title="GS">⭐</span>
+                            )}
                             <span className="text-xs bg-teal-100 text-teal-700 px-3 py-1 rounded-full font-medium">📄 مقال</span>
                             {post.isPinned && (
                                 <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">📌 مثبت</span>
@@ -242,7 +251,13 @@ const PostCard = ({ post }) => {
 
     // Regular Post Card Layout
     return (
-        <article className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ${post.isPinned ? 'ring-2 ring-teal-500' : ''}`}>
+        <article className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ${post.isFounderPost ? 'ring-4 ring-yellow-400 shadow-yellow-200' : post.isPinned ? 'ring-2 ring-teal-500' : ''}`}>
+            {/* Special Post Indicator - Subtle */}
+            {post.isFounderPost && (
+                <div className="bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 py-1 px-4 flex items-center justify-center">
+                    <span className="text-amber-600 text-sm">⭐</span>
+                </div>
+            )}
             {/* Featured Image */}
             {post.featuredImage && (
                 <div className="h-48 w-full overflow-hidden">
@@ -261,6 +276,9 @@ const PostCard = ({ post }) => {
                         <span className="text-3xl">{post.icon || '📢'}</span>
                         <div className="flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
+                                {post.isFounderPost && (
+                                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full" title="GS">⭐</span>
+                                )}
                                 {post.isPinned && (
                                     <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">📌 مثبت</span>
                                 )}

@@ -59,8 +59,9 @@ router.get('/alerts', async (req, res) => {
  */
 router.get('/posts', async (req, res) => {
     try {
+        // Sort order: Founder post first, then pinned, then by order, then by date
         const posts = await DevTeamPost.find({ isPublished: true })
-            .sort({ isPinned: -1, createdAt: -1 })
+            .sort({ isFounderPost: -1, isPinned: -1, order: 1, createdAt: -1 })
             .limit(20);
 
         res.json({
@@ -351,7 +352,7 @@ router.delete('/admin/messages/:id', authenticateToken, requireAdmin, async (req
 router.get('/admin/posts', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const posts = await DevTeamPost.find()
-            .sort({ isPinned: -1, createdAt: -1 });
+            .sort({ isFounderPost: -1, isPinned: -1, order: 1, createdAt: -1 });
 
         res.json({
             success: true,
@@ -373,7 +374,7 @@ router.get('/admin/posts', authenticateToken, requireAdmin, async (req, res) => 
 router.post('/admin/posts', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const {
-            title, content, summary, postType, icon, isPublished, isPinned,
+            title, content, summary, postType, icon, isPublished, isPinned, isFounderPost,
             author, authorRole, authorAvatar, featuredImage,
             paragraphSpacing, textAlignment, isArticle, maxCollapsedHeight
         } = req.body;
@@ -397,6 +398,7 @@ router.post('/admin/posts', authenticateToken, requireAdmin, async (req, res) =>
             featuredImage: featuredImage || '',
             isPublished: isPublished !== false,
             isPinned: isPinned || false,
+            isFounderPost: isFounderPost || false,
             paragraphSpacing: paragraphSpacing || 'normal',
             textAlignment: textAlignment || 'right',
             isArticle: isArticle || false,
@@ -426,7 +428,7 @@ router.post('/admin/posts', authenticateToken, requireAdmin, async (req, res) =>
 router.put('/admin/posts/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const {
-            title, content, summary, postType, icon, isPublished, isPinned,
+            title, content, summary, postType, icon, isPublished, isPinned, isFounderPost,
             author, authorRole, authorAvatar, featuredImage,
             paragraphSpacing, textAlignment, isArticle, maxCollapsedHeight
         } = req.body;
@@ -447,6 +449,7 @@ router.put('/admin/posts/:id', authenticateToken, requireAdmin, async (req, res)
         if (icon) post.icon = icon;
         if (isPublished !== undefined) post.isPublished = isPublished;
         if (isPinned !== undefined) post.isPinned = isPinned;
+        if (isFounderPost !== undefined) post.isFounderPost = isFounderPost;
         if (author) post.author = author;
         if (authorRole !== undefined) post.authorRole = authorRole;
         if (authorAvatar !== undefined) post.authorAvatar = authorAvatar;

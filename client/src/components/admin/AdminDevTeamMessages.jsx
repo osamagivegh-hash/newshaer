@@ -284,6 +284,7 @@ const PostFormModal = ({ post, onClose, onSave }) => {
         featuredImage: post?.featuredImage || '',
         isPublished: post?.isPublished ?? true,
         isPinned: post?.isPinned || false,
+        isFounderPost: post?.isFounderPost || false,
         paragraphSpacing: post?.paragraphSpacing || 'normal',
         textAlignment: post?.textAlignment || 'right',
         isArticle: post?.isArticle || false,
@@ -428,6 +429,33 @@ const PostFormModal = ({ post, onClose, onSave }) => {
                             <input type="checkbox" checked={formData.isPinned} onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })} className="w-5 h-5 rounded text-teal-600" />
                             <span>تثبيت في الأعلى</span>
                         </label>
+                    </div>
+
+                    {/* Priority Post Section - Subtle GS Badge */}
+                    <div className={`border rounded-xl p-4 space-y-4 ${formData.isFounderPost ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">⭐</span>
+                            <div>
+                                <h4 className={`font-bold ${formData.isFounderPost ? 'text-amber-800' : 'text-gray-700'}`}>تثبيت أولوية عالية <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded ml-2">GS</span></h4>
+                                <p className={`text-sm ${formData.isFounderPost ? 'text-amber-700' : 'text-gray-500'}`}>سيظهر هذا المنشور في أعلى القائمة قبل جميع المنشورات الأخرى</p>
+                            </div>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={formData.isFounderPost}
+                                onChange={(e) => setFormData({ ...formData, isFounderPost: e.target.checked })}
+                                className="w-5 h-5 rounded text-amber-600 accent-amber-500"
+                            />
+                            <span className={`font-medium ${formData.isFounderPost ? 'text-amber-800' : 'text-gray-700'}`}>
+                                تفعيل الأولوية العالية (GS)
+                            </span>
+                        </label>
+                        {formData.isFounderPost && (
+                            <div className="bg-amber-100 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                                <strong>⭐</strong> هذا المنشور سيظهر قبل جميع المنشورات الأخرى بما في ذلك المنشورات المثبتة
+                            </div>
+                        )}
                     </div>
 
                     {/* Article Mode Section */}

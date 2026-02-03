@@ -131,7 +131,13 @@ const DevTeamPostSchema = new mongoose.Schema({
         default: false
     },
 
-    // Order for display
+    // GS Priority Post - always displayed first
+    isFounderPost: {
+        type: Boolean,
+        default: false
+    },
+
+    // Order for display (lower = higher priority)
     order: {
         type: Number,
         default: 0
