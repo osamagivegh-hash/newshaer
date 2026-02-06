@@ -30,7 +30,7 @@ const HeroSlider = () => {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
-    }, 5000)
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [slides.length])
@@ -67,9 +67,8 @@ const HeroSlider = () => {
       {slides.map((slide, index) => (
         <div
           key={slide.id || slide._id || index}
-          className={`absolute inset-0 ${
-            index === currentSlide ? 'block z-10' : 'hidden z-0'
-          }`}
+          className={`absolute inset-0 ${index === currentSlide ? 'block z-10' : 'hidden z-0'
+            }`}
           style={{ transition: 'none' }}
         >
           {/* Background Image */}
@@ -79,7 +78,7 @@ const HeroSlider = () => {
             className="absolute inset-0 w-full h-full object-cover"
             loading={index === 0 ? 'eager' : 'lazy'}
           />
-          
+
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 
@@ -140,11 +139,10 @@ const HeroSlider = () => {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-3 rounded-full ${
-                index === currentSlide 
-                  ? 'bg-palestine-green w-8' 
+              className={`h-3 rounded-full ${index === currentSlide
+                  ? 'bg-palestine-green w-8'
                   : 'bg-white/50 hover:bg-white/80 w-3'
-              }`}
+                }`}
               aria-label={`الانتقال للشريحة ${index + 1}`}
             />
           ))}
