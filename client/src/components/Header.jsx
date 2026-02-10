@@ -118,7 +118,7 @@ const Header = () => {
               عائلة الشاعر
             </h1>
             <span className="text-[10px] md:text-xs text-gray-600 font-medium tracking-wide mt-1 hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity">
-              المنصة الرقمية لشجرة عائلة الشاعر الإلكترونية
+              المنصه الرقميه لشجرة عائلة الشاعر
             </span>
             <div className="h-0.5 w-16 group-hover:w-full bg-gradient-to-r from-palestine-green to-palestine-red transition-all duration-500 mt-1"></div>
           </div>

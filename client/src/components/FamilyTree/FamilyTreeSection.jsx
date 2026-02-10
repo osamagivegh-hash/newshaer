@@ -43,7 +43,7 @@ const FamilyTreeSection = () => {
                     </h2>
 
                     <h3 className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-palestine-green to-emerald-700 mb-6 font-kufi">
-                        المنصة الرقمية لشجرة عائلة الشاعر الإلكترونية
+                        المنصه الرقميه لشجرة عائلة الشاعر
                     </h3>
 
                     <div className="h-1.5 w-32 bg-gradient-to-r from-palestine-red via-white to-palestine-green mx-auto rounded-full shadow-sm mb-8"></div>

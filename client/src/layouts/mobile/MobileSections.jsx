@@ -92,7 +92,7 @@ export const MobileHomeSection = ({ data }) => {
                         <span className="highlight">عائلة الشاعر</span>
                     </h1>
                     <p className="mobile-hero-subtitle">
-                        المنصة الرقمية لشجرة عائلة الشاعر الإلكترونية
+                        المنصه الرقميه لشجرة عائلة الشاعر
                     </p>
                 </div>
 
