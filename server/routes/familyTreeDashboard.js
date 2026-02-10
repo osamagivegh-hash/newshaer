@@ -157,12 +157,28 @@ router.get('/persons', authenticateFTToken, requireFTPermission('manage-members'
         // 1. No Search - Standard List
         if (!search || !search.trim()) {
             const persons = await Person.find(query)
-                .populate('fatherId', 'fullName generation')
-                .sort({ generation: 1, order: 1 });
+                .populate('fatherId', 'fullName generation fatherId')
+                .sort({ generation: 1, order: 1 })
+                .lean();
+
+            // Build displayName for each father
+            const personsWithDisplayNames = await Promise.all(persons.map(async (person) => {
+                if (person.fatherId) {
+                    const displayName = await buildFatherFullName(person.fatherId);
+                    return {
+                        ...person,
+                        fatherId: {
+                            ...person.fatherId,
+                            displayName
+                        }
+                    };
+                }
+                return person;
+            }));
 
             return res.json({
                 success: true,
-                data: persons
+                data: personsWithDisplayNames
             });
         }
 
@@ -175,8 +191,24 @@ router.get('/persons', authenticateFTToken, requireFTPermission('manage-members'
             // Single name search
             query.fullName = { $regex: new RegExp(escapeRegex(nameParts[0]), 'i') };
             results = await Person.find(query)
-                .populate('fatherId', 'fullName generation')
-                .sort({ generation: 1, order: 1 });
+                .populate('fatherId', 'fullName generation fatherId')
+                .sort({ generation: 1, order: 1 })
+                .lean();
+
+            // Build displayName for each father
+            results = await Promise.all(results.map(async (person) => {
+                if (person.fatherId) {
+                    const displayName = await buildFatherFullName(person.fatherId);
+                    return {
+                        ...person,
+                        fatherId: {
+                            ...person.fatherId,
+                            displayName
+                        }
+                    };
+                }
+                return person;
+            }));
         } else {
             // Multi-part name search (Person > Father > Grandfather)
             // Use aggregation to match the chain
@@ -713,6 +745,29 @@ router.get('/audit-logs', authenticateFTToken, requireFTSuperAdmin, async (req, 
 });
 
 module.exports = router;
+
+// Helper: Build full 5-part name for a person (up to 5 ancestors)
+async function buildFatherFullName(person) {
+    if (!person) return '';
+
+    const names = [person.fullName.split(' ')[0]]; // First name only
+    let current = person;
+    let count = 0;
+    const maxAncestors = 4; // To make it 5 names total (person + 4 ancestors)
+
+    while (current.fatherId && count < maxAncestors) {
+        const father = await Person.findById(current.fatherId).select('fullName fatherId').lean();
+        if (father) {
+            names.push(father.fullName.split(' ')[0]); // First name only
+            current = father;
+            count++;
+        } else {
+            break;
+        }
+    }
+
+    return names.join(' بن ') + ' الشاعر';
+}
 
 // Helper: Escape regex special characters
 function escapeRegex(string) {

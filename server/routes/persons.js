@@ -411,6 +411,35 @@ router.get('/eligible-fathers', async (req, res) => {
             });
         }
 
+        // Helper function to build 5-part name (person + 4 ancestors)
+        const buildFullName5Parts = (personId) => {
+            const names = [];
+            let current = personMap.get(personId?.toString());
+            let count = 0;
+            const maxAncestors = 4; // To make it 5 names total
+            const visited = new Set();
+
+            if (!current) return '';
+
+            // Add person's first name
+            names.push(current.fullName.split(' ')[0]);
+            visited.add(current._id.toString());
+
+            // Traverse up to 4 ancestors
+            while (current.fatherId && count < maxAncestors && !visited.has(current.fatherId.toString())) {
+                visited.add(current.fatherId.toString());
+                current = personMap.get(current.fatherId.toString());
+                if (current) {
+                    names.push(current.fullName.split(' ')[0]);
+                    count++;
+                } else {
+                    break;
+                }
+            }
+
+            return names.join(' بن ') + ' الشاعر';
+        };
+
         res.json({
             success: true,
             data: eligibleFathers.map(p => ({
@@ -419,9 +448,7 @@ router.get('/eligible-fathers', async (req, res) => {
                 nickname: p.nickname,
                 generation: p.generation,
                 fatherName: p.fatherId?.fullName || null,
-                displayName: p.fatherId
-                    ? `${p.fullName} بن ${p.fatherId.fullName}`
-                    : p.fullName
+                displayName: buildFullName5Parts(p._id.toString())
             })),
             total: eligibleFathers.length,
             branchCounts,

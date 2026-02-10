@@ -250,7 +250,7 @@ const AdminFamilyTree = () => {
             fatherId: father._id,
             targetGeneration: String((father.generation || 0) + 1)
         }));
-        setSelectedFatherName(father.fullName + ' (الجيل ' + father.generation + ')');
+        setSelectedFatherName((father.displayName || father.fullName) + ' (الجيل ' + father.generation + ')');
         setShowFatherDropdown(false);
         setFatherSearchQuery('');
     };
@@ -923,7 +923,7 @@ const AdminFamilyTree = () => {
                                                                         {father.fullName?.charAt(0)}
                                                                     </div>
                                                                     <div className="flex-1">
-                                                                        <p className="font-medium text-gray-800">{father.fullName}</p>
+                                                                        <p className="font-medium text-gray-800">{father.displayName || father.fullName}</p>
                                                                         <p className="text-xs text-gray-500">
                                                                             الجيل {father.generation}
                                                                             {father.fatherId?.fullName && ` • ابن ${father.fatherId.fullName}`}
