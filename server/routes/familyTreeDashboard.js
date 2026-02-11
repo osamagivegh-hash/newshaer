@@ -157,28 +157,12 @@ router.get('/persons', authenticateFTToken, requireFTPermission('manage-members'
         // 1. No Search - Standard List
         if (!search || !search.trim()) {
             const persons = await Person.find(query)
-                .populate('fatherId', 'fullName generation fatherId')
-                .sort({ generation: 1, order: 1 })
-                .lean();
-
-            // Build displayName for each father
-            const personsWithDisplayNames = await Promise.all(persons.map(async (person) => {
-                if (person.fatherId) {
-                    const displayName = await buildFatherFullName(person.fatherId);
-                    return {
-                        ...person,
-                        fatherId: {
-                            ...person.fatherId,
-                            displayName
-                        }
-                    };
-                }
-                return person;
-            }));
+                .populate('fatherId', 'fullName generation')
+                .sort({ generation: 1, order: 1 });
 
             return res.json({
                 success: true,
-                data: personsWithDisplayNames
+                data: persons
             });
         }
 
@@ -191,24 +175,8 @@ router.get('/persons', authenticateFTToken, requireFTPermission('manage-members'
             // Single name search
             query.fullName = { $regex: new RegExp(escapeRegex(nameParts[0]), 'i') };
             results = await Person.find(query)
-                .populate('fatherId', 'fullName generation fatherId')
-                .sort({ generation: 1, order: 1 })
-                .lean();
-
-            // Build displayName for each father
-            results = await Promise.all(results.map(async (person) => {
-                if (person.fatherId) {
-                    const displayName = await buildFatherFullName(person.fatherId);
-                    return {
-                        ...person,
-                        fatherId: {
-                            ...person.fatherId,
-                            displayName
-                        }
-                    };
-                }
-                return person;
-            }));
+                .populate('fatherId', 'fullName generation')
+                .sort({ generation: 1, order: 1 });
         } else {
             // Multi-part name search (Person > Father > Grandfather)
             // Use aggregation to match the chain
