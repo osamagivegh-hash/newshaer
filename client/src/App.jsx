@@ -15,7 +15,9 @@ import ForumCreateTopic from './pages/forum/ForumCreateTopic'
 import ForumLogin from './pages/forum/ForumLogin'
 import ForumRegister from './pages/forum/ForumRegister'
 import ForumAdminDashboard from './pages/forum/ForumAdminDashboard'
-import ForumProfile from './pages/forum/ForumProfile'// Mobile CSS
+import ForumProfile from './pages/forum/ForumProfile'
+
+// Mobile CSS
 import './styles/mobile.css'
 
 // Layout Components
