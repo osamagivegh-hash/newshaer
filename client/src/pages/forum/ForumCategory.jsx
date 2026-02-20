@@ -75,14 +75,14 @@ const ForumCategory = () => {
                     topics.map(topic => (
                         <div key={topic._id} className="flex flex-col md:grid md:grid-cols-12 p-3 md:p-4 border-b hover:bg-gray-50 transition md:items-center gap-2 md:gap-4">
                             <div className="md:col-span-7 flex flex-col justify-center">
-                                <Link to={`/family-tree/forum/topic/${topic._id}`}>
-                                    <h3 className="text-base md:text-lg font-bold text-palestine-blue hover:text-palestine-green transition flex items-start md:items-center gap-2">
-                                        {topic.isPinned && <span className="text-red-500 text-sm" title="مثبت">📌</span>}
-                                        {topic.isLocked && <span className="text-gray-500 text-sm" title="مغلق">🔒</span>}
-                                        <span className="leading-tight">{topic.title}</span>
+                                <Link to={`/family-tree/forum/topic/${topic._id}`} className="block group">
+                                    <h3 className="text-base md:text-xl font-bold text-palestine-blue group-hover:text-palestine-green transition flex items-start sm:items-center gap-2 mb-2">
+                                        {topic.isPinned && <span className="text-red-500 text-sm bg-red-50 px-2 py-0.5 rounded" title="مثبت">📌 مثبت</span>}
+                                        {topic.isLocked && <span className="text-gray-500 text-sm bg-gray-100 px-2 py-0.5 rounded" title="مغلق">🔒 مغلق</span>}
+                                        <span className="leading-tight group-hover:underline">{topic.title}</span>
                                     </h3>
                                 </Link>
-                                <div className="text-xs md:text-sm text-gray-500 mt-1 flex items-center gap-2">
+                                <div className="text-sm text-gray-500 flex items-center gap-2">
                                     <Link to={`/family-tree/forum/user/${topic.author._id}`} className="font-semibold text-gray-700 hover:text-palestine-green transition">
                                         {topic.author.username}
                                     </Link>

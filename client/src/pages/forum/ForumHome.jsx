@@ -40,13 +40,16 @@ const ForumHome = () => {
                 ) : (
                     categories.map(category => (
                         <div key={category._id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-palestine-green/50 transition p-4 md:p-6 flex flex-col sm:flex-row items-start gap-4">
-                            <div className="text-3xl md:text-4xl hidden sm:block">{category.icon || '💬'}</div>
+                            <div className="text-3xl md:text-5xl hidden sm:block p-3 bg-palestine-green/10 text-palestine-green rounded-xl">{category.icon || '💬'}</div>
                             <div className="flex-grow w-full">
-                                <Link to={`/family-tree/forum/category/${category._id}`} className="flex items-center gap-2">
-                                    <span className="sm:hidden text-2xl">{category.icon || '💬'}</span>
-                                    <h2 className="text-lg md:text-xl font-bold text-palestine-blue hover:text-palestine-green transition">{category.title}</h2>
+                                <Link to={`/family-tree/forum/category/${category._id}`} className="flex items-center gap-3 w-full group">
+                                    <span className="sm:hidden text-2xl p-2 bg-palestine-green/10 text-palestine-green rounded-lg">{category.icon || '💬'}</span>
+                                    <h2 className="text-lg md:text-2xl font-bold text-palestine-blue group-hover:text-palestine-green transition flex-grow">{category.title}</h2>
+                                    <svg className="w-5 h-5 text-gray-400 group-hover:text-palestine-green transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
                                 </Link>
-                                <p className="text-sm md:text-base text-gray-600 mt-1">{category.description}</p>
+                                <p className="text-sm md:text-base text-gray-600 mt-2 line-clamp-2 pr-12 sm:pr-0">{category.description}</p>
 
                                 <div className="mt-3 flex gap-4 text-xs sm:hidden border-t pt-2 border-gray-50 text-gray-500">
                                     <div><span className="font-bold text-gray-800">{category.topicCount}</span> مواضيع</div>
