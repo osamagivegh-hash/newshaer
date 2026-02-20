@@ -73,6 +73,12 @@ const personSchema = new mongoose.Schema({
     default: true
   },
 
+  // Should the alive/deceased status be shown in the person modal?
+  showStatus: {
+    type: Boolean,
+    default: false
+  },
+
   // Birth location/origin
   birthPlace: {
     type: String,
@@ -250,6 +256,7 @@ personSchema.statics.buildTree = async function (personId = null, fullDetails = 
     generation: 1,
     gender: 1,
     isAlive: 1,
+    showStatus: 1,
     isRoot: 1,
     siblingOrder: 1,
     birthDate: 1,
@@ -298,20 +305,21 @@ personSchema.statics.buildTree = async function (personId = null, fullDetails = 
     }
   });
 
-  // Second pass: compute fullLineageName
+  // Second pass: compute fullLineageName for ALL nodes first
   allPersons.forEach(person => {
     const node = personMap.get(person._id.toString());
     let current = node;
     let lineageArray = [];
     while (current) {
-      // Split by spaces and take only the first word if we don't want "أحمد محمد بن محمد الشاعر"
-      // But typically joining their given names is what the user asked for "فلان بن فلان"
-      // If fullName already contains the rest of the name, it might be repetitive.
-      // But let's just use fullName as is, or maybe the user expects the system to just join them.
       lineageArray.push(current.fullName);
       current = current._tempFatherNode;
     }
     node.fullLineageName = lineageArray.join(' بن ');
+  });
+
+  // Third pass: clean up temp references (must be separate to avoid breaking chains)
+  allPersons.forEach(person => {
+    const node = personMap.get(person._id.toString());
     delete node._tempFatherNode;
   });
 

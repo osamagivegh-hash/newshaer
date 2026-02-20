@@ -198,7 +198,10 @@ const SafeFullTreePage = () => {
             biography: person.biography,
             notes: person.notes,
             children: person.children || [],
-            isAlive: person.isAlive
+            isAlive: person.isAlive,
+            showStatus: person.showStatus,
+            isRoot: person.isRoot,
+            fullLineageName: person.fullLineageName
         });
     };
 

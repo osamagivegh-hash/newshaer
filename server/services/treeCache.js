@@ -155,7 +155,7 @@ class TreeCache {
         // Removed only: contact, verification, profileImage (rarely used), timestamps
         const essentialFields = [
             '_id', 'fullName', 'nickname', 'fatherId', 'generation',
-            'gender', 'isAlive', 'isRoot', 'siblingOrder', 'birthDate', 'deathDate',
+            'gender', 'isAlive', 'showStatus', 'isRoot', 'siblingOrder', 'birthDate', 'deathDate',
             // Additional fields for PersonModal
             'birthPlace', 'currentResidence', 'occupation', 'biography', 'notes'
         ];
@@ -192,7 +192,7 @@ class TreeCache {
             }
         });
 
-        // Second pass: compute fullLineageName
+        // Second pass: compute fullLineageName for ALL nodes first
         allPersons.forEach(person => {
             const node = personMap.get(person._id.toString());
             let current = node;
@@ -202,6 +202,11 @@ class TreeCache {
                 current = current._tempFatherNode;
             }
             node.fullLineageName = lineageArray.join(' بن ');
+        });
+
+        // Third pass: clean up temp references (must be separate to avoid breaking chains)
+        allPersons.forEach(person => {
+            const node = personMap.get(person._id.toString());
             delete node._tempFatherNode;
         });
 
@@ -235,7 +240,7 @@ class TreeCache {
 
             // Fetch essential fields + PersonModal fields from database
             const allPersons = await Person.find({}).select(
-                '_id fullName nickname fatherId generation gender isAlive isRoot siblingOrder birthDate deathDate birthPlace currentResidence occupation biography notes'
+                '_id fullName nickname fatherId generation gender isAlive showStatus isRoot siblingOrder birthDate deathDate birthPlace currentResidence occupation biography notes'
             ).lean();
 
             if (allPersons.length === 0) {

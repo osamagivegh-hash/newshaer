@@ -49,7 +49,7 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                     {(person.fullLineageName || (person.ancestors && person.ancestors.length > 0)) && (
                         <div className="p-3 bg-gray-50 rounded-lg border border-palestine-green/20">
                             <p className="text-xs text-gray-500 mb-2 font-bold flex items-center gap-2">
-                                <span className="text-palestine-green text-lg">📜</span> النسب الشريف
+                                <span className="text-palestine-green text-lg">📜</span> النسب الكامل
                             </p>
                             <p className="font-medium text-palestine-green text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>
                                 {person.fullLineageName
@@ -93,6 +93,21 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                             <div>
                                 <p className="text-xs text-gray-500">مكان الإقامة</p>
                                 <p className="font-medium">{person.currentResidence}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Person Status - only shown if showStatus is enabled */}
+                    {person.showStatus && person.isAlive !== undefined && (
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <span className={person.isAlive ? "text-green-500 text-xl" : "text-gray-500 text-xl"}>
+                                {person.isAlive ? "🌱" : "🕊️"}
+                            </span>
+                            <div>
+                                <p className="text-xs text-gray-500">حالة الشخص</p>
+                                <p className="font-medium">
+                                    {person.isAlive ? "على قيد الحياة" : "متوفى"}
+                                </p>
                             </div>
                         </div>
                     )}

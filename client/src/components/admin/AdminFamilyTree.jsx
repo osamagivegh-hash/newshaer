@@ -68,6 +68,7 @@ const AdminFamilyTree = () => {
         birthDate: '',
         deathDate: '',
         isAlive: true,
+        showStatus: false,
         birthPlace: '',
         currentResidence: '',
         occupation: '',
@@ -265,6 +266,7 @@ const AdminFamilyTree = () => {
             birthDate: '',
             deathDate: '',
             isAlive: true,
+            showStatus: false,
             birthPlace: '',
             currentResidence: '',
             occupation: '',
@@ -293,6 +295,7 @@ const AdminFamilyTree = () => {
             birthDate: person.birthDate || '',
             deathDate: person.deathDate || '',
             isAlive: person.isAlive !== false,
+            showStatus: person.showStatus || false,
             birthPlace: person.birthPlace || '',
             currentResidence: person.currentResidence || '',
             occupation: person.occupation || '',
@@ -838,6 +841,18 @@ const AdminFamilyTree = () => {
                                         <option value="true">على قيد الحياة (حي)</option>
                                         <option value="false">متوفى</option>
                                     </select>
+                                </div>
+                                <div className="flex items-center gap-2 mt-6">
+                                    <input
+                                        type="checkbox"
+                                        id="showStatus"
+                                        checked={formData.showStatus}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, showStatus: e.target.checked }))}
+                                        className="w-4 h-4 text-palestine-green border-gray-300 rounded focus:ring-palestine-green"
+                                    />
+                                    <label htmlFor="showStatus" className="text-sm text-gray-700">
+                                        عرض الحالة عند الضغط على الاسم
+                                    </label>
                                 </div>
                             </div>
 
