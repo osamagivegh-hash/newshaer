@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import RichTextEditor from '../../components/Forum/RichTextEditor';
 import { useForumAuth } from '../../contexts/ForumAuthContext';
 
 const ForumCreateTopic = () => {
@@ -14,18 +13,7 @@ const ForumCreateTopic = () => {
     const { forumUser } = useForumAuth();
     const navigate = useNavigate();
 
-    // Quill formatting modules
-    const modules = {
-        toolbar: [
-            [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'color': [] }, { 'background': [] }],
-            [{ 'align': [] }],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            ['link', 'image', 'video'],
-            ['clean']
-        ],
-    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -81,9 +69,7 @@ const ForumCreateTopic = () => {
                 <div>
                     <label className="block text-gray-700 font-bold mb-2">محتوى الموضوع</label>
                     <div className="bg-white" style={{ minHeight: '300px' }}>
-                        <ReactQuill
-                            theme="snow"
-                            modules={modules}
+                        <RichTextEditor
                             value={content}
                             onChange={setContent}
                             placeholder="اكتب رسالتك هنا..."

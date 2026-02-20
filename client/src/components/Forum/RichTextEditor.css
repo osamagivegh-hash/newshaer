@@ -1,0 +1,81 @@
+/* Custom Fonts Setup */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap');
+
+.ql-font-cairo {
+    font-family: 'Cairo', sans-serif;
+}
+.ql-font-tahoma {
+    font-family: 'Tahoma', sans-serif;
+}
+.ql-font-arial {
+    font-family: 'Arial', sans-serif;
+}
+.ql-font-times-new-roman {
+    font-family: 'Times New Roman', serif;
+}
+
+/* Pseudo elements for Quill Toolbar Dropdowns to display label */
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="cairo"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="cairo"]::before {
+    content: 'Cairo';
+    font-family: 'Cairo', sans-serif;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="tahoma"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="tahoma"]::before {
+    content: 'Tahoma';
+    font-family: 'Tahoma', sans-serif;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before {
+    content: 'Arial';
+    font-family: 'Arial', sans-serif;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
+    content: 'Times New Roman';
+    font-family: 'Times New Roman', serif;
+}
+
+/* Default font label if not overridden (fallback) */
+.ql-snow .ql-picker.ql-font .ql-picker-label::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item::before {
+    content: 'الخط الافتراضي' !important;
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value]::before {
+    content: attr(data-value) !important;
+}
+
+/* Custom Sizes Setup */
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="10px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="10px"]::before { content: '10' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { content: '12' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { content: '14' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before { content: '16' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { content: '18' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="20px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="20px"]::before { content: '20' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before { content: '24' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="28px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="28px"]::before { content: '28' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before { content: '32' !important; }
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="36px"]::before, .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="36px"]::before { content: '36' !important; }
+
+/* Default size label if not overridden */
+.ql-snow .ql-picker.ql-size .ql-picker-label::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+    content: 'الحجم الافتراضي' !important;
+}
+
+/* Adjust toolbar width for the font style to fit nicely inside the container */
+.ql-snow .ql-picker.ql-font {
+    width: 140px;
+}
+.ql-snow .ql-picker.ql-size {
+    width: 70px;
+}
+
+/* Ensure the editor itself supports these custom sizes without issues */
+.ql-editor {
+    min-height: 200px;
+}

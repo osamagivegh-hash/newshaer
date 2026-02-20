@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import RichTextEditor from '../../components/Forum/RichTextEditor';
 import DOMPurify from 'dompurify';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -25,13 +24,7 @@ const ForumTopic = () => {
 
     const { forumUser } = useForumAuth();
 
-    const modules = {
-        toolbar: [
-            ['bold', 'italic', 'underline'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            ['link', 'clean']
-        ],
-    };
+
 
     const fetchTopicData = async () => {
         try {
@@ -220,9 +213,7 @@ const ForumTopic = () => {
                     <div>
                         {editingTopic ? (
                             <div className="space-y-4">
-                                <ReactQuill
-                                    theme="snow"
-                                    modules={modules}
+                                <RichTextEditor
                                     value={editTopicContent}
                                     onChange={setEditTopicContent}
                                 />
@@ -293,9 +284,7 @@ const ForumTopic = () => {
                     <div>
                         {editingPostId === post._id ? (
                             <div className="space-y-4">
-                                <ReactQuill
-                                    theme="snow"
-                                    modules={modules}
+                                <RichTextEditor
                                     value={editPostContent}
                                     onChange={setEditPostContent}
                                 />
@@ -332,9 +321,7 @@ const ForumTopic = () => {
                     <form onSubmit={handleReply} className="space-y-4">
                         <h3 className="font-bold text-lg text-palestine-green">أضف رداً</h3>
                         <div className="bg-white">
-                            <ReactQuill
-                                theme="snow"
-                                modules={modules}
+                            <RichTextEditor
                                 value={replyContent}
                                 onChange={setReplyContent}
                                 placeholder="اكتب مشاركتك هنا..."
