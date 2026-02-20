@@ -167,20 +167,20 @@ const ForumTopic = () => {
             {/* Main Topic (First Post) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y">
 
-                <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
-                    <h1 className="text-2xl font-bold flex items-center gap-2 text-palestine-blue">
+                <div className="p-3 md:p-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-palestine-blue">
                         {topic.isPinned && <span className="text-red-500" title="مثبت">📌</span>}
                         {topic.isLocked && <span className="text-gray-500" title="مغلق">🔒</span>}
                         {topic.title}
                     </h1>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                     {/* Header: Author & Dates */}
-                    <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100 w-full">
                         {/* Author Info */}
-                        <Link to={`/family-tree/forum/user/${topic.author._id}`} className="flex items-center gap-4 hover:opacity-80 transition cursor-pointer">
-                            <div className="w-12 h-12 rounded-full overflow-hidden bg-palestine-green/20 text-palestine-green flex justify-center items-center text-xl font-bold border border-gray-200 shadow-sm shrink-0">
+                        <Link to={`/family-tree/forum/user/${topic.author._id}`} className="flex items-center gap-3 md:gap-4 hover:opacity-80 transition cursor-pointer shrink-0">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-palestine-green/20 text-palestine-green flex justify-center items-center text-lg md:text-xl font-bold border border-gray-200 shadow-sm shrink-0">
                                 {topic.author.avatar ? (
                                     <img src={topic.author.avatar} alt={topic.author.username} className="w-full h-full object-cover" />
                                 ) : (
@@ -188,17 +188,17 @@ const ForumTopic = () => {
                                 )}
                             </div>
                             <div>
-                                <h3 className="font-bold text-palestine-green text-lg leading-tight">{topic.author.username}</h3>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <h3 className="font-bold text-palestine-green text-base md:text-lg leading-tight">{topic.author.username}</h3>
+                                <p className="text-xs text-gray-500 mt-0.5 md:mt-1">
                                     {topic.author.role === 'admin' ? 'Admin' : topic.author.role === 'moderator' ? 'مشرف' : 'عضو'}
                                 </p>
                             </div>
                         </Link>
                         {/* Time & Actions */}
-                        <div className="text-left text-sm text-gray-400 flex flex-col items-end gap-2">
+                        <div className="text-right sm:text-left text-xs md:text-sm text-gray-400 flex flex-row sm:flex-col items-center sm:items-end w-full sm:w-auto justify-between sm:justify-start">
                             <span>{new Date(topic.createdAt).toLocaleString('ar-EG')}</span>
                             {forumUser && (forumUser._id === topic.author._id || forumUser.role === 'admin' || forumUser.role === 'moderator') && (
-                                <div className="flex gap-3 mt-1">
+                                <div className="flex gap-2 md:gap-3">
                                     {forumUser._id === topic.author._id && !topic.isLocked && (
                                         <button
                                             onClick={() => {
@@ -244,12 +244,12 @@ const ForumTopic = () => {
 
             {/* Replies List */}
             {posts.map(post => (
-                <div key={post._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6 mb-4">
+                <div key={post._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-4 md:p-6 mb-4">
                     {/* Header: Author & Dates */}
-                    <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6 pb-3 md:pb-4 border-b border-gray-100 w-full">
                         {/* Author Info */}
-                        <Link to={`/family-tree/forum/user/${post.author._id}`} className="flex items-center gap-4 hover:opacity-80 transition cursor-pointer">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-palestine-blue/20 text-palestine-blue flex justify-center items-center text-lg font-bold border border-gray-200 shadow-sm shrink-0">
+                        <Link to={`/family-tree/forum/user/${post.author._id}`} className="flex items-center gap-3 md:gap-4 hover:opacity-80 transition cursor-pointer shrink-0">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden bg-palestine-blue/20 text-palestine-blue flex justify-center items-center text-base md:text-lg font-bold border border-gray-200 shadow-sm shrink-0">
                                 {post.author.avatar ? (
                                     <img src={post.author.avatar} alt={post.author.username} className="w-full h-full object-cover" />
                                 ) : (
@@ -257,14 +257,14 @@ const ForumTopic = () => {
                                 )}
                             </div>
                             <div>
-                                <h3 className="font-bold text-palestine-blue text-base leading-tight">{post.author.username}</h3>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <h3 className="font-bold text-palestine-blue text-sm md:text-base leading-tight">{post.author.username}</h3>
+                                <p className="text-xs text-gray-500 mt-0.5 md:mt-1">
                                     {post.author.role === 'admin' ? 'Admin' : post.author.role === 'moderator' ? 'مشرف' : 'عضو'}
                                 </p>
                             </div>
                         </Link>
                         {/* Time & Actions */}
-                        <div className="text-left text-sm text-gray-400 flex flex-col items-end gap-2">
+                        <div className="text-right sm:text-left text-xs md:text-sm text-gray-400 flex flex-row sm:flex-col items-center sm:items-end gap-2 w-full sm:w-auto justify-between sm:justify-start">
                             <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ar })}</span>
                             {forumUser && (forumUser._id === post.author._id || forumUser.role === 'admin' || forumUser.role === 'moderator') && (
                                 <div className="flex gap-3 mt-1">
