@@ -19,6 +19,7 @@ export const MOBILE_SECTIONS = [
 
 // Sub-sections for "More" tab
 export const MORE_SUBSECTIONS = [
+    { id: 'forum', label: 'المنتدى', icon: 'forum', color: '#10b981' },
     { id: 'conversations', label: 'حوارات', icon: 'chat', color: '#007A3D' },
     { id: 'palestine', label: 'فلسطين', icon: 'flag', color: '#CE1126' },
     { id: 'gallery', label: 'معرض الصور', icon: 'gallery', color: '#1a1a1a' },

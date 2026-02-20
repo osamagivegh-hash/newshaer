@@ -25,8 +25,12 @@ const MobileMenu = ({ isOpen, onClose, navItems, activeSection, scrollToSection 
     }
   }, [isOpen, onClose])
 
-  const handleNavClick = (sectionId) => {
-    scrollToSection(sectionId)
+  const handleNavClick = (item) => {
+    if (item.route) {
+      window.location.href = item.route;
+    } else {
+      scrollToSection(item.id)
+    }
     onClose()
   }
 
@@ -75,7 +79,7 @@ const MobileMenu = ({ isOpen, onClose, navItems, activeSection, scrollToSection 
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => handleNavClick(item)}
                 className={`
                   w-full text-right px-4 py-3 text-base transition-colors duration-200
                   ${activeSection === item.id

@@ -68,6 +68,7 @@ const Header = () => {
   const navItems = [
     { id: 'hero', label: 'الرئيسية' },
     { id: 'family-tree', label: 'شجرة العائلة' },
+    { id: 'forum', label: 'المنتدى', route: '/family-tree/forum' },
     { id: 'news', label: 'الأخبار' },
     { id: 'conversations', label: 'حوارات' },
     { id: 'palestine', label: 'فلسطين' },
@@ -134,7 +135,11 @@ const Header = () => {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  scrollToSection(item.id)
+                  if (item.route) {
+                    window.location.href = item.route;
+                  } else {
+                    scrollToSection(item.id)
+                  }
                 }}
                 className={`relative px-4 py-2 text-sm font-bold rounded-full transition-all duration-200 cursor-pointer select-none whitespace-nowrap hover:scale-105 active:scale-95 ${activeSection === item.id
                   ? 'bg-gradient-to-r from-palestine-green to-olive-600 text-white shadow-md'
