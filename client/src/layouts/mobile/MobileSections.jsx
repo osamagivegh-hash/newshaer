@@ -192,6 +192,14 @@ export const MobileFamilyTreeSection = () => {
             icon: '👨‍💻',
             description: 'تواصل مع فريق التطوير وشاركنا اقتراحاتك',
             path: '/family-tree/dev-team'
+        },
+        {
+            id: 'forum',
+            label: 'منتدى العائلة',
+            color: '#0284c7',
+            icon: '🏛️',
+            description: 'شارك في النقاشات وتواصل مع أفراد العائلة',
+            path: '/family-tree/forum'
         }
     ];
 
