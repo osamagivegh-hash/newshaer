@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { useForumAuth } from '../../contexts/ForumAuthContext';
 
 const ForumUserProfile = () => {
     const { id } = useParams();
+    const { forumUser } = useForumAuth();
     const [user, setUser] = useState(null);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -53,10 +55,20 @@ const ForumUserProfile = () => {
 
                 {/* Info */}
                 <div className="flex-1 text-center md:text-right w-full">
-                    <h1 className="text-3xl font-bold text-palestine-blue">{user.username}</h1>
-                    <div className="mt-2 inline-block bg-gray-100 px-4 py-1 rounded-full text-sm text-gray-700 font-medium">
-                        {user.role === 'admin' ? 'Admin' : user.role === 'moderator' ? 'مشرف' : 'عضو'}
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <h1 className="text-3xl font-bold text-palestine-blue">{user.username}</h1>
+                        <div className="inline-block bg-gray-100 px-4 py-1 rounded-full text-sm text-gray-700 font-medium">
+                            {user.role === 'admin' ? 'Admin' : user.role === 'moderator' ? 'مشرف' : 'عضو'}
+                        </div>
                     </div>
+
+                    {forumUser && forumUser._id === user._id && (
+                        <div className="mt-4">
+                            <Link to="/family-tree/forum/profile" className="inline-block bg-palestine-green hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-sm">
+                                تعديل الملف الشخصي
+                            </Link>
+                        </div>
+                    )}
 
                     <div className="mt-6">
                         <h3 className="text-lg font-bold text-gray-700 mb-2">نبذة:</h3>
