@@ -81,7 +81,9 @@ const ForumCategory = () => {
                                     </h3>
                                 </Link>
                                 <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                                    <span className="font-semibold text-gray-700">{topic.author.username}</span>
+                                    <Link to={`/family-tree/forum/user/${topic.author._id}`} className="font-semibold text-gray-700 hover:text-palestine-green transition">
+                                        {topic.author.username}
+                                    </Link>
                                     <span>•</span>
                                     <span>{new Date(topic.createdAt).toLocaleDateString('ar-EG')}</span>
                                 </div>

@@ -3,6 +3,7 @@ const { forumAuthMiddleware, forumModeratorMiddleware } = require('../middleware
 const ForumCategory = require('../models/ForumCategory');
 const ForumTopic = require('../models/ForumTopic');
 const ForumPost = require('../models/ForumPost');
+const ForumUser = require('../models/ForumUser');
 
 const router = express.Router();
 
@@ -298,6 +299,30 @@ router.delete('/posts/:id', forumAuthMiddleware, async (req, res) => {
         res.json({ success: true, message: 'تم حذف المشاركة' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'خطأ أثناء حذف المشاركة' });
+    }
+});
+
+// Get User Public Profile (Any user can view)
+router.get('/users/:id', async (req, res) => {
+    try {
+        const user = await ForumUser.findById(req.params.id).select('-password');
+        if (!user || !user.isActive) {
+            return res.status(404).json({ success: false, message: 'العضو غير موجود أو تم حظره' });
+        }
+
+        const topicCount = await ForumTopic.countDocuments({ author: req.params.id, isActive: true });
+        const postCount = await ForumPost.countDocuments({ author: req.params.id, isActive: true });
+
+        res.json({
+            success: true,
+            user,
+            stats: {
+                topicCount,
+                postCount
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'يوجد خطأ في جلب بيانات العضو' });
     }
 });
 

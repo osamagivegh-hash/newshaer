@@ -179,7 +179,7 @@ const ForumTopic = () => {
                     {/* Header: Author & Dates */}
                     <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
                         {/* Author Info */}
-                        <div className="flex items-center gap-4">
+                        <Link to={`/family-tree/forum/user/${topic.author._id}`} className="flex items-center gap-4 hover:opacity-80 transition cursor-pointer">
                             <div className="w-12 h-12 rounded-full overflow-hidden bg-palestine-green/20 text-palestine-green flex justify-center items-center text-xl font-bold border border-gray-200 shadow-sm shrink-0">
                                 {topic.author.avatar ? (
                                     <img src={topic.author.avatar} alt={topic.author.username} className="w-full h-full object-cover" />
@@ -193,7 +193,7 @@ const ForumTopic = () => {
                                     {topic.author.role === 'admin' ? 'Admin' : topic.author.role === 'moderator' ? 'مشرف' : 'عضو'}
                                 </p>
                             </div>
-                        </div>
+                        </Link>
                         {/* Time & Actions */}
                         <div className="text-left text-sm text-gray-400 flex flex-col items-end gap-2">
                             <span>{new Date(topic.createdAt).toLocaleString('ar-EG')}</span>
@@ -248,7 +248,7 @@ const ForumTopic = () => {
                     {/* Header: Author & Dates */}
                     <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
                         {/* Author Info */}
-                        <div className="flex items-center gap-4">
+                        <Link to={`/family-tree/forum/user/${post.author._id}`} className="flex items-center gap-4 hover:opacity-80 transition cursor-pointer">
                             <div className="w-10 h-10 rounded-full overflow-hidden bg-palestine-blue/20 text-palestine-blue flex justify-center items-center text-lg font-bold border border-gray-200 shadow-sm shrink-0">
                                 {post.author.avatar ? (
                                     <img src={post.author.avatar} alt={post.author.username} className="w-full h-full object-cover" />
@@ -262,7 +262,7 @@ const ForumTopic = () => {
                                     {post.author.role === 'admin' ? 'Admin' : post.author.role === 'moderator' ? 'مشرف' : 'عضو'}
                                 </p>
                             </div>
-                        </div>
+                        </Link>
                         {/* Time & Actions */}
                         <div className="text-left text-sm text-gray-400 flex flex-col items-end gap-2">
                             <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ar })}</span>

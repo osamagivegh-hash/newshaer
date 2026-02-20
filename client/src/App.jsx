@@ -16,6 +16,7 @@ import ForumLogin from './pages/forum/ForumLogin'
 import ForumRegister from './pages/forum/ForumRegister'
 import ForumAdminDashboard from './pages/forum/ForumAdminDashboard'
 import ForumProfile from './pages/forum/ForumProfile'
+import ForumUserProfile from './pages/forum/ForumUserProfile'
 
 // Mobile CSS
 import './styles/mobile.css'
@@ -122,6 +123,7 @@ function App() {
                       <Route path="topic/:id" element={<ForumTopic />} />
                       <Route path="admin" element={<ForumAdminDashboard />} />
                       <Route path="profile" element={<ForumProfile />} />
+                      <Route path="user/:id" element={<ForumUserProfile />} />
                     </Route>
 
                     {/* Legacy route - redirects to gateway */}
