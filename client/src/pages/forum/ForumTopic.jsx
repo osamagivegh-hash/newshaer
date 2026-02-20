@@ -175,41 +175,49 @@ const ForumTopic = () => {
                     </h1>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 min-h-[250px] p-6 gap-6">
-                    {/* Author block (Side) */}
-                    <div className="md:col-span-1 border-b md:border-b-0 md:border-l border-gray-100 pb-4 md:pb-0 text-center md:text-right flex flex-col items-center gap-2">
-                        <div className="w-20 h-20 rounded-full bg-palestine-green/20 text-palestine-green flex justify-center items-center text-3xl font-bold">
-                            {topic.author.username.charAt(0)}
+                <div className="p-6">
+                    {/* Header: Author & Dates */}
+                    <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
+                        {/* Author Info */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-palestine-green/20 text-palestine-green flex justify-center items-center text-xl font-bold border border-gray-200 shadow-sm shrink-0">
+                                {topic.author.avatar ? (
+                                    <img src={topic.author.avatar} alt={topic.author.username} className="w-full h-full object-cover" />
+                                ) : (
+                                    topic.author.username.charAt(0).toUpperCase()
+                                )}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-palestine-green text-lg leading-tight">{topic.author.username}</h3>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {topic.author.role === 'admin' ? 'Admin' : topic.author.role === 'moderator' ? 'مشرف' : 'عضو'}
+                                </p>
+                            </div>
                         </div>
-                        <h3 className="font-bold text-lg text-palestine-green">{topic.author.username}</h3>
-                        <p className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-max">
-                            {topic.author.role === 'admin' ? 'Admin' : topic.author.role === 'moderator' ? 'مشرف' : 'عضو'}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                            انضم: {new Date(topic.author.joinDate || Date.now()).toLocaleDateString('ar-EG')}
-                        </p>
-                    </div>
-                    {/* Content block */}
-                    <div className="md:col-span-3">
-                        <div className="text-sm text-gray-400 mb-6 flex justify-between">
+                        {/* Time & Actions */}
+                        <div className="text-left text-sm text-gray-400 flex flex-col items-end gap-2">
                             <span>{new Date(topic.createdAt).toLocaleString('ar-EG')}</span>
                             {forumUser && (forumUser._id === topic.author._id || forumUser.role === 'admin' || forumUser.role === 'moderator') && (
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 mt-1">
                                     {forumUser._id === topic.author._id && !topic.isLocked && (
                                         <button
                                             onClick={() => {
                                                 setEditingTopic(!editingTopic);
                                                 setEditTopicContent(topic.content);
                                             }}
-                                            className="text-blue-500 hover:underline"
+                                            className="text-blue-500 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
                                         >
                                             {editingTopic ? 'إلغاء التعديل' : 'تعديل'}
                                         </button>
                                     )}
-                                    <button onClick={handleDeleteTopic} className="text-red-500 hover:underline">حذف</button>
+                                    <button onClick={handleDeleteTopic} className="text-red-500 hover:underline text-xs bg-red-50 px-2 py-1 rounded">حذف</button>
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Content block */}
+                    <div>
                         {editingTopic ? (
                             <div className="space-y-4">
                                 <ReactQuill
@@ -236,23 +244,30 @@ const ForumTopic = () => {
 
             {/* Replies List */}
             {posts.map(post => (
-                <div key={post._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[200px] grid grid-cols-1 md:grid-cols-4 p-6 gap-6">
-                    {/* Reply Author */}
-                    <div className="md:col-span-1 border-b md:border-b-0 md:border-l border-gray-100 pb-4 md:pb-0 text-center md:text-right flex flex-col items-center gap-2">
-                        <div className="w-16 h-16 rounded-full bg-palestine-blue/20 text-palestine-blue flex justify-center items-center text-2xl font-bold">
-                            {post.author.username.charAt(0)}
+                <div key={post._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6 mb-4">
+                    {/* Header: Author & Dates */}
+                    <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
+                        {/* Author Info */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-palestine-blue/20 text-palestine-blue flex justify-center items-center text-lg font-bold border border-gray-200 shadow-sm shrink-0">
+                                {post.author.avatar ? (
+                                    <img src={post.author.avatar} alt={post.author.username} className="w-full h-full object-cover" />
+                                ) : (
+                                    post.author.username.charAt(0).toUpperCase()
+                                )}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-palestine-blue text-base leading-tight">{post.author.username}</h3>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {post.author.role === 'admin' ? 'Admin' : post.author.role === 'moderator' ? 'مشرف' : 'عضو'}
+                                </p>
+                            </div>
                         </div>
-                        <h3 className="font-bold text-palestine-blue">{post.author.username}</h3>
-                        <p className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-max">
-                            {post.author.role === 'admin' ? 'Admin' : post.author.role === 'moderator' ? 'مشرف' : 'عضو'}
-                        </p>
-                    </div>
-                    {/* Reply Content */}
-                    <div className="md:col-span-3">
-                        <div className="text-sm text-gray-400 mb-6 flex justify-between">
+                        {/* Time & Actions */}
+                        <div className="text-left text-sm text-gray-400 flex flex-col items-end gap-2">
                             <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ar })}</span>
                             {forumUser && (forumUser._id === post.author._id || forumUser.role === 'admin' || forumUser.role === 'moderator') && (
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 mt-1">
                                     {forumUser._id === post.author._id && !topic.isLocked && (
                                         <button
                                             onClick={() => {
@@ -263,15 +278,19 @@ const ForumTopic = () => {
                                                     setEditPostContent(post.content);
                                                 }
                                             }}
-                                            className="text-blue-500 hover:underline"
+                                            className="text-blue-500 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
                                         >
                                             {editingPostId === post._id ? 'إلغاء' : 'تعديل'}
                                         </button>
                                     )}
-                                    <button onClick={() => handleDeletePost(post._id)} className="text-red-500 hover:underline">حذف</button>
+                                    <button onClick={() => handleDeletePost(post._id)} className="text-red-500 hover:underline text-xs bg-red-50 px-2 py-1 rounded">حذف</button>
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Content */}
+                    <div>
                         {editingPostId === post._id ? (
                             <div className="space-y-4">
                                 <ReactQuill

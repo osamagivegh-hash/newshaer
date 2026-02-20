@@ -32,8 +32,12 @@ const ForumLayout = () => {
                                     </Link>
                                 )}
                                 <Link to="/family-tree/forum/profile" className="flex items-center gap-2 hover:text-gray-200">
-                                    <div className="w-8 h-8 rounded-full bg-palestine-red flex items-center justify-center font-bold">
-                                        {forumUser.username.charAt(0).toUpperCase()}
+                                    <div className="w-8 h-8 rounded-full bg-palestine-red flex items-center justify-center font-bold overflow-hidden border border-white">
+                                        {forumUser.avatar ? (
+                                            <img src={forumUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                        ) : (
+                                            forumUser.username.charAt(0).toUpperCase()
+                                        )}
                                     </div>
                                     <span>{forumUser.username}</span>
                                 </Link>
