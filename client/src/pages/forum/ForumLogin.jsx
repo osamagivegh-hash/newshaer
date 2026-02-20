@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useForumAuth } from '../../../contexts/ForumAuthContext';
+import { useForumAuth } from '../../contexts/ForumAuthContext';
 
 const ForumLogin = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });

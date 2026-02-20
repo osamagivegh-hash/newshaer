@@ -6,7 +6,7 @@ import 'react-quill/dist/quill.snow.css';
 import DOMPurify from 'dompurify';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { useForumAuth } from '../../../contexts/ForumAuthContext';
+import { useForumAuth } from '../../contexts/ForumAuthContext';
 
 const ForumTopic = () => {
     const { id } = useParams();

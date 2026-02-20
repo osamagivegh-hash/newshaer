@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { useForumAuth } from '../../../contexts/ForumAuthContext';
+import { useForumAuth } from '../../contexts/ForumAuthContext';
 
 const ForumCategory = () => {
     const { id } = useParams();
