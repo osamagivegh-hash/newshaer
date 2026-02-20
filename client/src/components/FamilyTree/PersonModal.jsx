@@ -45,16 +45,18 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
 
                 {/* Content */}
                 <div className="p-6 space-y-4" dir="rtl">
-                    {/* Father */}
-                    {(person.fatherId || person.fatherName) && (
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                            <span className="text-palestine-green text-xl">👨</span>
-                            <div>
-                                <p className="text-xs text-gray-500">الأب</p>
-                                <p className="font-medium">
-                                    {person.fatherName || person.fatherId?.fullName || 'غير محدد'}
-                                </p>
-                            </div>
+                    {/* Ancestors / Full Lineage */}
+                    {(person.fullLineageName || (person.ancestors && person.ancestors.length > 0)) && (
+                        <div className="p-3 bg-gray-50 rounded-lg border border-palestine-green/20">
+                            <p className="text-xs text-gray-500 mb-2 font-bold flex items-center gap-2">
+                                <span className="text-palestine-green text-lg">📜</span> النسب الشريف
+                            </p>
+                            <p className="font-medium text-palestine-green text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>
+                                {person.fullLineageName
+                                    ? person.fullLineageName
+                                    : person.ancestors?.map(a => a.fullName).join(' بن ')
+                                }
+                            </p>
                         </div>
                     )}
 
@@ -95,21 +97,6 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                         </div>
                     )}
 
-                    {/* Status */}
-                    {person.isAlive !== undefined && (
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                            <span className={person.isAlive ? "text-green-500 text-xl" : "text-gray-500 text-xl"}>
-                                {person.isAlive ? "🌱" : "🕊️"}
-                            </span>
-                            <div>
-                                <p className="text-xs text-gray-500">حالة الشخص</p>
-                                <p className="font-medium">
-                                    {person.isAlive ? "على قيد الحياة" : "متوفى"}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Children */}
                     {person.children && person.children.length > 0 && (
                         <div className="p-3 bg-gray-50 rounded-lg">
@@ -143,18 +130,6 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                         </div>
                     )}
 
-                    {/* Ancestors / Full Lineage */}
-                    {(person.fullLineageName || (person.ancestors && person.ancestors.length > 0)) && (
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                            <p className="text-xs text-gray-500 mb-2">النسب الشريف (تسلسل الآباء)</p>
-                            <p className="font-medium text-palestine-green text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>
-                                {person.fullLineageName
-                                    ? person.fullLineageName
-                                    : person.ancestors.map(a => a.fullName).join(' بن ')
-                                }
-                            </p>
-                        </div>
-                    )}
                 </div>
 
                 {/* Footer Actions */}
