@@ -66,15 +66,22 @@ const FamilyTreeSection = () => {
                     </div>
                 )}
 
-                <div>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
                     <Link
                         to="/family-tree"
-                        className="inline-flex items-center gap-3 bg-palestine-black text-white px-10 py-5 rounded-xl text-xl font-bold hover:bg-palestine-green transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                        className="inline-flex items-center gap-3 bg-palestine-black text-white px-10 py-5 rounded-xl text-xl font-bold hover:bg-palestine-green transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto justify-center"
                     >
                         <span>تصفح شجرة العائلة</span>
                         <svg className="w-6 h-6 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
+                    </Link>
+
+                    <Link
+                        to="/family-tree/forum"
+                        className="inline-flex items-center gap-3 bg-white text-palestine-green border-2 border-palestine-green px-10 py-4 rounded-xl text-xl font-bold hover:bg-palestine-green hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto justify-center"
+                    >
+                        <span>🏛️ منتدى العائلة</span>
                     </Link>
                 </div>
             </div>

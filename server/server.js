@@ -221,6 +221,10 @@ app.use('/api/family-tree-auth', require('./routes/familyTreeAuth'));
 // Family Tree Dashboard (uses FT auth - completely isolated)
 app.use('/api/dashboard/family-tree', require('./routes/familyTreeDashboard'));
 
+// Family Tree Forum
+app.use('/api/forum-auth', require('./routes/forumAuth'));
+app.use('/api/forum', require('./routes/forum'));
+
 // Serve React app for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));

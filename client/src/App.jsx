@@ -4,8 +4,16 @@ import { Toaster } from 'react-hot-toast'
 import { AdminProvider } from './contexts/AdminContext'
 import { FamilyTreeAuthProvider } from './contexts/FamilyTreeAuthContext'
 import { LayoutProvider } from './contexts/LayoutContext'
+import { ForumAuthProvider } from './contexts/ForumAuthContext'
 
-// Mobile CSS
+// Forum Components
+import ForumLayout from './components/Forum/ForumLayout'
+import ForumHome from './pages/forum/ForumHome'
+import ForumCategory from './pages/forum/ForumCategory'
+import ForumTopic from './pages/forum/ForumTopic'
+import ForumCreateTopic from './pages/forum/ForumCreateTopic'
+import ForumLogin from './pages/forum/ForumLogin'
+import ForumRegister from './pages/forum/ForumRegister'// Mobile CSS
 import './styles/mobile.css'
 
 // Layout Components
@@ -74,174 +82,187 @@ function App() {
       <AdminProvider>
         <FamilyTreeAuthProvider>
           <Router>
-            <LayoutProvider>
-              <div className="min-h-screen bg-palestine-white">
-                <ScrollToTop />
-                <Routes>
-                  {/* Public Routes - Uses Responsive Layout Wrapper */}
-                  <Route path="/" element={<ResponsiveLayoutWrapper />} />
-                  <Route path="/archive" element={<ArchivePage />} />
-                  <Route path="/news" element={<NewsPage />} />
+            <ForumAuthProvider>
+              <LayoutProvider>
+                <div className="min-h-screen bg-palestine-white">
+                  <ScrollToTop />
+                  <Routes>
+                    {/* Public Routes - Uses Responsive Layout Wrapper */}
+                    <Route path="/" element={<ResponsiveLayoutWrapper />} />
+                    <Route path="/archive" element={<ArchivePage />} />
+                    <Route path="/news" element={<NewsPage />} />
 
-                  {/* Family Tree Section Routes */}
-                  <Route path="/family-tree" element={<FamilyTreeGateway />} />
-                  <Route path="/family-tree/appreciation" element={<FounderAppreciation />} />
-                  <Route path="/family-tree/tree" element={<FamilyTreeBranchSelection />} />
-                  <Route path="/family-tree/tree/zahar" element={<ZaharBranchSelection />} />
-                  <Route path="/family-tree/tree/saleh" element={<SalehBranchSelection />} />
-                  <Route path="/family-tree/tree/saleh/salman" element={<SalmanBranchSelection />} />
-                  <Route path="/family-tree/visual" element={<FamilyTreeDisplayPage />} />
-                  <Route path="/family-tree/olive" element={<OliveTreePage />} />
-                  <Route path="/family-tree/lineage" element={<LineageTreePage />} />
-                  <Route path="/family-tree/organic-olive" element={<OrganicOliveTreePage />} />
-                  <Route path="/family-tree/full-organic-olive" element={<FullOrganicTreePage />} />
-                  <Route path="/family-tree/safe-full-tree" element={<SafeFullTreePage />} />
-                  <Route path="/family-tree/lineage/:personId" element={<PersonLineagePage />} />
-                  <Route path="/family-tree/dev-team" element={<DevTeamPage />} />
-                  {/* Legacy route - redirects to gateway */}
-                  <Route path="/family-tree-old" element={<FamilyTreePage />} />
+                    {/* Family Tree Section Routes */}
+                    <Route path="/family-tree" element={<FamilyTreeGateway />} />
+                    <Route path="/family-tree/appreciation" element={<FounderAppreciation />} />
+                    <Route path="/family-tree/tree" element={<FamilyTreeBranchSelection />} />
+                    <Route path="/family-tree/tree/zahar" element={<ZaharBranchSelection />} />
+                    <Route path="/family-tree/tree/saleh" element={<SalehBranchSelection />} />
+                    <Route path="/family-tree/tree/saleh/salman" element={<SalmanBranchSelection />} />
+                    <Route path="/family-tree/visual" element={<FamilyTreeDisplayPage />} />
+                    <Route path="/family-tree/olive" element={<OliveTreePage />} />
+                    <Route path="/family-tree/lineage" element={<LineageTreePage />} />
+                    <Route path="/family-tree/organic-olive" element={<OrganicOliveTreePage />} />
+                    <Route path="/family-tree/full-organic-olive" element={<FullOrganicTreePage />} />
+                    <Route path="/family-tree/safe-full-tree" element={<SafeFullTreePage />} />
+                    <Route path="/family-tree/lineage/:personId" element={<PersonLineagePage />} />
+                    <Route path="/family-tree/dev-team" element={<DevTeamPage />} />
 
-                  <Route path="/articles/:id" element={<ArticleDetail />} />
-                  <Route path="/conversations/:id" element={<ConversationDetail />} />
-                  <Route path="/news/:id" element={<NewsDetail />} />
+                    {/* FORUM ROUTES */}
+                    <Route path="/family-tree/forum" element={<ForumLayout />}>
+                      <Route index element={<ForumHome />} />
+                      <Route path="login" element={<ForumLogin />} />
+                      <Route path="register" element={<ForumRegister />} />
+                      <Route path="category/:id" element={<ForumCategory />} />
+                      <Route path="category/:categoryId/new" element={<ForumCreateTopic />} />
+                      <Route path="topic/:id" element={<ForumTopic />} />
+                    </Route>
 
-                  {/* ===== CMS ADMIN ROUTES (Uses AdminContext) ===== */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
+                    {/* Legacy route - redirects to gateway */}
+                    <Route path="/family-tree-old" element={<FamilyTreePage />} />
 
-                  {/* ===== ISOLATED FAMILY TREE DASHBOARD (Uses FamilyTreeAuthContext) ===== */}
-                  {/* SECURITY: This is a completely separate authentication system */}
-                  <Route path="/family-dashboard/login" element={<FamilyTreeLogin />} />
-                  <Route path="/family-dashboard/*" element={
-                    <FamilyTreeProtectedRoute>
-                      <FamilyTreeDashboardLayout />
-                    </FamilyTreeProtectedRoute>
-                  }>
-                    {/* Family Tree Dashboard Pages */}
-                    <Route index element={<FamilyTreeDashboardOverview />} />
-                    <Route path="members" element={<AdminFamilyTree />} />
-                    <Route path="tree" element={<AdminFamilyTree />} />
-                    <Route path="content" element={<AdminFamilyTreeContent />} />
-                    <Route path="backups" element={<FamilyTreeBackupManager />} />
-                    <Route path="users" element={<FamilyTreeUserManagement />} />
-                  </Route>
+                    <Route path="/articles/:id" element={<ArticleDetail />} />
+                    <Route path="/conversations/:id" element={<ConversationDetail />} />
+                    <Route path="/news/:id" element={<NewsDetail />} />
 
-                  {/* ===== MAIN CMS ADMIN ROUTES ===== */}
-                  <Route path="/admin/*" element={
-                    <ProtectedRoute>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }>
-                    {/* Dashboard - accessible to all logged in users */}
-                    <Route path="dashboard" element={<AdminDashboard />} />
+                    {/* ===== CMS ADMIN ROUTES (Uses AdminContext) ===== */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
 
-                    {/* News - requires 'news' permission */}
-                    <Route path="news" element={
-                      <PermissionGuard permission="news">
-                        <AdminNews />
-                      </PermissionGuard>
-                    } />
+                    {/* ===== ISOLATED FAMILY TREE DASHBOARD (Uses FamilyTreeAuthContext) ===== */}
+                    {/* SECURITY: This is a completely separate authentication system */}
+                    <Route path="/family-dashboard/login" element={<FamilyTreeLogin />} />
+                    <Route path="/family-dashboard/*" element={
+                      <FamilyTreeProtectedRoute>
+                        <FamilyTreeDashboardLayout />
+                      </FamilyTreeProtectedRoute>
+                    }>
+                      {/* Family Tree Dashboard Pages */}
+                      <Route index element={<FamilyTreeDashboardOverview />} />
+                      <Route path="members" element={<AdminFamilyTree />} />
+                      <Route path="tree" element={<AdminFamilyTree />} />
+                      <Route path="content" element={<AdminFamilyTreeContent />} />
+                      <Route path="backups" element={<FamilyTreeBackupManager />} />
+                      <Route path="users" element={<FamilyTreeUserManagement />} />
+                    </Route>
 
-                    {/* Conversations - requires 'conversations' permission */}
-                    <Route path="conversations" element={
-                      <PermissionGuard permission="conversations">
-                        <AdminConversations />
-                      </PermissionGuard>
-                    } />
+                    {/* ===== MAIN CMS ADMIN ROUTES ===== */}
+                    <Route path="/admin/*" element={
+                      <ProtectedRoute>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }>
+                      {/* Dashboard - accessible to all logged in users */}
+                      <Route path="dashboard" element={<AdminDashboard />} />
 
-                    {/* Articles - requires 'articles' permission */}
-                    <Route path="articles" element={
-                      <PermissionGuard permission="articles">
-                        <AdminArticles />
-                      </PermissionGuard>
-                    } />
+                      {/* News - requires 'news' permission */}
+                      <Route path="news" element={
+                        <PermissionGuard permission="news">
+                          <AdminNews />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Palestine - requires 'palestine' permission */}
-                    <Route path="palestine" element={
-                      <PermissionGuard permission="palestine">
-                        <AdminPalestine />
-                      </PermissionGuard>
-                    } />
+                      {/* Conversations - requires 'conversations' permission */}
+                      <Route path="conversations" element={
+                        <PermissionGuard permission="conversations">
+                          <AdminConversations />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Gallery - requires 'gallery' permission */}
-                    <Route path="gallery" element={
-                      <PermissionGuard permission="gallery">
-                        <AdminGallery />
-                      </PermissionGuard>
-                    } />
+                      {/* Articles - requires 'articles' permission */}
+                      <Route path="articles" element={
+                        <PermissionGuard permission="articles">
+                          <AdminArticles />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Comments - requires articles, news, or conversations permission */}
-                    <Route path="comments" element={
-                      <PermissionGuard permission="articles">
-                        <AdminComments />
-                      </PermissionGuard>
-                    } />
+                      {/* Palestine - requires 'palestine' permission */}
+                      <Route path="palestine" element={
+                        <PermissionGuard permission="palestine">
+                          <AdminPalestine />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Contacts - requires 'contacts' permission */}
-                    <Route path="contacts" element={
-                      <PermissionGuard permission="contacts">
-                        <AdminContacts />
-                      </PermissionGuard>
-                    } />
+                      {/* Gallery - requires 'gallery' permission */}
+                      <Route path="gallery" element={
+                        <PermissionGuard permission="gallery">
+                          <AdminGallery />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Tickers - requires 'news' or 'palestine' permission */}
-                    <Route path="tickers" element={
-                      <PermissionGuard permission="news">
-                        <AdminTickers />
-                      </PermissionGuard>
-                    } />
+                      {/* Comments - requires articles, news, or conversations permission */}
+                      <Route path="comments" element={
+                        <PermissionGuard permission="articles">
+                          <AdminComments />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Dev Team - requires 'dev-team' permission */}
-                    <Route path="dev-team" element={
-                      <PermissionGuard permission="dev-team">
-                        <AdminDevTeamMessages />
-                      </PermissionGuard>
-                    } />
+                      {/* Contacts - requires 'contacts' permission */}
+                      <Route path="contacts" element={
+                        <PermissionGuard permission="contacts">
+                          <AdminContacts />
+                        </PermissionGuard>
+                      } />
 
-                    {/* User Management - handled internally (super-admin only) */}
-                    <Route path="users" element={<AdminUserManagement />} />
+                      {/* Tickers - requires 'news' or 'palestine' permission */}
+                      <Route path="tickers" element={
+                        <PermissionGuard permission="news">
+                          <AdminTickers />
+                        </PermissionGuard>
+                      } />
 
-                    {/* CMS Backups - admin/super-admin only */}
-                    <Route path="cms-backups" element={<CMSBackupManager />} />
+                      {/* Dev Team - requires 'dev-team' permission */}
+                      <Route path="dev-team" element={
+                        <PermissionGuard permission="dev-team">
+                          <AdminDevTeamMessages />
+                        </PermissionGuard>
+                      } />
 
-                    {/* Settings - requires 'settings' permission */}
-                    <Route path="settings" element={
-                      <PermissionGuard permission="settings">
-                        <AdminSettings />
-                      </PermissionGuard>
-                    } />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                      {/* User Management - handled internally (super-admin only) */}
+                      <Route path="users" element={<AdminUserManagement />} />
 
-                {/* Toast Notifications */}
-                <Toaster
-                  position="top-center"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: '#363636',
-                      color: '#fff',
-                      fontFamily: 'Cairo, sans-serif',
-                      direction: 'rtl'
-                    },
-                    success: {
-                      duration: 3000,
-                      iconTheme: {
-                        primary: '#007A3D',
-                        secondary: '#fff',
+                      {/* CMS Backups - admin/super-admin only */}
+                      <Route path="cms-backups" element={<CMSBackupManager />} />
+
+                      {/* Settings - requires 'settings' permission */}
+                      <Route path="settings" element={
+                        <PermissionGuard permission="settings">
+                          <AdminSettings />
+                        </PermissionGuard>
+                      } />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+
+                  {/* Toast Notifications */}
+                  <Toaster
+                    position="top-center"
+                    toastOptions={{
+                      duration: 4000,
+                      style: {
+                        background: '#363636',
+                        color: '#fff',
+                        fontFamily: 'Cairo, sans-serif',
+                        direction: 'rtl'
                       },
-                    },
-                    error: {
-                      duration: 5000,
-                      iconTheme: {
-                        primary: '#CE1126',
-                        secondary: '#fff',
+                      success: {
+                        duration: 3000,
+                        iconTheme: {
+                          primary: '#007A3D',
+                          secondary: '#fff',
+                        },
                       },
-                    },
-                  }}
-                />
-              </div>
-            </LayoutProvider>
+                      error: {
+                        duration: 5000,
+                        iconTheme: {
+                          primary: '#CE1126',
+                          secondary: '#fff',
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </LayoutProvider>
+            </ForumAuthProvider>
           </Router>
         </FamilyTreeAuthProvider>
       </AdminProvider>
