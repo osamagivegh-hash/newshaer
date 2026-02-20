@@ -93,6 +93,14 @@ const FamilyTreeGateway = () => {
             icon: '👨‍💻',
             description: 'تواصل مع فريق التطوير وشاركنا اقتراحاتك',
             path: '/family-tree/dev-team'
+        },
+        {
+            id: 'forum',
+            label: 'منتدى العائلة',
+            color: '#1E40AF', // A nice blue shade
+            icon: '🏛️',
+            description: 'تبادل الأخبار والصور والنقاشات مع أفراد العائلة',
+            path: '/family-tree/forum'
         }
     ];
 
@@ -151,7 +159,7 @@ const FamilyTreeGateway = () => {
                 </div>
 
                 {/* Button Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl w-full">
                     {buttons.map((button, index) => (
                         <button
                             key={button.id}
