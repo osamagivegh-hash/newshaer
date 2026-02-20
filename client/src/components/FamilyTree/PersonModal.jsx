@@ -131,20 +131,16 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                         </div>
                     )}
 
-                    {/* Ancestors */}
-                    {person.ancestors && person.ancestors.length > 0 && (
+                    {/* Ancestors / Full Lineage */}
+                    {(person.fullLineageName || (person.ancestors && person.ancestors.length > 0)) && (
                         <div className="p-3 bg-gray-50 rounded-lg">
-                            <p className="text-xs text-gray-500 mb-2">سلسلة النسب</p>
-                            <div className="flex flex-wrap items-center gap-1 text-sm">
-                                {person.ancestors.map((ancestor, index) => (
-                                    <React.Fragment key={ancestor._id}>
-                                        <span className="text-palestine-green font-medium">{ancestor.fullName}</span>
-                                        {index < person.ancestors.length - 1 && (
-                                            <span className="text-gray-400">←</span>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </div>
+                            <p className="text-xs text-gray-500 mb-2">النسب الشريف (تسلسل الآباء)</p>
+                            <p className="font-medium text-palestine-green text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>
+                                {person.fullLineageName
+                                    ? person.fullLineageName
+                                    : person.ancestors.map(a => a.fullName).join(' بن ')
+                                }
+                            </p>
                         </div>
                     )}
                 </div>

@@ -673,9 +673,44 @@ const handleImageUpload = async (req, res) => {
   }
 };
 
-router.post('/upload/single-image', upload.single('image'), handleImageUpload);
 
+const handleVideoUpload = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'لم يتم رفع فيديو' });
+  }
+
+  // Basic check for video mime type
+  if (!req.file.mimetype.startsWith('video/')) {
+    return res.status(400).json({ error: 'الملف المرفوع ليس فيديو' });
+  }
+
+  try {
+    if (isCloudinaryConfigured) {
+      try {
+        const result = await cloudinaryUtils.uploadVideo(req.file.buffer, cloudinaryFolder + '/videos');
+        return res.json({
+          url: result.secure_url,
+          publicId: result.public_id,
+          format: result.format,
+          duration: result.duration
+        });
+      } catch (cloudError) {
+        console.error('Cloudinary video upload failed:', cloudError);
+        return res.status(500).json({ error: 'فشل رفع الفيديو إلى Cloudinary: ' + (cloudError.message || 'Unknown error') });
+      }
+    } else {
+      // Fallback for local dev without Cloudinary? Maybe not for videos.
+      return res.status(500).json({ error: 'خدمة رفع الفيديو غير متاحة حالياً (Cloudinary غير مهيأ)' });
+    }
+  } catch (error) {
+    console.error('Video upload error:', error);
+    return res.status(500).json({ error: 'حدث خطأ غير متوقع أثناء معالجة الفيديو' });
+  }
+};
+
+router.post('/upload/single-image', upload.single('image'), handleImageUpload);
 router.post('/upload/editor-image', upload.single('image'), handleImageUpload);
+router.post('/upload/video', upload.single('video'), handleVideoUpload);
 
 module.exports = router;
 

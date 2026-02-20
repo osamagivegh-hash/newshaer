@@ -112,6 +112,42 @@ module.exports = {
   uploadImage,
   uploadImageFromPath,
   deleteImage,
-  getPublicIdFromUrl
+  getPublicIdFromUrl,
+  /**
+   * Upload video to Cloudinary
+   * @param {Buffer} videoBuffer - Video buffer
+   * @param {String} folder - Folder name in Cloudinary (optional)
+   * @returns {Promise<Object>} Upload result with URL
+   */
+  uploadVideo: async (videoBuffer, folder = 'al-shaer-family/videos') => {
+    return new Promise((resolve, reject) => {
+      const uploadOptions = {
+        folder: folder,
+        resource_type: 'video',
+        use_filename: true,
+        unique_filename: true,
+        chunk_size: 6000000 // 6MB chunks
+      };
+
+      cloudinary.uploader.upload_stream(
+        uploadOptions,
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary video upload error:', error);
+            return reject(error);
+          }
+          if (!result || !result.secure_url) {
+            return reject(new Error('Cloudinary upload failed: missing secure_url'));
+          }
+          console.log('Cloudinary video upload successful:', {
+            public_id: result.public_id,
+            url: result.secure_url,
+            format: result.format
+          });
+          resolve(result);
+        }
+      ).end(videoBuffer);
+    });
+  }
 };
 

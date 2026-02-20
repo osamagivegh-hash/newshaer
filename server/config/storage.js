@@ -27,7 +27,7 @@ if (isCloudinaryConfigured) {
     api_key: cloudinaryApiKey,
     api_secret: cloudinaryApiSecret,
   });
-  
+
   console.log('✅ Cloudinary storage configured');
   console.log('Cloudinary settings:', {
     cloud_name: cloudinaryCloudName,
@@ -54,18 +54,24 @@ fs.ensureDirSync(uploadsDir);
 const multerStorage = multer.memoryStorage();
 
 // Upload configuration
+// Upload configuration
 const uploadConfig = {
   storage: multerStorage,
   limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024, // 5MB default
+    // Increase limit to 100MB for video uploads
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 100 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') || 
-      ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    // Allow images and videos
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+    const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') ||
+      [...allowedImageTypes, ...allowedVideoTypes];
+
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('فقط الصور مسموحة'), false);
+      cb(new Error('نوع الملف غير مدعوم. المسموح: صور (jpg, png, gif, webp) وفيديو (mp4, webm, mov)'), false);
     }
   }
 };

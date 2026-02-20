@@ -815,17 +815,30 @@ const AdminFamilyTree = () => {
                                 </div>
                             </div>
 
-                            {/* Gender */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">الجنس</label>
-                                <select
-                                    value={formData.gender}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-palestine-green focus:border-transparent"
-                                >
-                                    <option value="male">ذكر</option>
-                                    <option value="female">أنثى</option>
-                                </select>
+                            {/* Gender and Status */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">الجنس</label>
+                                    <select
+                                        value={formData.gender}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-palestine-green focus:border-transparent"
+                                    >
+                                        <option value="male">ذكر</option>
+                                        <option value="female">أنثى</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">حالة الشخص</label>
+                                    <select
+                                        value={String(formData.isAlive)}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, isAlive: e.target.value === 'true' }))}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-palestine-green focus:border-transparent"
+                                    >
+                                        <option value="true">على قيد الحياة (حي)</option>
+                                        <option value="false">متوفى</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Generation & Father */}

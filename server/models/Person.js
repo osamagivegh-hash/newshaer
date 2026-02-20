@@ -287,6 +287,8 @@ personSchema.statics.buildTree = async function (personId = null, fullDetails = 
         parent.children.push(node);
         // Add father's name for display in PersonModal
         node.fatherName = parent.fullName;
+        // Temporary reference for ascending the tree
+        node._tempFatherNode = parent;
       }
     }
 
@@ -294,6 +296,23 @@ personSchema.statics.buildTree = async function (personId = null, fullDetails = 
     if (person.isRoot || (!person.fatherId && !root)) {
       root = node;
     }
+  });
+
+  // Second pass: compute fullLineageName
+  allPersons.forEach(person => {
+    const node = personMap.get(person._id.toString());
+    let current = node;
+    let lineageArray = [];
+    while (current) {
+      // Split by spaces and take only the first word if we don't want "أحمد محمد بن محمد الشاعر"
+      // But typically joining their given names is what the user asked for "فلان بن فلان"
+      // If fullName already contains the rest of the name, it might be repetitive.
+      // But let's just use fullName as is, or maybe the user expects the system to just join them.
+      lineageArray.push(current.fullName);
+      current = current._tempFatherNode;
+    }
+    node.fullLineageName = lineageArray.join(' بن ');
+    delete node._tempFatherNode;
   });
 
   // Sort children by siblingOrder
