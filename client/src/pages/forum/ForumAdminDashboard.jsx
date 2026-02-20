@@ -107,7 +107,7 @@ const ForumAdminDashboard = () => {
                                         >
                                             <option value="user">عضو</option>
                                             <option value="moderator">مشرف</option>
-                                            {forumUser.role === 'admin' && <option value="admin">مدير</option>}
+                                            {forumUser.role === 'admin' && <option value="admin">Admin</option>}
                                         </select>
                                     </td>
                                     <td className="p-4">

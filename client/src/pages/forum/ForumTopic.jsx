@@ -183,7 +183,7 @@ const ForumTopic = () => {
                         </div>
                         <h3 className="font-bold text-lg text-palestine-green">{topic.author.username}</h3>
                         <p className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-max">
-                            {topic.author.role === 'admin' ? 'مدير' : topic.author.role === 'moderator' ? 'مشرف' : 'عضو'}
+                            {topic.author.role === 'admin' ? 'Admin' : topic.author.role === 'moderator' ? 'مشرف' : 'عضو'}
                         </p>
                         <p className="text-xs text-gray-400 mt-2">
                             انضم: {new Date(topic.author.joinDate || Date.now()).toLocaleDateString('ar-EG')}
@@ -244,7 +244,7 @@ const ForumTopic = () => {
                         </div>
                         <h3 className="font-bold text-palestine-blue">{post.author.username}</h3>
                         <p className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-max">
-                            {post.author.role === 'admin' ? 'مدير' : post.author.role === 'moderator' ? 'مشرف' : 'عضو'}
+                            {post.author.role === 'admin' ? 'Admin' : post.author.role === 'moderator' ? 'مشرف' : 'عضو'}
                         </p>
                     </div>
                     {/* Reply Content */}
