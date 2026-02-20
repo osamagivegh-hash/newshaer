@@ -231,7 +231,7 @@ class TreeCache {
      */
     async warmUp() {
         try {
-            console.log('[TreeCache] 🔥 Starting memory-efficient cache pre-warming...');
+            console.log('[TreeCache] 🔥 Starting memory-efficient cache pre-warming (v3)...');
             const startTime = Date.now();
             const startMemory = process.memoryUsage().heapUsed;
 
