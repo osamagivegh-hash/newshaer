@@ -183,12 +183,26 @@ class TreeCache {
                 if (parent) {
                     parent.children.push(node);
                     node.fatherName = parent.fullName;
+                    node._tempFatherNode = parent;
                 }
             }
 
             if (person.isRoot || (!person.fatherId && !root)) {
                 root = node;
             }
+        });
+
+        // Second pass: compute fullLineageName
+        allPersons.forEach(person => {
+            const node = personMap.get(person._id.toString());
+            let current = node;
+            let lineageArray = [];
+            while (current) {
+                lineageArray.push(current.fullName);
+                current = current._tempFatherNode;
+            }
+            node.fullLineageName = lineageArray.join(' بن ');
+            delete node._tempFatherNode;
         });
 
         // Sort children by siblingOrder

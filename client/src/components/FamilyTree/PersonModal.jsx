@@ -96,7 +96,19 @@ const PersonModal = ({ person, onClose, onViewFullTree }) => {
                     )}
 
                     {/* Status */}
-
+                    {person.isAlive !== undefined && (
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <span className={person.isAlive ? "text-green-500 text-xl" : "text-gray-500 text-xl"}>
+                                {person.isAlive ? "🌱" : "🕊️"}
+                            </span>
+                            <div>
+                                <p className="text-xs text-gray-500">حالة الشخص</p>
+                                <p className="font-medium">
+                                    {person.isAlive ? "على قيد الحياة" : "متوفى"}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Children */}
                     {person.children && person.children.length > 0 && (

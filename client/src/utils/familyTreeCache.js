@@ -3,7 +3,7 @@
  * Uses localStorage for persistent caching with TTL and version tracking
  */
 
-const CACHE_KEY = 'familyTreeData';
+const CACHE_KEY = 'familyTreeData_v2';
 const CACHE_VERSION_KEY = 'familyTreeVersion';
 const CACHE_TIMESTAMP_KEY = 'familyTreeTimestamp';
 const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
