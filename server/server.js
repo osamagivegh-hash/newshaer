@@ -223,6 +223,7 @@ app.use('/api/dashboard/family-tree', require('./routes/familyTreeDashboard'));
 
 // Family Tree Forum
 app.use('/api/forum-auth', require('./routes/forumAuth'));
+app.use('/api/forum-admin', require('./routes/forumAdmin'));
 app.use('/api/forum', require('./routes/forum'));
 
 // Serve React app for all non-API routes

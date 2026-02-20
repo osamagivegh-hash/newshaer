@@ -26,6 +26,11 @@ const ForumLayout = () => {
                         </Link>
                         {forumUser ? (
                             <div className="flex items-center gap-4 border-r border-white/20 pr-4">
+                                {(forumUser.role === 'admin' || forumUser.role === 'moderator') && (
+                                    <Link to="/family-tree/forum/admin" className="text-sm bg-palestine-red/20 text-white font-bold hover:bg-palestine-red/40 px-3 py-1 rounded">
+                                        إدارة المنتدى
+                                    </Link>
+                                )}
                                 <Link to="/family-tree/forum/profile" className="flex items-center gap-2 hover:text-gray-200">
                                     <div className="w-8 h-8 rounded-full bg-palestine-red flex items-center justify-center font-bold">
                                         {forumUser.username.charAt(0).toUpperCase()}

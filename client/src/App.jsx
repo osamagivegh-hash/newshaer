@@ -13,7 +13,8 @@ import ForumCategory from './pages/forum/ForumCategory'
 import ForumTopic from './pages/forum/ForumTopic'
 import ForumCreateTopic from './pages/forum/ForumCreateTopic'
 import ForumLogin from './pages/forum/ForumLogin'
-import ForumRegister from './pages/forum/ForumRegister'// Mobile CSS
+import ForumRegister from './pages/forum/ForumRegister'
+import ForumAdminDashboard from './pages/forum/ForumAdminDashboard'// Mobile CSS
 import './styles/mobile.css'
 
 // Layout Components
@@ -116,6 +117,7 @@ function App() {
                       <Route path="category/:id" element={<ForumCategory />} />
                       <Route path="category/:categoryId/new" element={<ForumCreateTopic />} />
                       <Route path="topic/:id" element={<ForumTopic />} />
+                      <Route path="admin" element={<ForumAdminDashboard />} />
                     </Route>
 
                     {/* Legacy route - redirects to gateway */}

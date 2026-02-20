@@ -124,6 +124,56 @@ router.get('/topics/:id', async (req, res) => {
     }
 });
 
+// Edit Topic (Author only)
+router.put('/topics/:id', forumAuthMiddleware, async (req, res) => {
+    try {
+        const { title, content } = req.body;
+
+        if (!title || !content || content.length < 10) {
+            return res.status(400).json({ success: false, message: 'العنوان والمحتوى مطلوبان' });
+        }
+
+        const topic = await ForumTopic.findById(req.params.id);
+        if (!topic || !topic.isActive) return res.status(404).json({ success: false, message: 'الموضوع غير موجود' });
+
+        if (topic.author.toString() !== req.forumUser._id.toString()) {
+            return res.status(403).json({ success: false, message: 'لا تملك صلاحية تعديل هذا الموضوع' });
+        }
+
+        if (topic.isLocked) return res.status(403).json({ success: false, message: 'الموضوع مغلق لا يمكن تعديله' });
+
+        topic.title = title;
+        topic.content = content;
+        await topic.save();
+
+        res.json({ success: true, topic });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطأ أثناء تعديل الموضوع' });
+    }
+});
+
+// Delete Topic (Author only) (Soft merge)
+router.delete('/topics/:id', forumAuthMiddleware, async (req, res) => {
+    try {
+        const topic = await ForumTopic.findById(req.params.id);
+        if (!topic || !topic.isActive) return res.status(404).json({ success: false, message: 'الموضوع غير موجود' });
+
+        if (topic.author.toString() !== req.forumUser._id.toString()) {
+            return res.status(403).json({ success: false, message: 'لا تملك صلاحية حذف هذا الموضوع' });
+        }
+
+        topic.isActive = false;
+        await topic.save();
+
+        // Deactivate posts
+        await ForumPost.updateMany({ topic: topic._id }, { isActive: false });
+
+        res.json({ success: true, message: 'تم حذف الموضوع بنجاح' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطأ أثناء حذف الموضوع' });
+    }
+});
+
 /** POST (REPLIES) ROUTES **/
 // Get Posts for Topic
 router.get('/topics/:topicId/posts', async (req, res) => {
@@ -190,6 +240,64 @@ router.post('/topics/:topicId/posts', forumAuthMiddleware, async (req, res) => {
         res.status(201).json({ success: true, post: newPost });
     } catch (error) {
         res.status(500).json({ success: false, message: 'فشل في إضافة الرد' });
+    }
+});
+
+// Edit Post (Author only)
+router.put('/posts/:id', forumAuthMiddleware, async (req, res) => {
+    try {
+        const { content } = req.body;
+
+        if (!content || content.length < 2) {
+            return res.status(400).json({ success: false, message: 'محتوى الرد قصير جداً' });
+        }
+
+        const post = await ForumPost.findById(req.params.id);
+        if (!post || !post.isActive) return res.status(404).json({ success: false, message: 'المشاركة غير موجودة' });
+
+        // Ensure user is author
+        if (post.author.toString() !== req.forumUser._id.toString()) {
+            return res.status(403).json({ success: false, message: 'لا تملك صلاحية تعديل هذه المشاركة' });
+        }
+
+        const topic = await ForumTopic.findById(post.topic);
+        if (topic && topic.isLocked) return res.status(403).json({ success: false, message: 'الموضوع مغلق لا يمكن التعديل' });
+
+        post.content = content;
+        await post.save();
+        await post.populate('author', 'username avatar role joinDate');
+
+        res.json({ success: true, post });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطأ أثناء تعديل المشاركة' });
+    }
+});
+
+// Delete Post (Author only)
+router.delete('/posts/:id', forumAuthMiddleware, async (req, res) => {
+    try {
+        const post = await ForumPost.findById(req.params.id);
+        if (!post || !post.isActive) return res.status(404).json({ success: false, message: 'المشاركة غير موجودة' });
+
+        // Ensure user is author
+        if (post.author.toString() !== req.forumUser._id.toString()) {
+            return res.status(403).json({ success: false, message: 'لا تملك صلاحية حذف هذه المشاركة' });
+        }
+
+        const topic = await ForumTopic.findById(post.topic);
+        if (topic && topic.isLocked) return res.status(403).json({ success: false, message: 'الموضوع مغلق لا يمكن الحذف' });
+
+        post.isActive = false;
+        await post.save();
+
+        if (topic) {
+            topic.replyCount -= 1;
+            await topic.save();
+        }
+
+        res.json({ success: true, message: 'تم حذف المشاركة' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'خطأ أثناء حذف المشاركة' });
     }
 });
 
