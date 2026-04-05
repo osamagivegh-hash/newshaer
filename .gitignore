@@ -75,6 +75,10 @@ dist
 # Gatsby files
 .cache/
 public
+!client/public/
+!client/public/recovery-test/
+!client/public/recovery-test/browser-family-tree.json
+!client/public/recovery-test/rebuilt-family-tree.json
 
 # Storybook build outputs
 .out
