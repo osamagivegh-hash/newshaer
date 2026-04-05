@@ -6,13 +6,13 @@ import { TEMPORARY_SITE_CREDITS, TEMPORARY_SITE_ROUTES } from './constants'
 const treeOptions = [
   {
     title: 'شجرة العائلة التدريجي',
-    description: 'عرض هرمي متدرج يساعد على قراءة التسلسل الجيلي فرعاً بعد فرع.',
+    description: 'عرض متدرج يساعد على تتبع التسلسل العائلي جيلاً بعد جيل بصورة واضحة ومريحة.',
     to: TEMPORARY_SITE_ROUTES.progressiveTree,
     accent: 'border-emerald-200 hover:border-emerald-400 hover:text-emerald-900'
   },
   {
     title: 'الشجرة العضوية',
-    description: 'عرض عضوي بصري للفروع الرئيسية وفق ملفات الاسترجاع الحالية.',
+    description: 'عرض شجري بصري يوضح الفروع الرئيسية والارتباطات العائلية في بنية مرنة ومباشرة.',
     to: TEMPORARY_SITE_ROUTES.organicTree,
     accent: 'border-amber-200 hover:border-amber-400 hover:text-amber-900'
   }
@@ -22,9 +22,9 @@ const TemporaryFamilyTreePage = () => {
   return (
     <TemporaryLayout
       title="المنصه الرقميه لشجرة عائلة الشاعر"
-      subtitle="هذه الصفحة تمثل المدخل المؤقت لشجرة العائلة إلى أن تستعاد المنصة الأصلية بالكامل. اختر نمط العرض المناسب لك من الأزرار التالية."
+      subtitle="اختر طريقة العرض المناسبة للوصول إلى شجرة العائلة بالشكل التدريجي أو بالشكل الشجري."
       badge="شجرة العائلة"
-      footer="تم بناء هذه الصفحة داخل مجلد مستقل عن الواجهة القديمة حتى تبقى بديلاً مؤقتاً واضحاً وسهل الإدارة."
+      footer="المنصة الرقمية الرسمية لشجرة عائلة الشاعر."
     >
       <div className="relative overflow-hidden rounded-[34px] border border-stone-200 bg-[linear-gradient(135deg,#fffdf8,#f8f5ed,#f5efe5)] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)] sm:p-8">
         <div className="absolute left-0 top-0 h-36 w-36 rounded-full bg-emerald-100/70 blur-3xl" />
@@ -35,7 +35,8 @@ const TemporaryFamilyTreePage = () => {
             <div className="text-sm font-bold text-emerald-100">البوابة الرئيسية</div>
             <div className="mt-3 text-3xl font-black sm:text-4xl">شجرة العائلة</div>
             <p className="mt-4 max-w-3xl text-sm leading-8 text-white/85 sm:text-base">
-              النسخة المؤقتة الحالية تربط مباشرة بنسختين بصريتين جاهزتين من بيانات الاسترجاع المحلية، بحيث يبقى الوصول إلى الشجرة متاحاً حتى قبل اكتمال استعادة المنصة الأصلية.
+              الوصول إلى الشجرة متاح عبر عرضين بصريين مختلفين، بحيث يختار الزائر الشكل الأنسب
+              له في التصفح والقراءة.
             </p>
           </div>
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { TEMPORARY_SITE_ROUTES } from './constants'
 
 const navItems = [
-  { label: 'سنعود قريباً', to: TEMPORARY_SITE_ROUTES.home },
+  { label: 'الرئيسية', to: TEMPORARY_SITE_ROUTES.home },
   { label: 'شجرة العائلة', to: TEMPORARY_SITE_ROUTES.familyTree },
   { label: 'الأخبار', to: TEMPORARY_SITE_ROUTES.news }
 ]
@@ -11,7 +11,7 @@ const navItems = [
 const TemporaryLayout = ({
   title,
   subtitle,
-  badge = 'نسخة مؤقتة',
+  badge = 'الواجهة الرسمية',
   children,
   footer
 }) => {
@@ -51,7 +51,7 @@ const TemporaryLayout = ({
         <section className="overflow-hidden rounded-[36px] border border-white/70 bg-white/80 shadow-[0_24px_90px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="border-b border-stone-100 bg-[linear-gradient(135deg,#042f2e,#14532d,#365314)] px-6 py-8 text-white sm:px-8">
             <div className="max-w-4xl">
-              <p className="text-xs font-bold uppercase tracking-[0.32em] text-emerald-100/80">Temporary Portal</p>
+              <p className="text-xs font-bold uppercase tracking-[0.32em] text-emerald-100/80">Alshaer Family Platform</p>
               <h1 className="mt-3 text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">{title}</h1>
               {subtitle && (
                 <p className="mt-4 max-w-3xl text-sm leading-8 text-white/85 sm:text-base">
@@ -67,7 +67,7 @@ const TemporaryLayout = ({
 
       <footer className="px-4 pb-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl rounded-[28px] border border-white/60 bg-white/70 px-6 py-4 text-sm text-stone-600 shadow-[0_14px_40px_rgba(15,23,42,0.05)] backdrop-blur">
-          {footer || 'هذه نسخة مؤقتة مستقلة عن الواجهة القديمة، وتبقي المنصة متاحة إلى حين استعادة المحتوى الكامل.'}
+          {footer || 'المنصة الرقمية الرسمية لعائلة الشاعر.'}
         </div>
       </footer>
     </div>

@@ -22,18 +22,15 @@ import ForumUserProfile from './pages/forum/ForumUserProfile'
 import './styles/mobile.css'
 
 // Layout Components
-import ResponsiveLayoutWrapper from './components/ResponsiveLayoutWrapper'
 import ErrorBoundary from './components/common/ErrorBoundary'
 
 // Public Components
 import PublicApp from './components/PublicApp'
 import ArticleDetail from './components/ArticleDetail'
 import ConversationDetail from './components/ConversationDetail'
-import NewsDetail from './components/NewsDetail'
 import NotFound from './components/common/NotFound'
 import ScrollToTop from './components/common/ScrollToTop'
 import ArchivePage from './pages/Archive'
-import NewsPage from './pages/NewsPage'
 import FamilyTreePage from './pages/FamilyTreePage'
 import TemporaryHomePage from './temporary-site/TemporaryHomePage'
 import TemporaryFamilyTreePage from './temporary-site/TemporaryFamilyTreePage'
@@ -41,7 +38,6 @@ import TemporaryNewsPage from './temporary-site/TemporaryNewsPage'
 import { TEMPORARY_SITE_ROUTES } from './temporary-site/constants'
 
 // Family Tree Section Pages
-import FamilyTreeGateway from './pages/FamilyTreeGateway'
 import FounderAppreciation from './pages/FounderAppreciation'
 import FamilyTreeDisplayPage from './pages/FamilyTreeDisplayPage'
 import OliveTreePage from './pages/OliveTreePage'
@@ -98,19 +94,19 @@ function App() {
                 <div className="min-h-screen bg-palestine-white">
                   <ScrollToTop />
                   <Routes>
-                    {/* Public Routes - Uses Responsive Layout Wrapper */}
+                    {/* Public Routes */}
                     <Route path={TEMPORARY_SITE_ROUTES.home} element={<TemporaryHomePage />} />
                     <Route path={TEMPORARY_SITE_ROUTES.homeAlias} element={<TemporaryHomePage />} />
-                    <Route path={TEMPORARY_SITE_ROUTES.legacyHome} element={<ResponsiveLayoutWrapper />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.legacyHome} element={<TemporaryHomePage />} />
                     <Route path="/archive" element={<ArchivePage />} />
                     <Route path={TEMPORARY_SITE_ROUTES.news} element={<TemporaryNewsPage />} />
                     <Route path={TEMPORARY_SITE_ROUTES.newsAlias} element={<TemporaryNewsPage />} />
-                    <Route path={TEMPORARY_SITE_ROUTES.legacyNews} element={<NewsPage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.legacyNews} element={<TemporaryNewsPage />} />
 
                     {/* Family Tree Section Routes */}
                     <Route path={TEMPORARY_SITE_ROUTES.familyTree} element={<TemporaryFamilyTreePage />} />
                     <Route path={TEMPORARY_SITE_ROUTES.familyTreeAlias} element={<TemporaryFamilyTreePage />} />
-                    <Route path={TEMPORARY_SITE_ROUTES.legacyFamilyTree} element={<FamilyTreeGateway />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.legacyFamilyTree} element={<TemporaryFamilyTreePage />} />
                     <Route path="/family-tree/appreciation" element={<FounderAppreciation />} />
                     <Route path="/family-tree/tree" element={<FamilyTreeBranchSelection />} />
                     <Route path="/family-tree/tree/zahar" element={<ZaharBranchSelection />} />
@@ -145,7 +141,7 @@ function App() {
 
                     <Route path="/articles/:id" element={<ArticleDetail />} />
                     <Route path="/conversations/:id" element={<ConversationDetail />} />
-                    <Route path="/news/:id" element={<NewsDetail />} />
+                    <Route path="/news/:id" element={<TemporaryNewsPage />} />
 
                     {/* ===== CMS ADMIN ROUTES (Uses AdminContext) ===== */}
                     <Route path="/admin/login" element={<AdminLogin />} />
