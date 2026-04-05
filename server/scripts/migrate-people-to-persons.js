@@ -1,63 +1,56 @@
 /**
- * Migration Script - Transfer Family Tree Data
- * From: familytree database "people" collection (old)
- * To: test database "persons" collection (myfamily website)
+ * Migration Script - Transfer people collection into persons collection
+ * Source connection comes from SOURCE_MONGODB_URI
+ * Target connection comes from MONGODB_URI
  */
 
+const path = require('path');
 const mongoose = require('mongoose');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const SOURCE_URI = 'mongodb+srv://osamashaer66_db_user:990099@mawaddah.lh79hv8.mongodb.net/familytree?retryWrites=true&w=majority';
-const TARGET_URI = 'mongodb+srv://osamashaer66_db_user:990099@mawaddah.lh79hv8.mongodb.net/test?retryWrites=true&w=majority';
+const SOURCE_URI = process.env.SOURCE_MONGODB_URI;
+const TARGET_URI = process.env.MONGODB_URI;
 
 async function migrate() {
-    console.log('🚀 Starting migration from people -> persons...\n');
+  if (!SOURCE_URI) {
+    throw new Error('SOURCE_MONGODB_URI is missing in server/.env');
+  }
 
-    // Connect to source
-    console.log('📤 Connecting to source (familytree/people)...');
-    const sourceConn = mongoose.createConnection(SOURCE_URI);
-    await sourceConn.asPromise();
+  if (!TARGET_URI) {
+    throw new Error('MONGODB_URI is missing in server/.env');
+  }
 
-    // Connect to target  
-    console.log('📥 Connecting to target (test/persons)...');
-    const targetConn = mongoose.createConnection(TARGET_URI);
-    await targetConn.asPromise();
+  console.log('Starting migration from people -> persons...');
 
-    // Get source data
-    const sourceData = await sourceConn.db.collection('people').find({}).toArray();
-    console.log(`✓ Found ${sourceData.length} people in source\n`);
+  const sourceConn = await mongoose.createConnection(SOURCE_URI).asPromise();
+  const targetConn = await mongoose.createConnection(TARGET_URI).asPromise();
 
-    if (sourceData.length === 0) {
-        console.log('⚠️ No data to migrate');
-        await sourceConn.close();
-        await targetConn.close();
-        return;
-    }
+  const sourceData = await sourceConn.db.collection('people').find({}).toArray();
+  console.log(`Found ${sourceData.length} people in source`);
 
-    // Show names being migrated
-    console.log('📋 Data to migrate:');
-    sourceData.forEach((p, i) => {
-        console.log(`   ${i + 1}. ${p.fullName} (Gen ${p.generation})${p.isRoot ? ' 👑' : ''}`);
-    });
-    console.log('');
-
-    // Clear target collection first
-    await targetConn.db.collection('persons').deleteMany({});
-    console.log('🗑️ Cleared target persons collection');
-
-    // Insert all data
-    const result = await targetConn.db.collection('persons').insertMany(sourceData);
-    console.log(`✅ Migrated ${result.insertedCount} persons\n`);
-
-    // Verify
-    const count = await targetConn.db.collection('persons').countDocuments();
-    console.log(`✓ Verification: ${count} persons now in target database`);
-
+  if (sourceData.length === 0) {
+    console.log('No data to migrate');
     await sourceConn.close();
     await targetConn.close();
-    console.log('\n🎉 Migration completed successfully!');
+    return;
+  }
+
+  const targetCount = await targetConn.db.collection('persons').countDocuments();
+  if (targetCount > 0) {
+    console.log(`Target persons collection already has ${targetCount} records. Aborting to avoid overwrite.`);
+    await sourceConn.close();
+    await targetConn.close();
+    return;
+  }
+
+  const result = await targetConn.db.collection('persons').insertMany(sourceData);
+  console.log(`Migrated ${result.insertedCount} persons`);
+
+  await sourceConn.close();
+  await targetConn.close();
 }
 
-migrate().catch(err => {
-    console.error('❌ Migration error:', err);
-    process.exit(1);
+migrate().catch((error) => {
+  console.error('Migration error:', error.message);
+  process.exit(1);
 });

@@ -1,46 +1,43 @@
+const path = require('path');
 const mongoose = require('mongoose');
-
-// Use the production URI
-const uri = 'mongodb+srv://osamagivegh:990099@cluster0.npzs81o.mongodb.net/?appName=Cluster0';
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 async function checkDuplicates() {
-    try {
-        await mongoose.connect(uri);
-        console.log('Connected to DB');
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is missing in server/.env');
+  }
 
-        const db = mongoose.connection.db;
-        const persons = await db.collection('persons').find({}).toArray();
-        console.log('Total persons:', persons.length);
+  await mongoose.connect(process.env.MONGODB_URI);
+  const db = mongoose.connection.db;
+  const persons = await db.collection('persons').find({}).toArray();
 
-        // Check for exact duplicates
-        const nameCounts = {};
-        persons.forEach(p => {
-            nameCounts[p.fullName] = (nameCounts[p.fullName] || 0) + 1;
-        });
+  console.log('Connected to DB');
+  console.log('Total persons:', persons.length);
 
-        const duplicates = Object.keys(nameCounts).filter(name => nameCounts[name] > 1);
+  const nameCounts = {};
+  persons.forEach((person) => {
+    const key = person.fullName || 'Unknown';
+    nameCounts[key] = (nameCounts[key] || 0) + 1;
+  });
 
-        if (duplicates.length > 0) {
-            console.log('Duplicates found:', duplicates.map(name => `${name} (${nameCounts[name]})`).join(', '));
-        } else {
-            console.log('No exact duplicates found by full name.');
-        }
+  const duplicates = Object.entries(nameCounts).filter(([, count]) => count > 1);
 
-        // Check for "برهم"
-        const barham = persons.filter(p => p.fullName && p.fullName.includes('برهم'));
-        if (barham.length > 0) {
-            console.log('\nEntries containing "برهم":');
-            barham.forEach(p => {
-                console.log(`- ${p.fullName} (ID: ${p._id}, FatherID: ${p.fatherId})`);
-            });
-        } else {
-            console.log('\nNo entries found containing "برهم"');
-        }
+  if (duplicates.length > 0) {
+    console.log(
+      'Duplicates found:',
+      duplicates.map(([name, count]) => `${name} (${count})`).join(', ')
+    );
+  } else {
+    console.log('No exact duplicates found by full name.');
+  }
 
-        await mongoose.connection.close();
-    } catch (error) {
-        console.error('Error:', error);
-    }
+  await mongoose.disconnect();
 }
 
-checkDuplicates();
+checkDuplicates().catch(async (error) => {
+  console.error('Error:', error.message);
+  try {
+    await mongoose.disconnect();
+  } catch (_) {}
+  process.exit(1);
+});

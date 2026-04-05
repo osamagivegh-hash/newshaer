@@ -35,6 +35,10 @@ import ScrollToTop from './components/common/ScrollToTop'
 import ArchivePage from './pages/Archive'
 import NewsPage from './pages/NewsPage'
 import FamilyTreePage from './pages/FamilyTreePage'
+import TemporaryHomePage from './temporary-site/TemporaryHomePage'
+import TemporaryFamilyTreePage from './temporary-site/TemporaryFamilyTreePage'
+import TemporaryNewsPage from './temporary-site/TemporaryNewsPage'
+import { TEMPORARY_SITE_ROUTES } from './temporary-site/constants'
 
 // Family Tree Section Pages
 import FamilyTreeGateway from './pages/FamilyTreeGateway'
@@ -45,6 +49,8 @@ import LineageTreePage from './pages/LineageTreePage'
 import OrganicOliveTreePage from './pages/OrganicOliveTreePage'
 import FullOrganicTreePage from './pages/FullOrganicTreePage'
 import SafeFullTreePage from './pages/SafeFullTreePage'
+import RecoveryTreeTestPage from './pages/RecoveryTreeTestPage'
+import RecoveryOrganicTreePage from './pages/RecoveryOrganicTreePage'
 import FamilyTreeBranchSelection from './pages/FamilyTreeBranchSelection'
 import ZaharBranchSelection from './pages/ZaharBranchSelection'
 import SalehBranchSelection from './pages/SalehBranchSelection'
@@ -93,12 +99,18 @@ function App() {
                   <ScrollToTop />
                   <Routes>
                     {/* Public Routes - Uses Responsive Layout Wrapper */}
-                    <Route path="/" element={<ResponsiveLayoutWrapper />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.home} element={<TemporaryHomePage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.homeAlias} element={<TemporaryHomePage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.legacyHome} element={<ResponsiveLayoutWrapper />} />
                     <Route path="/archive" element={<ArchivePage />} />
-                    <Route path="/news" element={<NewsPage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.news} element={<TemporaryNewsPage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.newsAlias} element={<TemporaryNewsPage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.legacyNews} element={<NewsPage />} />
 
                     {/* Family Tree Section Routes */}
-                    <Route path="/family-tree" element={<FamilyTreeGateway />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.familyTree} element={<TemporaryFamilyTreePage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.familyTreeAlias} element={<TemporaryFamilyTreePage />} />
+                    <Route path={TEMPORARY_SITE_ROUTES.legacyFamilyTree} element={<FamilyTreeGateway />} />
                     <Route path="/family-tree/appreciation" element={<FounderAppreciation />} />
                     <Route path="/family-tree/tree" element={<FamilyTreeBranchSelection />} />
                     <Route path="/family-tree/tree/zahar" element={<ZaharBranchSelection />} />
@@ -110,6 +122,8 @@ function App() {
                     <Route path="/family-tree/organic-olive" element={<OrganicOliveTreePage />} />
                     <Route path="/family-tree/full-organic-olive" element={<FullOrganicTreePage />} />
                     <Route path="/family-tree/safe-full-tree" element={<SafeFullTreePage />} />
+                    <Route path="/family-tree-test" element={<RecoveryTreeTestPage />} />
+                    <Route path="/family-tree-organic-test" element={<RecoveryOrganicTreePage />} />
                     <Route path="/family-tree/lineage/:personId" element={<PersonLineagePage />} />
                     <Route path="/family-tree/dev-team" element={<DevTeamPage />} />
 

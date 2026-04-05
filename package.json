@@ -10,7 +10,9 @@
     "build": "cd client && npm run build",
     "build:render": "echo 'Using optimized build command from render.yaml'",
     "start": "cd server && npm start",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "db:bootstrap": "cd server && npm run bootstrap:recovery",
+    "deploy:check": "npm run build && cd server && npm run verify:env"
   },
   "keywords": [
     "family",

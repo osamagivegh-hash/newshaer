@@ -1,25 +1,30 @@
+const path = require('path');
 const mongoose = require('mongoose');
-
-const uri = 'mongodb+srv://osamagivegh:990099@cluster0.npzs81o.mongodb.net/?appName=Cluster0';
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 async function checkUsers() {
-    try {
-        await mongoose.connect(uri);
-        const db = mongoose.connection.db;
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is missing in server/.env');
+  }
 
-        // Collection identified as 'users' in previous step
-        const users = await db.collection('users').find({}).toArray();
+  await mongoose.connect(process.env.MONGODB_URI);
+  const db = mongoose.connection.db;
+  const users = await db.collection('users').find({}).toArray();
 
-        console.log(`Found ${users.length} users:`);
-        users.forEach(u => {
-            console.log(`- Username: ${u.username || 'N/A'}, Email: ${u.email}, Role: ${u.role}, Permissions: ${JSON.stringify(u.permissions || [])}`);
-        });
+  console.log(`Found ${users.length} users:`);
+  users.forEach((user) => {
+    console.log(
+      `- Username: ${user.username || 'N/A'}, Email: ${user.email || 'N/A'}, Role: ${user.role || 'N/A'}, Permissions: ${JSON.stringify(user.permissions || [])}`
+    );
+  });
 
-    } catch (e) {
-        console.error('Error:', e);
-    } finally {
-        await mongoose.disconnect();
-    }
+  await mongoose.disconnect();
 }
 
-checkUsers();
+checkUsers().catch(async (error) => {
+  console.error('Error:', error.message);
+  try {
+    await mongoose.disconnect();
+  } catch (_) {}
+  process.exit(1);
+});
