@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-04-03T08:35:52.248Z",
+  "summary": {
+    "totalRecoveredRows": 3983,
+    "totalFamilyNameRows": 1593,
+    "totalLineageRows": 2390,
+    "totalRebuiltTreePersons": 2387,
+    "maxTreeGeneration": 12,
+    "treeGenerationCounts": {
+      "0": 1,
+      "1": 3,
+      "2": 8,
+      "3": 18,
+      "4": 43,
+      "5": 101,
+      "6": 293,
+      "7": 573,
+      "8": 665,
+      "9": 476,
+      "10": 141,
+      "11": 61,
+      "12": 4
+    },
+    "conservativeMissingBucketCount": 3,
+    "conservativeMissingCount": 3
+  },
+  "notes": [
+    "هذا التقرير محافظ: يعتمد فقط على فرق العد بين ملف أسماء العائلة وبين الشجرة الحالية داخل نفس الجيل ونفس الاسم بعد تطبيع بسيط.",
+    "الأسماء المتكررة طبيعيّة، لذلك لا يتم اعتبار الاسم مفقودًا إلا إذا كان عدد ظهوره في ملف الأسماء أكبر من عدد ظهوره في الشجرة الحالية داخل الجيل نفسه.",
+    "الأجيال 10 و11 و12 موجودة بالفعل في الشجرة الحالية، ولم تظهر فجوات محافظة فيها من ملف الأسماء."
+  ],
+  "conservativeMissingByGeneration": {
+    "6": {
+      "missingCount": 1,
+      "buckets": [
+        {
+          "generation": 6,
+          "normalizedName": "محمود",
+          "familyCount": 19,
+          "treeCount": 18,
+          "missingCount": 1,
+          "sourceRows": [
+            {
+              "sourceRow": 394,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 395,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 396,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 397,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 398,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 399,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 400,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 401,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 402,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 403,
+              "displayName": "محمود",
+              "generation": 6,
+              "gender": "ذكر",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    "7": {
+      "missingCount": 1,
+      "buckets": [
+        {
+          "generation": 7,
+          "normalizedName": "عبده",
+          "familyCount": 1,
+          "treeCount": 0,
+          "missingCount": 1,
+          "sourceRows": [
+            {
+              "sourceRow": 719,
+              "displayName": "عبده",
+              "generation": 7,
+              "gender": "ذكر",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    "8": {
+      "missingCount": 1,
+      "buckets": [
+        {
+          "generation": 8,
+          "normalizedName": "تيسير",
+          "familyCount": 2,
+          "treeCount": 1,
+          "missingCount": 1,
+          "sourceRows": [
+            {
+              "sourceRow": 998,
+              "displayName": "تيسير",
+              "generation": 8,
+              "gender": "ذكر",
+              "notes": ""
+            },
+            {
+              "sourceRow": 999,
+              "displayName": "تيسير",
+              "generation": 8,
+              "gender": "ذكر",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

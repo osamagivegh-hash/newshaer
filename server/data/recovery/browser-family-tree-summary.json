@@ -1,0 +1,175 @@
+{
+  "generatedAt": "2026-04-13T22:30:10.860424+00:00",
+  "storageKey": "https://alshaerf.com",
+  "browsers": [
+    {
+      "browser": "chrome",
+      "storageDir": "C:\\Users\\TestUser\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb",
+      "recordCount": 10,
+      "records": [
+        {
+          "scriptKey": "familyTreeData",
+          "seq": 234669,
+          "isLive": true,
+          "valueLength": 1175585,
+          "valuePreview": "{\"_id\":\"696386321f6e8f7e10a9d0ac\",\"fullName\":\"محمد الشاعر\",\"nickname\":\"\",\"fatherId\":null,\"generation\":0,\"gender\":\"male\","
+        },
+        {
+          "scriptKey": "familyTreeData_v2",
+          "seq": 234710,
+          "isLive": true,
+          "valueLength": 1300036,
+          "valuePreview": "{\"_id\":\"696386321f6e8f7e10a9d0ac\",\"fullName\":\"محمد الشاعر\",\"nickname\":\"\",\"fatherId\":null,\"generation\":0,\"gender\":\"male\","
+        },
+        {
+          "scriptKey": "familyTreeToken",
+          "seq": 236401,
+          "isLive": false,
+          "valueLength": null,
+          "valuePreview": null
+        },
+        {
+          "scriptKey": "familyTreeUser",
+          "seq": 236402,
+          "isLive": false,
+          "valueLength": null,
+          "valuePreview": null
+        },
+        {
+          "scriptKey": "familyTreeData_v3",
+          "seq": 319307,
+          "isLive": true,
+          "valueLength": 1760674,
+          "valuePreview": "{\"_id\":\"696386321f6e8f7e10a9d0ac\",\"fullName\":\"محمد الشاعر\",\"nickname\":\"\",\"fatherId\":null,\"generation\":0,\"gender\":\"male\","
+        },
+        {
+          "scriptKey": "familyTreeTimestamp",
+          "seq": 319308,
+          "isLive": true,
+          "valueLength": 13,
+          "valuePreview": "1773397866833"
+        },
+        {
+          "scriptKey": "familyTreeVersion",
+          "seq": 319309,
+          "isLive": true,
+          "valueLength": 26,
+          "valuePreview": "\"tree-1773391810403-l6rpy\""
+        },
+        {
+          "scriptKey": "adminToken",
+          "seq": 355519,
+          "isLive": false,
+          "valueLength": null,
+          "valuePreview": null
+        },
+        {
+          "scriptKey": "adminUser",
+          "seq": 355520,
+          "isLive": false,
+          "valueLength": null,
+          "valuePreview": null
+        }
+      ],
+      "selectedTreeKey": "familyTreeData_v3",
+      "selectedTreeSeq": 319307,
+      "selectedTreePath": "C:\\Users\\TestUser\\Desktop\\myprojects\\LogAnalyzewithShaerFamily\\myfamily\\server\\data\\recovery\\chrome-familyTreeData_v3.json",
+      "treeSummary": {
+        "rootName": "محمد الشاعر",
+        "nodeCount": 3905,
+        "maxGeneration": 12,
+        "generationCounts": {
+          "0": 1,
+          "1": 3,
+          "2": 8,
+          "3": 18,
+          "4": 43,
+          "5": 100,
+          "6": 294,
+          "7": 574,
+          "8": 890,
+          "9": 1071,
+          "10": 694,
+          "11": 205,
+          "12": 4
+        }
+      }
+    },
+    {
+      "browser": "edge",
+      "storageDir": "C:\\Users\\TestUser\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Local Storage\\leveldb",
+      "recordCount": 3,
+      "records": [
+        {
+          "scriptKey": "familyTreeData",
+          "seq": 4643,
+          "isLive": true,
+          "valueLength": 1047837,
+          "valuePreview": "{\"_id\":\"696386321f6e8f7e10a9d0ac\",\"fullName\":\"محمد الشاعر\",\"nickname\":\"\",\"fatherId\":null,\"motherId\":null,\"generation\":0,"
+        },
+        {
+          "scriptKey": "familyTreeTimestamp",
+          "seq": 4644,
+          "isLive": true,
+          "valueLength": 13,
+          "valuePreview": "1769167126158"
+        },
+        {
+          "scriptKey": "familyTreeVersion",
+          "seq": 4645,
+          "isLive": true,
+          "valueLength": 27,
+          "valuePreview": "\"tree-1769165213679-ytzs0d\""
+        }
+      ],
+      "selectedTreeKey": "familyTreeData",
+      "selectedTreeSeq": 4643,
+      "selectedTreePath": "C:\\Users\\TestUser\\Desktop\\myprojects\\LogAnalyzewithShaerFamily\\myfamily\\server\\data\\recovery\\edge-familyTreeData.json",
+      "treeSummary": {
+        "rootName": "محمد الشاعر",
+        "nodeCount": 2055,
+        "maxGeneration": 12,
+        "generationCounts": {
+          "0": 1,
+          "1": 3,
+          "2": 8,
+          "3": 18,
+          "4": 43,
+          "5": 101,
+          "6": 294,
+          "7": 575,
+          "8": 605,
+          "9": 323,
+          "10": 49,
+          "11": 34,
+          "12": 1
+        }
+      }
+    }
+  ],
+  "bestBrowserTree": {
+    "browser": "chrome",
+    "path": "C:\\Users\\TestUser\\Desktop\\myprojects\\LogAnalyzewithShaerFamily\\myfamily\\client\\public\\recovery-test\\browser-family-tree.json",
+    "flatImportPath": "C:\\Users\\TestUser\\Desktop\\myprojects\\LogAnalyzewithShaerFamily\\myfamily\\server\\data\\recovery\\browser-family-tree-persons-import.json",
+    "summary": {
+      "rootName": "محمد الشاعر",
+      "nodeCount": 3905,
+      "maxGeneration": 12,
+      "generationCounts": {
+        "0": 1,
+        "1": 3,
+        "2": 8,
+        "3": 18,
+        "4": 43,
+        "5": 100,
+        "6": 294,
+        "7": 574,
+        "8": 890,
+        "9": 1071,
+        "10": 694,
+        "11": 205,
+        "12": 4
+      }
+    }
+  }
+}

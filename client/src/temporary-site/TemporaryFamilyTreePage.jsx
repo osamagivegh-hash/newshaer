@@ -15,6 +15,12 @@ const treeOptions = [
     description: 'عرض شجري بصري يوضح الفروع الرئيسية والارتباطات العائلية في بنية مرنة ومباشرة.',
     to: TEMPORARY_SITE_ROUTES.organicTree,
     accent: 'border-amber-200 hover:border-amber-400 hover:text-amber-900'
+  },
+  {
+    title: 'الشجرة الحقيقية',
+    description: 'نمط جديد مستقل يعرض كل فرع رئيسي كشجرة واقعية خاصة به، مع جذع واضح وفروع منحنية وبحث داخل الفرع.',
+    to: TEMPORARY_SITE_ROUTES.realTree,
+    accent: 'border-stone-300 hover:border-stone-500 hover:text-stone-900'
   }
 ]
 
@@ -22,7 +28,7 @@ const TemporaryFamilyTreePage = () => {
   return (
     <TemporaryLayout
       title="المنصه الرقميه لشجرة عائلة الشاعر"
-      subtitle="اختر طريقة العرض المناسبة للوصول إلى شجرة العائلة بالشكل التدريجي أو بالشكل الشجري."
+      subtitle="اختر طريقة العرض المناسبة للوصول إلى شجرة العائلة بالنمط التدريجي أو العضوي أو الشجرة الحقيقية."
       badge="شجرة العائلة"
       footer="المنصة الرقمية الرسمية لشجرة عائلة الشاعر."
     >
@@ -35,12 +41,12 @@ const TemporaryFamilyTreePage = () => {
             <div className="text-sm font-bold text-emerald-100">البوابة الرئيسية</div>
             <div className="mt-3 text-3xl font-black sm:text-4xl">شجرة العائلة</div>
             <p className="mt-4 max-w-3xl text-sm leading-8 text-white/85 sm:text-base">
-              الوصول إلى الشجرة متاح عبر عرضين بصريين مختلفين، بحيث يختار الزائر الشكل الأنسب
-              له في التصفح والقراءة.
+              الوصول إلى الشجرة متاح الآن عبر ثلاثة أنماط مستقلة: عرض تدريجي، وعرض عضوي،
+              وReal Tree جديد يفصل الفروع الكبرى إلى أشجار مستقلة يسهل استعراضها.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {treeOptions.map((option) => (
               <Link
                 key={option.to}

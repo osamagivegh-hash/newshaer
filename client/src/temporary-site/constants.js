@@ -7,6 +7,7 @@ export const TEMPORARY_SITE_ROUTES = {
   newsAlias: '/temporary/news',
   progressiveTree: '/family-tree-test',
   organicTree: '/family-tree-organic-test',
+  realTree: '/family-tree-real-test',
   legacyHome: '/legacy',
   legacyFamilyTree: '/legacy/family-tree',
   legacyNews: '/legacy/news'

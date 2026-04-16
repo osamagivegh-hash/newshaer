@@ -33,6 +33,13 @@ const parseDate = (value, fallback = new Date()) => {
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
+const extractPersonsList = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  return asArray(payload?.persons);
+};
+
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
 const toObjectId = (value) => {
@@ -55,21 +62,47 @@ async function maybeClearCollection(model, label) {
   console.log(`[bootstrap] Cleared ${label}`);
 }
 
+async function resolveBestPersonsPayload() {
+  const candidates = [
+    {
+      label: 'rebuilt-persons-import.json',
+      payload: await readJsonIfExists(PERSONS_RECOVERY_FILE)
+    },
+    {
+      label: 'browser-family-tree-persons-import.json',
+      payload: await readJsonIfExists(FALLBACK_PERSONS_RECOVERY_FILE)
+    }
+  ]
+    .map((entry) => ({
+      ...entry,
+      count: extractPersonsList(entry.payload).length
+    }))
+    .filter((entry) => entry.count > 0);
+
+  if (!candidates.length) {
+    return { label: 'none', payload: null, count: 0 };
+  }
+
+  candidates.sort((a, b) => b.count - a.count);
+  return candidates[0];
+}
+
 function mapPersons(payload) {
-  const sourcePersons = asArray(payload?.persons);
+  const sourcePersons = extractPersonsList(payload);
   const idMap = new Map();
 
   sourcePersons.forEach((person) => {
-    idMap.set(person.tempId, toObjectId(person.tempId));
+    const sourceId = person.tempId || person._id;
+    idMap.set(sourceId, toObjectId(sourceId));
   });
 
   return sourcePersons
     .filter((person) => person.fullName && person.fullName.trim())
     .map((person, index) => ({
-      _id: idMap.get(person.tempId),
+      _id: idMap.get(person.tempId || person._id),
       fullName: person.fullName.trim(),
       nickname: person.nickname || '',
-      fatherId: person.fatherTempId ? idMap.get(person.fatherTempId) || null : null,
+      fatherId: (person.fatherTempId || person.fatherId) ? idMap.get(person.fatherTempId || person.fatherId) || null : null,
       motherId: null,
       generation: Number.isFinite(person.generation) ? person.generation : 0,
       gender: ['male', 'female', 'unknown'].includes(person.gender) ? person.gender : 'unknown',
@@ -83,7 +116,7 @@ function mapPersons(payload) {
       biography: person.biography || '',
       notes: person.notes || '',
       siblingOrder: Number.isFinite(person.siblingOrder) ? person.siblingOrder : index,
-      isRoot: Boolean(person.isRoot || !person.fatherTempId),
+      isRoot: Boolean(person.isRoot || !(person.fatherTempId || person.fatherId)),
       verification: {
         status: 'verified',
         source: 'recovery-bootstrap'
@@ -236,9 +269,8 @@ async function bootstrapPersons() {
 
   await maybeClearCollection(Person, 'persons');
 
-  const personsPayload =
-    (await readJsonIfExists(PERSONS_RECOVERY_FILE)) ||
-    (await readJsonIfExists(FALLBACK_PERSONS_RECOVERY_FILE));
+  const personsSource = await resolveBestPersonsPayload();
+  const personsPayload = personsSource.payload;
 
   const persons = mapPersons(personsPayload);
   if (!persons.length) {
@@ -247,7 +279,7 @@ async function bootstrapPersons() {
   }
 
   await Person.insertMany(persons, { ordered: false });
-  console.log(`[bootstrap] Imported ${persons.length} persons`);
+  console.log(`[bootstrap] Imported ${persons.length} persons from ${personsSource.label}`);
   return persons.length;
 }
 
