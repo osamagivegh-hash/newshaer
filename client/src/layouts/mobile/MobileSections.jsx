@@ -14,6 +14,7 @@ import { useLayout } from '../../contexts/LayoutContext';
 
 // Lazy load heavy components
 const News = lazy(() => import('../../components/News'));
+const NewsHeroSlider = lazy(() => import('../../components/NewsHeroSlider'));
 const Articles = lazy(() => import('../../components/Articles'));
 const Conversations = lazy(() => import('../../components/Conversations'));
 const Palestine = lazy(() => import('../../components/Palestine'));
@@ -83,6 +84,11 @@ export const MobileHomeSection = ({ data }) => {
 
     return (
         <div className="mobile-section mobile-home-section">
+            {/* News Hero Slider */}
+            <Suspense fallback={<div className="w-full h-[250px] bg-gray-100 flex items-center justify-center"><div className="loader-spinner"></div></div>}>
+                <NewsHeroSlider />
+            </Suspense>
+
             {/* Hero Welcome */}
             <div className="mobile-hero">
                 <div className="mobile-hero-content">

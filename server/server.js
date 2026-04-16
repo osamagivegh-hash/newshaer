@@ -15,7 +15,7 @@ const { startNewsJob } = require('./jobs/newsJob');
 const { startBackupScheduler } = require('./jobs/backupScheduler');
 const { initializeFTAdmin } = require('./middleware/familyTreeAuth');
 const treeCache = require('./services/treeCache');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -202,6 +202,7 @@ app.get('/api/storage/status', (req, res) => {
 
 // API Routes
 app.use('/api/news', newsRouter);
+app.use('/api/fb-posts', require('./routes/fbPosts'));
 app.use('/api/persons', require('./routes/persons'));
 app.use('/api/branches', require('./routes/branches')); // NEW: Safe, scalable branch-based API
 app.use('/api/family-tree-content', require('./routes/familyTreeContent'));
@@ -240,6 +241,10 @@ app.listen(PORT, () => {
   startNewsJob().catch(error => {
     console.error('[news-job] Failed to start:', error.message);
   });
+
+  // تشغيل مزامنة فيسبوك التلقائية
+  const { startFbSyncScheduler } = require('./services/fbSync');
+  startFbSyncScheduler();
 });
 
 // Log storage mode

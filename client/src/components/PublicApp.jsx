@@ -9,7 +9,8 @@ import { FamilyTreeSection } from './FamilyTree'
 import { fetchSectionsData, api } from '../utils/api'
 
 // Lazy load components
-const News = lazy(() => import('./News'))
+const FbNewsSection = lazy(() => import('./FbNewsSection'))
+const NewsHeroSlider = lazy(() => import('./NewsHeroSlider'))
 const Conversations = lazy(() => import('./Conversations'))
 const Palestine = lazy(() => import('./Palestine'))
 const Articles = lazy(() => import('./Articles'))
@@ -77,6 +78,9 @@ const PublicApp = () => {
       <Header />
       <NewsTickers />
       <main style={{ paddingTop: '150px' }} className="md:pt-[10rem]">
+        <Suspense fallback={<div className="w-full h-[300px] md:h-[420px] bg-gray-100 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-palestine-green"></div></div>}>
+          <NewsHeroSlider />
+        </Suspense>
         <HeroSlider />
         <Hero />
 
@@ -85,7 +89,7 @@ const PublicApp = () => {
 
         <LazySection>
           <Suspense fallback={<SectionFallback name="الأخبار" />}>
-            <News data={sectionsData?.news || []} />
+            <FbNewsSection />
           </Suspense>
         </LazySection>
 
