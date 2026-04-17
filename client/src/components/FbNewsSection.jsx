@@ -73,7 +73,7 @@ const FbNewsSection = () => {
             آخر أخبار العائلة
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-            تابع أحدث أخبار عائلة الشاعر من صفحة الفيسبوك
+            تابع أحدث أخبار عائلة الشاعر
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-palestine-red to-red-600 mx-auto mt-6 rounded-full" />
         </div>
