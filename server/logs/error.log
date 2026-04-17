@@ -76,3 +76,18 @@
 {"method":"DELETE","url":"/persons/6960609b515b7b4e370f689b","status":404,"duration":"199ms","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"}
 [ERROR] 2026-01-11T11:27:55.504Z - Request failed
 {"method":"GET","url":"/persons?limit=5","status":401,"duration":"4ms","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.7462"}
+[ERROR] 2026-04-16T20:20:40.454Z - Error recording visit:
+MongoServerError: E11000 duplicate key error collection: alshaer.visitors index: date_1 dup key: { date: "2026-04-16" }
+    at InsertOneOperation.handleOk (C:\Users\TestUser\Desktop\myprojects\N8N\myfamily\server\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at tryOperation (C:\Users\TestUser\Desktop\myprojects\N8N\myfamily\server\node_modules\mongodb\lib\operations\execute_operation.js:214:34)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async executeOperation (C:\Users\TestUser\Desktop\myprojects\N8N\myfamily\server\node_modules\mongodb\lib\operations\execute_operation.js:78:16)
+    at async Collection.insertOne (C:\Users\TestUser\Desktop\myprojects\N8N\myfamily\server\node_modules\mongodb\lib\collection.js:154:16)
+[ERROR] 2026-04-16T20:51:10.672Z - Request failed
+{"method":"GET","url":"/api/fb-posts/latest?limit=8","status":500,"duration":"6ms","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"}
+[ERROR] 2026-04-16T20:51:10.681Z - Request failed
+{"method":"GET","url":"/api/fb-posts/latest?limit=8","status":500,"duration":"2ms","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"}
+[ERROR] 2026-04-17T14:52:08.106Z - Request failed
+{"method":"GET","url":"/api/sections","status":500,"duration":"30018ms","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.116.0 Chrome/142.0.7444.265 Electron/39.8.7 Safari/537.36"}
+[ERROR] 2026-04-17T14:52:28.083Z - Request failed
+{"method":"GET","url":"/api/sections","status":500,"duration":"30006ms","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.116.0 Chrome/142.0.7444.265 Electron/39.8.7 Safari/537.36"}

@@ -15,6 +15,7 @@ import { useLayout } from '../../contexts/LayoutContext';
 // Lazy load heavy components
 const News = lazy(() => import('../../components/News'));
 const NewsHeroSlider = lazy(() => import('../../components/NewsHeroSlider'));
+const FbNewsSection = lazy(() => import('../../components/FbNewsSection'));
 const Articles = lazy(() => import('../../components/Articles'));
 const Conversations = lazy(() => import('../../components/Conversations'));
 const Palestine = lazy(() => import('../../components/Palestine'));
@@ -245,7 +246,7 @@ export const MobileNewsSection = ({ data }) => {
     return (
         <div className="mobile-section mobile-news-section">
             <Suspense fallback={<SectionLoader />}>
-                <News data={data} />
+                <FbNewsSection />
             </Suspense>
         </div>
     );
