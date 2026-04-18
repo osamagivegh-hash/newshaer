@@ -176,6 +176,22 @@ adminNews.toggleArchive = async (id, isArchived) => {
     throw new Error(error.response?.data?.message || 'خطأ في تحديث حالة الأرشفة')
   }
 }
+adminNews.getFbPosts = async () => {
+  try {
+    const response = await adminApi.get('/news/fb-posts')
+    return response.data
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'خطأ في جلب منشورات فيسبوك')
+  }
+}
+adminNews.importFbPosts = async (postIds) => {
+  try {
+    const response = await adminApi.post('/news/import-fb', { postIds })
+    return response.data
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'خطأ في استيراد منشورات فيسبوك')
+  }
+}
 export const adminConversations = createCRUDFunctions('conversations')
 export const adminArticles = createCRUDFunctions('articles')
 export const adminPalestine = createCRUDFunctions('palestine')

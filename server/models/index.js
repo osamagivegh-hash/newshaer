@@ -59,6 +59,8 @@ const newsSchema = new mongoose.Schema({
   isArchived: { type: Boolean, default: false },
   archivedAt: { type: Date, default: null },
   gallery: [{ type: String }],
+  fbPostId: { type: String, default: null },
+  fbPermalink: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -108,6 +110,7 @@ newsSchema.index({ tags: 1 });
 newsSchema.index({ category: 1, isArchived: 1 });
 newsSchema.index({ isArchived: 1, archivedAt: -1 });
 newsSchema.index({ author: 1 });
+newsSchema.index({ fbPostId: 1 }, { sparse: true });
 newsSchema.index({ createdAt: -1 });
 
 // Conversations Schema

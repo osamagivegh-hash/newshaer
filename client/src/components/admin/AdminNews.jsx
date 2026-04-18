@@ -23,6 +23,10 @@ const AdminNews = () => {
   const [selectedNews, setSelectedNews] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editingNews, setEditingNews] = useState(null)
+  const [showFbImport, setShowFbImport] = useState(false)
+  const [fbPosts, setFbPosts] = useState([])
+  const [selectedFbPosts, setSelectedFbPosts] = useState([])
+  const [fbLoading, setFbLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -89,6 +93,52 @@ const AdminNews = () => {
       setNews([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchFbPosts = async () => {
+    setFbLoading(true)
+    try {
+      const data = await adminNews.getFbPosts()
+      setFbPosts(data.posts || [])
+      setSelectedFbPosts([])
+    } catch (error) {
+      toast.error(error.message)
+      setFbPosts([])
+    } finally {
+      setFbLoading(false)
+    }
+  }
+
+  const handleOpenFbImport = () => {
+    setShowFbImport(true)
+    fetchFbPosts()
+  }
+
+  const handleImportFbPosts = async () => {
+    if (selectedFbPosts.length === 0) {
+      toast.error('يرجى اختيار منشورات للاستيراد')
+      return
+    }
+    setFbLoading(true)
+    try {
+      const result = await adminNews.importFbPosts(selectedFbPosts)
+      toast.success(result.message)
+      setShowFbImport(false)
+      setSelectedFbPosts([])
+      fetchNews()
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setFbLoading(false)
+    }
+  }
+
+  const handleSelectAllFb = () => {
+    if (selectedFbPosts.length === fbPosts.length) {
+      setSelectedFbPosts([])
+    } else {
+      setSelectedFbPosts(fbPosts.map(p => p.fb_post_id))
     }
   }
 
@@ -217,6 +267,12 @@ const AdminNews = () => {
               حذف المحدد ({selectedNews.length})
             </button>
           )}
+          <button
+            onClick={handleOpenFbImport}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            📥 استيراد من فيسبوك
+          </button>
           <button
             onClick={() => {
               setShowForm(true)
@@ -408,6 +464,122 @@ const AdminNews = () => {
         </div>
       )}
 
+      {/* Facebook Import Modal */}
+      {showFbImport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b">
+              <div>
+                <h2 className="text-xl font-bold text-palestine-black">📥 استيراد من فيسبوك</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {fbPosts.length > 0 ? `${fbPosts.length} منشور متاح للاستيراد` : 'جاري التحميل...'}
+                </p>
+              </div>
+              <button onClick={() => setShowFbImport(false)} className="text-gray-500 hover:text-gray-700">
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 p-4">
+              {fbLoading ? (
+                <div className="text-center py-12 text-gray-500">جاري تحميل منشورات فيسبوك...</div>
+              ) : fbPosts.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="text-lg">لا توجد منشورات جديدة للاستيراد</p>
+                  <p className="text-sm mt-2">جميع المنشورات مستوردة مسبقاً أو لا توجد منشورات على الصفحة</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4 flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedFbPosts.length === fbPosts.length}
+                        onChange={handleSelectAllFb}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-gray-700">تحديد الكل ({fbPosts.length})</span>
+                    </label>
+                    {selectedFbPosts.length > 0 && (
+                      <span className="text-sm text-blue-600 font-medium">
+                        تم تحديد {selectedFbPosts.length} منشور
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {fbPosts.map((post) => (
+                      <div
+                        key={post.fb_post_id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          selectedFbPosts.includes(post.fb_post_id)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => {
+                          setSelectedFbPosts(prev =>
+                            prev.includes(post.fb_post_id)
+                              ? prev.filter(id => id !== post.fb_post_id)
+                              : [...prev, post.fb_post_id]
+                          )
+                        }}
+                      >
+                        <div className="flex gap-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedFbPosts.includes(post.fb_post_id)}
+                            onChange={() => {}}
+                            className="h-4 w-4 mt-1 flex-shrink-0"
+                          />
+                          {post.image_url && (
+                            <img
+                              src={post.image_url}
+                              alt=""
+                              className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                              onError={(e) => { e.target.style.display = 'none' }}
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-palestine-black line-clamp-3" dir="rtl">
+                              {(post.message || 'بدون نص').substring(0, 200)}
+                              {(post.message || '').length > 200 ? '...' : ''}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                              <span>{new Date(post.created_time).toLocaleDateString('ar-SA')}</span>
+                              <span className="bg-gray-100 px-2 py-0.5 rounded">{post.category}</span>
+                              {post.image_url && <span className="text-green-600">✓ صورة</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="p-4 border-t flex justify-between items-center">
+              <button
+                onClick={() => setShowFbImport(false)}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleImportFbPosts}
+                disabled={selectedFbPosts.length === 0 || fbLoading}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  selectedFbPosts.length > 0 && !fbLoading
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {fbLoading ? 'جاري الاستيراد...' : `استيراد ${selectedFbPosts.length} منشور`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* News List */}
       <div className="bg-white rounded-lg shadow-md">
         {news.length > 0 && (
@@ -470,6 +642,11 @@ const AdminNews = () => {
                           <h3 className="text-lg font-semibold text-palestine-black">
                             {newsItem.title}
                           </h3>
+                          {newsItem.fbPostId && (
+                            <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                              فيسبوك
+                            </span>
+                          )}
                           {isArchived && (
                             <span className="text-xs font-semibold text-gray-600 bg-gray-200 px-2 py-1 rounded-full">
                               مؤرشف

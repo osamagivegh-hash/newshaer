@@ -261,6 +261,104 @@ const createCRUDRoutes = (sectionName, Model) => {
   });
 };
 
+// ===== Facebook Posts → CMS News Import =====
+// These routes MUST be registered before createCRUDRoutes('news') 
+// to avoid being caught by the generic GET /news/:id route
+const FbPost = require('../models/FbPost');
+
+const FB_TO_CMS_CATEGORY = {
+  'تعازي': 'Obituaries',
+  'أفراح وزواجات': 'Celebrations',
+  'صلح وجاهات واحتفالات وفعاليات': 'Events',
+  'مواليد': 'Celebrations',
+  'إعلانات': 'General',
+  'أخبار عامة': 'General'
+};
+
+// GET available FB posts (not yet imported)
+router.get('/news/fb-posts', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const importedNews = await News.find({ fbPostId: { $exists: true, $ne: null } }, { fbPostId: 1 }).lean();
+    const importedIds = new Set(importedNews.map(n => n.fbPostId));
+
+    const fbPosts = await FbPost.find().sort({ created_time: -1 }).limit(100).lean();
+    const available = fbPosts
+      .filter(p => !importedIds.has(p.fb_post_id))
+      .map(p => ({
+        id: p._id.toString(),
+        fb_post_id: p.fb_post_id,
+        message: p.message || '',
+        created_time: p.created_time,
+        image_url: p.image_url,
+        category: p.category,
+        permalink_url: p.permalink_url
+      }));
+
+    res.json({ total: fbPosts.length, available: available.length, posts: available });
+  } catch (error) {
+    console.error('Get FB posts error:', error);
+    res.status(500).json({ message: 'خطأ في جلب منشورات فيسبوك' });
+  }
+});
+
+// POST import selected FB posts into News
+router.post('/news/import-fb', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { postIds } = req.body;
+    if (!Array.isArray(postIds) || postIds.length === 0) {
+      return res.status(400).json({ message: 'يرجى تحديد منشورات للاستيراد' });
+    }
+
+    const fbPosts = await FbPost.find({ fb_post_id: { $in: postIds } }).lean();
+    if (fbPosts.length === 0) {
+      return res.status(404).json({ message: 'لم يتم العثور على المنشورات' });
+    }
+
+    const existing = await News.find({ fbPostId: { $in: postIds } }, { fbPostId: 1 }).lean();
+    const existingIds = new Set(existing.map(n => n.fbPostId));
+
+    const toImport = fbPosts.filter(p => !existingIds.has(p.fb_post_id));
+    if (toImport.length === 0) {
+      return res.json({ message: 'جميع المنشورات مستوردة مسبقاً', imported: 0 });
+    }
+
+    const newsItems = toImport.map(p => {
+      const msg = (p.message || '').trim();
+      const lines = msg.split('\n').filter(l => l.trim());
+      const title = (lines[0] || 'منشور فيسبوك').substring(0, 200);
+      const content = msg || title;
+      const summary = msg.substring(0, 300);
+
+      return {
+        title,
+        content,
+        summary,
+        headline: title,
+        author: 'صفحة فيسبوك',
+        date: p.created_time || new Date(),
+        image: p.image_url || '',
+        category: FB_TO_CMS_CATEGORY[p.category] || 'General',
+        fbPostId: p.fb_post_id,
+        fbPermalink: p.permalink_url || '',
+        isArchived: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    });
+
+    const inserted = await News.insertMany(newsItems);
+    maybeInvalidateCache('news');
+
+    res.json({
+      message: `تم استيراد ${inserted.length} خبر من فيسبوك بنجاح`,
+      imported: inserted.length
+    });
+  } catch (error) {
+    console.error('Import FB posts error:', error);
+    res.status(500).json({ message: 'خطأ في استيراد منشورات فيسبوك' });
+  }
+});
+
 // Create CRUD routes for all sections
 createCRUDRoutes('news', News);
 createCRUDRoutes('conversations', Conversations);

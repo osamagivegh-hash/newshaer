@@ -50,12 +50,25 @@ const initializeAdmin = async () => {
 
       await defaultAdmin.save();
       console.log('✓ Super Admin account created from environment configuration');
-    } else if (existingAdmin.role !== 'super-admin') {
-      // Upgrade existing admin to super-admin
-      existingAdmin.role = 'super-admin';
-      existingAdmin.permissions = ['family-tree', 'dev-team', 'news', 'articles', 'conversations', 'gallery', 'contacts', 'palestine', 'settings'];
-      await existingAdmin.save();
-      console.log('✓ Admin upgraded to Super Admin');
+    } else {
+      // Sync role, permissions and password from environment
+      let changed = false;
+      if (existingAdmin.role !== 'super-admin') {
+        existingAdmin.role = 'super-admin';
+        existingAdmin.permissions = ['family-tree', 'dev-team', 'news', 'articles', 'conversations', 'gallery', 'contacts', 'palestine', 'settings'];
+        changed = true;
+      }
+      // Sync password from env if it changed
+      const passwordMatch = await bcrypt.compare(adminPassword, existingAdmin.password);
+      if (!passwordMatch) {
+        existingAdmin.password = await bcrypt.hash(adminPassword, 10);
+        changed = true;
+        console.log('✓ Admin password synced from environment');
+      }
+      if (changed) {
+        await existingAdmin.save();
+        console.log('✓ Admin account updated');
+      }
     }
 
     // Create default Family Tree Editor if not exists
