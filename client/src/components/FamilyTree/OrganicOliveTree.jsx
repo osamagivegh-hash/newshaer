@@ -61,7 +61,7 @@ const CONFIG = {
 
         if (isVeryLarge) {
             separationMultiplier = 2.5;
-            radiusMultiplier = 1.8;
+            radiusMultiplier = 2.5;
         } else if (isLarge) {
             separationMultiplier = 2.0;
             radiusMultiplier = 1.5;
@@ -263,7 +263,54 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
             tree(root);
 
             // =========================================================
-            // POST-PROCESS: Dynamic radial distances
+            // POST-PROCESS 1: Proportional Angular Allocation
+            // Redistribute angles so each branch gets angular space
+            // proportional to its leaf count - prevents overlap in dense branches
+            // =========================================================
+
+            const redistributeAngles = (node, startAngle = 0, endAngle = 2 * Math.PI) => {
+                if (!node.children || node.children.length === 0) {
+                    node.x = (startAngle + endAngle) / 2;
+                    return;
+                }
+
+                // Weight each child by its leaf count
+                const childWeights = node.children.map(child => {
+                    const leaves = child.leaves().length;
+                    return Math.max(leaves, 1);
+                });
+                const totalWeight = childWeights.reduce((a, b) => a + b, 0);
+
+                // Gap between sibling groups (proportional to range, capped)
+                const rangeAngle = endAngle - startAngle;
+                const gapPerChild = node.children.length > 1
+                    ? Math.min(0.04, rangeAngle * 0.04 / node.children.length)
+                    : 0;
+                const totalGap = gapPerChild * Math.max(0, node.children.length - 1);
+                const usableAngle = rangeAngle - totalGap;
+
+                let currentAngle = startAngle;
+                node.children.forEach((child, i) => {
+                    const fraction = childWeights[i] / totalWeight;
+                    const childAngle = fraction * usableAngle;
+                    const childStart = currentAngle;
+                    const childEnd = currentAngle + childAngle;
+
+                    redistributeAngles(child, childStart, childEnd);
+                    currentAngle = childEnd + (i < node.children.length - 1 ? gapPerChild : 0);
+                });
+
+                // Position parent at the weighted center of its children
+                const weightedSum = node.children.reduce((sum, child, i) => {
+                    return sum + child.x * childWeights[i];
+                }, 0);
+                node.x = weightedSum / totalWeight;
+            };
+
+            redistributeAngles(root);
+
+            // =========================================================
+            // POST-PROCESS 2: Dynamic radial distances
             // =========================================================
 
             root.each(node => {
@@ -302,6 +349,83 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                     node.y = y;
                 }
             });
+
+            // =========================================================
+            // POST-PROCESS 3: Per-depth minimum radius
+            // Ensure each depth level has enough circumference for its node count
+            // =========================================================
+
+            const depthInfo = {};
+            const leafScale = totalNodes > 500 ? 0.7 : totalNodes > 200 ? 0.85 : 1;
+            root.each(node => {
+                if (node.depth === 0) return;
+                if (!depthInfo[node.depth]) depthInfo[node.depth] = { count: 0, maxWidth: 0 };
+                depthInfo[node.depth].count++;
+                const hasKids = node.children && node.children.length > 0;
+                const w = hasKids ? (node.depth <= 5 ? Math.max(30, 70 - node.depth * 8) * 1.8 : 50) : 40 * leafScale;
+                depthInfo[node.depth].maxWidth = Math.max(depthInfo[node.depth].maxWidth, w);
+            });
+
+            root.each(node => {
+                if (node.depth === 0) return;
+                const info = depthInfo[node.depth];
+                if (info && info.count > 1) {
+                    const requiredCircum = info.count * (info.maxWidth + 12);
+                    const requiredR = requiredCircum / (2 * Math.PI);
+                    if (node.y < requiredR) {
+                        node.y = requiredR;
+                    }
+                }
+            });
+
+            // =========================================================
+            // POST-PROCESS 4: Local angular collision resolution
+            // Push overlapping nodes apart by adjusting angles
+            // =========================================================
+
+            const allLayoutNodes = root.descendants().filter(n => n.depth > 0);
+
+            const shiftSubtree = (node, delta) => {
+                node.x += delta;
+                if (node.children) node.children.forEach(c => shiftSubtree(c, delta));
+            };
+
+            for (let pass = 0; pass < 5; pass++) {
+                // Group nodes by approximate radial distance (40px buckets)
+                const buckets = {};
+                allLayoutNodes.forEach(n => {
+                    const bucket = Math.round(n.y / 40);
+                    if (!buckets[bucket]) buckets[bucket] = [];
+                    buckets[bucket].push(n);
+                });
+
+                for (const bucket of Object.values(buckets)) {
+                    if (bucket.length <= 1) continue;
+                    bucket.sort((a, b) => a.x - b.x);
+
+                    for (let i = 0; i < bucket.length - 1; i++) {
+                        const a = bucket[i], b = bucket[i + 1];
+                        const avgR = (a.y + b.y) / 2;
+                        if (avgR === 0) continue;
+
+                        // Angular distance → physical distance
+                        const angleDiff = b.x - a.x;
+                        const arcDist = angleDiff * avgR;
+
+                        // Min distance based on node size
+                        const wA = (a.children ? 25 : 14 * leafScale);
+                        const wB = (b.children ? 25 : 14 * leafScale);
+                        const minDist = wA + wB + 2;
+
+                        if (arcDist < minDist) {
+                            const neededAngle = minDist / avgR;
+                            const push = (neededAngle - angleDiff) / 2;
+                            shiftSubtree(a, -push);
+                            shiftSubtree(b, push);
+                        }
+                    }
+                }
+            }
 
             // =========================================================
             // DRAW LINKS (BRANCHES) with gradient thickness
@@ -404,14 +528,15 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                         isPatriarch: true
                     };
                 } else if (!hasChildren) {
-                    // Leaf node (no children)
+                    // Leaf node (no children) - scale down for dense trees
+                    const leafScale = totalNodes > 500 ? 0.7 : totalNodes > 200 ? 0.85 : 1;
                     return {
-                        width: 40,
-                        height: 18,
+                        width: 40 * leafScale,
+                        height: 18 * leafScale,
                         fill: COLORS.leafFinal.fill,
                         stroke: COLORS.leafFinal.stroke,
                         textColor: COLORS.leafFinal.text,
-                        fontSize: 8,
+                        fontSize: Math.round(8 * leafScale),
                         fontWeight: '500',
                         filter: 'none',
                         isPatriarch: false
