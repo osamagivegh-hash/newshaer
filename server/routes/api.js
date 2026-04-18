@@ -145,8 +145,8 @@ const invalidateSectionsCache = () => {
   console.log('[SectionsCache] Cache invalidated');
 };
 
-// Export for use in admin routes
-module.exports.invalidateSectionsCache = invalidateSectionsCache;
+// Export attached to the router so it survives `module.exports = router` below
+router.invalidateSectionsCache = invalidateSectionsCache;
 
 // Get all sections data (with caching)
 router.get('/sections', asyncHandler(async (req, res) => {

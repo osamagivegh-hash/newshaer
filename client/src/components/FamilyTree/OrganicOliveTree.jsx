@@ -370,7 +370,9 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 if (node.depth === 0) return;
                 const info = depthInfo[node.depth];
                 if (info && info.count > 1) {
-                    const requiredCircum = info.count * (info.maxWidth + 12);
+                    // Extra padding for early generations (more visual breathing room)
+                    const earlyGenBoost = node.depth <= 3 ? 1.4 : node.depth <= 5 ? 1.15 : 1.0;
+                    const requiredCircum = info.count * (info.maxWidth + 12) * earlyGenBoost;
                     const requiredR = requiredCircum / (2 * Math.PI);
                     if (node.y < requiredR) {
                         node.y = requiredR;
@@ -390,41 +392,56 @@ const OrganicOliveTree = ({ data, onNodeClick, className = '', style = {} }) => 
                 if (node.children) node.children.forEach(c => shiftSubtree(c, delta));
             };
 
-            for (let pass = 0; pass < 5; pass++) {
-                // Group nodes by approximate radial distance (40px buckets)
+            // Run multiple passes with progressively smaller buckets for fine collision detection
+            const bucketSizes = [60, 40, 25, 15];
+            for (let pass = 0; pass < 12; pass++) {
+                const bucketSize = bucketSizes[Math.min(pass, bucketSizes.length - 1)];
                 const buckets = {};
                 allLayoutNodes.forEach(n => {
-                    const bucket = Math.round(n.y / 40);
-                    if (!buckets[bucket]) buckets[bucket] = [];
-                    buckets[bucket].push(n);
+                    const bucket = Math.round(n.y / bucketSize);
+                    // Add to own bucket AND both neighbor buckets so boundary collisions
+                    // (where two close-radius nodes fall on either side of a boundary) are caught.
+                    for (const key of [bucket - 1, bucket, bucket + 1]) {
+                        if (!buckets[key]) buckets[key] = [];
+                        buckets[key].push(n);
+                    }
                 });
 
+                let anyCollision = false;
                 for (const bucket of Object.values(buckets)) {
                     if (bucket.length <= 1) continue;
-                    bucket.sort((a, b) => a.x - b.x);
+                    // Deduplicate
+                    const uniqueBucket = [...new Set(bucket)];
+                    uniqueBucket.sort((a, b) => a.x - b.x);
 
-                    for (let i = 0; i < bucket.length - 1; i++) {
-                        const a = bucket[i], b = bucket[i + 1];
-                        const avgR = (a.y + b.y) / 2;
-                        if (avgR === 0) continue;
+                    for (let i = 0; i < uniqueBucket.length - 1; i++) {
+                        const a = uniqueBucket[i], b = uniqueBucket[i + 1];
 
-                        // Angular distance → physical distance
-                        const angleDiff = b.x - a.x;
-                        const arcDist = angleDiff * avgR;
+                        // Compute actual physical distance
+                        const ax = Math.cos(a.x - Math.PI / 2) * a.y;
+                        const ay = Math.sin(a.x - Math.PI / 2) * a.y;
+                        const bx = Math.cos(b.x - Math.PI / 2) * b.y;
+                        const by = Math.sin(b.x - Math.PI / 2) * b.y;
+                        const physDist = Math.hypot(ax - bx, ay - by);
 
-                        // Min distance based on node size
-                        const wA = (a.children ? 25 : 14 * leafScale);
-                        const wB = (b.children ? 25 : 14 * leafScale);
-                        const minDist = wA + wB + 2;
+                        // Min distance based on node size (parent nodes are larger)
+                        const wA = (a.children ? 30 : 16 * leafScale);
+                        const wB = (b.children ? 30 : 16 * leafScale);
+                        const minDist = wA + wB + 4;
 
-                        if (arcDist < minDist) {
-                            const neededAngle = minDist / avgR;
-                            const push = (neededAngle - angleDiff) / 2;
+                        if (physDist < minDist) {
+                            anyCollision = true;
+                            const avgR = (a.y + b.y) / 2;
+                            if (avgR === 0) continue;
+                            const angleDiff = b.x - a.x;
+                            const arcNeeded = (minDist - physDist) / avgR;
+                            const push = arcNeeded / 2;
                             shiftSubtree(a, -push);
                             shiftSubtree(b, push);
                         }
                     }
                 }
+                if (!anyCollision && pass >= 2) break;
             }
 
             // =========================================================

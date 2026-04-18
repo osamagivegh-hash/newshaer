@@ -35,6 +35,25 @@ const { upload, isCloudinaryConfigured, cloudinaryFolder, uploadsDir } = require
 // Import Cloudinary utilities
 const cloudinaryUtils = require('../utils/cloudinary');
 
+// Public sections cache invalidator (so /api/sections reflects admin mutations immediately)
+let invalidateSectionsCache = () => {};
+try {
+  const apiModule = require('./api');
+  if (typeof apiModule.invalidateSectionsCache === 'function') {
+    invalidateSectionsCache = apiModule.invalidateSectionsCache;
+  }
+} catch (e) {
+  console.warn('[adminMongo] Could not load invalidateSectionsCache:', e.message);
+}
+
+// Sections whose mutations should invalidate the public sections cache
+const PUBLIC_SECTIONS = new Set(['news', 'conversations', 'articles', 'palestine', 'gallery']);
+const maybeInvalidateCache = (sectionName) => {
+  if (PUBLIC_SECTIONS.has(sectionName)) {
+    try { invalidateSectionsCache(); } catch (_) { /* noop */ }
+  }
+};
+
 const router = express.Router();
 
 // Helper function to normalize MongoDB documents (convert _id to id)
@@ -159,6 +178,7 @@ const createCRUDRoutes = (sectionName, Model) => {
     try {
       const newItem = new Model(req.body);
       const savedItem = await newItem.save();
+      maybeInvalidateCache(sectionName);
 
       res.status(201).json({
         message: 'تم إضافة العنصر بنجاح',
@@ -181,6 +201,7 @@ const createCRUDRoutes = (sectionName, Model) => {
       );
 
       if (updatedItem) {
+        maybeInvalidateCache(sectionName);
         res.json({
           message: 'تم تحديث العنصر بنجاح',
           item: normalizeDocument(updatedItem)
@@ -201,6 +222,7 @@ const createCRUDRoutes = (sectionName, Model) => {
       const deletedItem = await Model.findByIdAndDelete(id);
 
       if (deletedItem) {
+        maybeInvalidateCache(sectionName);
         res.json({
           message: 'تم حذف العنصر بنجاح',
           item: deletedItem
@@ -224,6 +246,9 @@ const createCRUDRoutes = (sectionName, Model) => {
       }
 
       const result = await Model.deleteMany({ _id: { $in: ids } });
+      if (result.deletedCount > 0) {
+        maybeInvalidateCache(sectionName);
+      }
 
       res.json({
         message: `تم حذف ${result.deletedCount} عنصر بنجاح`,
@@ -261,6 +286,8 @@ router.patch('/news/:id/archive', authenticateToken, requireAdmin, async (req, r
     if (!updated) {
       return res.status(404).json({ message: 'الخبر غير موجود' });
     }
+
+    maybeInvalidateCache('news');
 
     res.json({
       message: isArchived ? 'تم نقل الخبر إلى الأرشيف' : 'تم استرجاع الخبر من الأرشيف',
