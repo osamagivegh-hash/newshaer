@@ -53,7 +53,7 @@ const getMergedPosts = async (filter = {}, sort = { created_time: -1 }, skip = 0
     }
   }
   if (filter.message) {
-    // Search applies to title+content in CMS
+    // Search applies to title+content in CMS (pass regex object)
     cmsFilter.$or = [
       { title: filter.message },
       { content: filter.message }
