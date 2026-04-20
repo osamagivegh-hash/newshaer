@@ -35,12 +35,18 @@ const Palestine = ({ data }) => {
         <div className="grid gap-8 lg:grid-cols-2">
           {data.map((item) => (
             <article key={item.id} className="card fade-in hover:shadow-xl transition-all duration-300">
-              {/* Image placeholder */}
-              <div className="w-full h-48 bg-gradient-to-br from-olive-200 to-olive-300 rounded-lg mb-6 flex items-center justify-center">
-                <div className="text-center text-olive-700">
-                  <div className="text-4xl mb-2">🏛️</div>
-                  <p className="text-sm">{item.image || 'صورة من فلسطين'}</p>
-                </div>
+              {/* Image */}
+              <div className="w-full h-48 rounded-lg mb-6 overflow-hidden">
+                {item.image && item.image.startsWith('http') ? (
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-olive-200 to-olive-300 flex items-center justify-center">
+                    <div className="text-center text-olive-700">
+                      <div className="text-4xl mb-2">🏛️</div>
+                      <p className="text-sm">{item.image || 'صورة من فلسطين'}</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <h3 className="text-2xl font-bold text-palestine-black mb-4 leading-tight">
