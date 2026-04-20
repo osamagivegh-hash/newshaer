@@ -56,12 +56,12 @@ export const MobileHomeSection = ({ data }) => {
             section: 'news'
         },
         {
-            id: 'articles',
-            label: 'المقالات',
-            description: 'اقرأ أحدث المقالات',
-            icon: '📖',
+            id: 'palestine',
+            label: 'فلسطين',
+            description: 'تعرف على تاريخ فلسطين وحضارتها',
+            icon: '🇵🇸',
             gradient: 'from-emerald-600 to-teal-700',
-            section: 'articles'
+            section: 'palestine'
         },
         {
             id: 'gallery',
