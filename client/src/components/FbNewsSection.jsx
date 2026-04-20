@@ -25,7 +25,7 @@ const FbNewsSection = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/fb-posts', { params: { limit: 8, page: 1 } })
+    api.get('/fb-posts', { params: { limit: 13, page: 1 } })
       .then(res => {
         if (res.data?.success) setPosts(res.data.data.posts)
       })
