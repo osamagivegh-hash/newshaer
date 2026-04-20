@@ -22,6 +22,25 @@ const PublicApp = () => {
   const [sectionsData, setSectionsData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [topOffset, setTopOffset] = useState(160)
+
+  // Dynamically compute top padding so the fixed header + news ticker never overlap content
+  useEffect(() => {
+    const computeOffset = () => {
+      const headerEl = document.querySelector('header')
+      const tickersEl = document.getElementById('news-tickers')
+      const headerH = headerEl?.offsetHeight || 0
+      const tickersH = tickersEl?.offsetHeight || 0
+      setTopOffset(headerH + tickersH)
+    }
+    computeOffset()
+    window.addEventListener('resize', computeOffset)
+    const interval = setInterval(computeOffset, 500)
+    return () => {
+      window.removeEventListener('resize', computeOffset)
+      clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     const loadData = async () => {
@@ -77,7 +96,7 @@ const PublicApp = () => {
     <>
       <Header />
       <NewsTickers />
-      <main style={{ paddingTop: '150px' }} className="md:pt-[10rem]">
+      <main style={{ paddingTop: `${topOffset}px` }}>
         <Suspense fallback={<div className="w-full h-[300px] md:h-[420px] bg-gray-100 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-palestine-green"></div></div>}>
           <NewsHeroSlider />
         </Suspense>

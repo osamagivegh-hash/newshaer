@@ -92,7 +92,7 @@ const NewsHeroSlider = () => {
           <img
             src={p.image_url}
             alt=""
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             loading={i === 0 ? 'eager' : 'lazy'}
           />
           {/* Gradient Overlay */}
