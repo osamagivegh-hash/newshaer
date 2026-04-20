@@ -75,7 +75,7 @@ const HeroSlider = () => {
           <img
             src={normalizeImageUrl(slide.image)}
             alt={slide.title}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain"
             loading={index === 0 ? 'eager' : 'lazy'}
           />
 
